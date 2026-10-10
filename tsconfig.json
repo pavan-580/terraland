@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "terraland-linux-x64-source"]
+  "exclude": ["node_modules", "terraland-linux-x64-source", "terraland-hostinger"]
 }
