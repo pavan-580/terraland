@@ -1,0 +1,61 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowUpRight, Check, Eye, EyeOff } from "lucide-react";
+
+export function AuthPanel({ destination, googleError }: { destination: string; googleError?: string }) {
+  const router = useRouter();
+  const [signup, setSignup] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [continueTo, setContinueTo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setBusy(true);
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+    try {
+      const response = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, action: signup ? "signup" : "signin" }) });
+      const result = await response.json() as {
+        error?: string;
+        notificationPending?: boolean;
+        user?: { role?: string; name?: string };
+      };
+      if (!response.ok) {
+        setError(result.error ?? "We couldn't sign you in. Please try again.");
+        return;
+      }
+      window.dispatchEvent(new Event("terraland:account-changed"));
+      if (signup) {
+        setContinueTo(result.user?.role === "admin" ? "/admin" : destination);
+        setSuccess(result.notificationPending
+          ? `Your account is ready${result.user?.name ? `, ${result.user.name}` : ""}. You are signed in. The registration email is queued and will be delivered after the site email service is configured.`
+          : `Your account is ready${result.user?.name ? `, ${result.user.name}` : ""}. You are signed in, and the registration email has been sent.`);
+        return;
+      }
+      router.push(result.user?.role === "admin" ? "/admin" : destination);
+      router.refresh();
+    } catch {
+      setError("We couldn't reach the server. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return <section className="auth-panel"><span className="eyebrow">YOUR TERRALAND ACCOUNT</span><h2>{signup ? "A new beginning." : "Welcome back."}</h2><p>{signup ? "Create an account to save places and share your land." : "Sign in to pick up where you left off."}</p>
+    {success ? <div className="auth-success" role="status"><p>{success}</p><button className="button button-dark auth-submit" onClick={() => router.push(continueTo)}>Continue <ArrowUpRight size={16} /></button></div> : <>
+      {googleError && <div className="form-error" role="alert">{googleError}</div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
+      <a className="google-signin-button" href={`/api/auth/google?next=${encodeURIComponent(destination)}`}><span aria-hidden="true">G</span> Continue with Google</a>
+      <div className="auth-divider"><span>or use email</span></div>
+      <form onSubmit={submit}>{signup && <label>Your name<input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="How should we address you?" /></label>}<label>Email address<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><label>Password<span className="password-input-wrap"><input name="password" type={showPassword ? "text" : "password"} required minLength={8} maxLength={72} autoComplete={signup ? "new-password" : "current-password"} placeholder="At least 8 characters" /><button type="button" className="password-visibility" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}<span>{showPassword ? "Hide" : "Show"}</span></button></span></label>
+        <button className="button button-dark auth-submit" disabled={busy}>{busy ? "One moment…" : signup ? "Create your account" : "Sign in"} <ArrowUpRight size={16} /></button>
+      </form>
+    </>}<div className="auth-switch">{signup ? "Already have an account?" : "New to Terraland?"} <button onClick={() => { setSignup(!signup); setError(""); setSuccess(""); }}>{signup ? "Sign in" : "Create an account"}</button></div>
+    <div className="auth-reassurance"><Check size={14} /> Your account details stay private.</div><Link href="/" className="text-link auth-home">Explore without an account <ArrowUpRight size={14} /></Link>
+  </section>;
+}

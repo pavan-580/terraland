@@ -1,0 +1,51 @@
+TERRALAND — LINUX x64 SERVER HOSTING
+
+This ZIP contains application source and a Dockerfile. It is not a prebuilt
+Linux binary. Build it on the Linux x64 server so SQLite's native module
+matches the host.
+
+REQUIREMENTS
+
+- Linux x64 server
+- Docker Engine and Docker CLI
+- A domain name and TLS reverse proxy (recommended for public hosting)
+
+DEPLOY
+
+1. Copy and extract terraland-linux-x64-source.zip on the server.
+2. Change into the extracted project folder.
+3. Create a private .env file from the example:
+
+      cp .env.example .env
+
+   Edit .env and set:
+   - ADMIN_PASSWORD to a long, unique password
+   - NEXT_PUBLIC_SITE_URL to your public HTTPS site URL
+   - RESEND_API_KEY and EMAIL_FROM if you want registration notifications
+
+   Do not commit or publicly expose .env.
+
+4. Build the app image on this server:
+
+      docker build --build-arg NEXT_PUBLIC_SITE_URL=https://your-domain.example -t terraland:latest .
+
+   Replace the example with the same public HTTPS URL configured in .env.
+
+5. Start the app with persistent database and uploaded-photo volumes:
+
+      docker run -d --name terraland --restart unless-stopped \
+        -p 3000:3000 --env-file .env \
+        -v terraland-data:/app/data \
+        -v terraland-uploads:/app/public/uploads \
+        terraland:latest
+
+6. Configure your TLS reverse proxy to forward HTTPS traffic to port 3000.
+   Keep port 3000 private to the server or trusted proxy.
+
+BACKUPS AND UPDATES
+
+- Back up both terraland-data and terraland-uploads volumes regularly.
+- This SQLite/local-photo deployment supports one app instance only.
+- For an update, build a new image from the new source and restart the
+  container while retaining both named volumes.
+- For multiple app instances, migrate to managed database and image storage.

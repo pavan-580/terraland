@@ -1,0 +1,281 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { Property } from "@/lib/market";
+import { ListingClassificationFields } from "@/components/listing-classification-fields";
+
+type AdminUser = { id: string; name: string; email: string; createdAt: string; listingCount: number };
+type AdminInquiry = {
+  id: string;
+  propertyId: string;
+  userId: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  createdAt: string;
+  propertyTitle: string;
+  emailStatus: "pending" | "sent" | null;
+};
+type InquiryEmailNotification = { id: string; status: "pending" | "sent"; attempts: number; lastError: string | null; createdAt: string; propertyTitle: string };
+type AdminReview = {
+  id: string;
+  propertyId: string;
+  userId: string | null;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  updatedAt: string | null;
+  propertyTitle: string;
+};
+type RegistrationNotification = {
+  id: string;
+  name: string;
+  email: string;
+  status: "pending" | "sent";
+  attempts: number;
+  lastError: string | null;
+  createdAt: string;
+  sentAt: string | null;
+};
+type DashboardData = {
+  users: AdminUser[];
+  properties: Property[];
+  inquiries: AdminInquiry[];
+  inquiryNotifications: InquiryEmailNotification[];
+  reviews: AdminReview[];
+  registrationNotifications: RegistrationNotification[];
+};
+
+function formatAdminDate(value: string) {
+  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  return new Date(normalized).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+}
+
+export function AdminDashboard() {
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], registrationNotifications: [] });
+  const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews">("properties");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState("");
+  const [retryingEmail, setRetryingEmail] = useState(false);
+  const [retryingInquiryEmail, setRetryingInquiryEmail] = useState(false);
+
+  async function load() {
+    setError("");
+    try {
+      const response = await fetch("/api/admin", { cache: "no-store" });
+      const result = await response.json() as DashboardData & { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The dashboard could not be loaded.");
+      setData(result);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  async function update(type: "user" | "property", id: string, fields: Record<string, unknown>) {
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resource: type, id, ...fields }),
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The changes could not be saved.");
+      setMessage(result.message ?? "Saved.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The changes could not be saved.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function remove(type: "user" | "property" | "inquiry" | "review", id: string) {
+    if (!window.confirm("Delete this record? This action cannot be undone.")) return;
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resource: type, id }),
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The record could not be deleted.");
+      setMessage(result.message ?? "Deleted.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The record could not be deleted.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function retryRegistrationEmails() {
+    setRetryingEmail(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "retry-registration-emails" }),
+      });
+      const result = await response.json() as { sent?: number; failed?: number; pending?: number; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Queued emails could not be retried.");
+      setMessage(`${result.sent ?? 0} email(s) sent; ${result.pending ?? 0} still queued.`);
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Queued emails could not be retried.");
+    } finally {
+      setRetryingEmail(false);
+    }
+  }
+
+  async function retryInquiryEmails() {
+    setRetryingInquiryEmail(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "retry-inquiry-emails" }),
+      });
+      const result = await response.json() as { sent?: number; pending?: number; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Queued enquiry emails could not be retried.");
+      setMessage(`${result.sent ?? 0} enquiry email(s) sent; ${result.pending ?? 0} still queued.`);
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Queued enquiry emails could not be retried.");
+    } finally {
+      setRetryingInquiryEmail(false);
+    }
+  }
+
+  return <section className="admin-content">
+    {data.registrationNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
+      <div><strong>Registration emails are queued</strong><p>New accounts can sign in. Configure a Resend API key and verified sender to deliver notices to pavansai580@gmail.com.</p></div>
+      <button className="button button-dark" type="button" disabled={retryingEmail} onClick={() => void retryRegistrationEmails()}>{retryingEmail ? "Retrying…" : "Retry queued emails"}</button>
+    </div>}
+    {data.inquiryNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
+      <div><strong>Enquiry emails are queued</strong><p>Configure the Resend sender and API key to deliver saved buyer enquiries to pavansai580@gmail.com.</p></div>
+      <button className="button button-dark" type="button" disabled={retryingInquiryEmail} onClick={() => void retryInquiryEmails()}>{retryingInquiryEmail ? "Retrying…" : "Retry enquiry emails"}</button>
+    </div>}
+    <div className="admin-stats">
+      <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}><span>LISTINGS</span><strong>{data.properties.length}</strong></button>
+      <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>
+      <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
+      <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
+    </div>
+    {error && <div className="form-error" role="alert">{error}</div>}
+    {message && <div className="admin-success" role="status">{message}</div>}
+    {loading ? <p className="admin-empty">Loading site records…</p> : <>
+      {section === "properties" && <div className="admin-record-list">{data.properties.map((property) =>
+        <form className="admin-record" key={property.id} onSubmit={(event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          void update("property", property.id, {
+            title: form.get("title"), type: form.get("type"), city: form.get("city"), locality: form.get("locality"),
+            owner: form.get("owner"), phone: form.get("phone"), price: form.get("price"), area: form.get("area"),
+            unit: form.get("unit"), badge: form.get("badge"), description: form.get("description"),
+            listingCategory: form.get("listingCategory"), pricePeriod: form.get("pricePeriod"),
+            availability: form.get("availability"), guestCapacity: form.get("guestCapacity"),
+            verified: form.get("verified") === "on", status: form.get("status"),
+            images: String(form.get("images") ?? "").split(/\r?\n/).map((image) => image.trim()).filter(Boolean),
+            facing: form.get("facing"), approvals: form.get("approvals"),
+            loanAvailable: form.get("loanAvailable"), registrationAvailable: form.get("registrationAvailable"),
+            renovation: form.get("renovation"), cornerPlot: form.get("cornerPlot"), roadWidth: form.get("roadWidth"),
+            surveyNumber: form.get("surveyNumber"), soilType: form.get("soilType"), clearTitle: form.get("clearTitle"),
+            amenities: String(form.get("amenities") ?? "").split(/\r?\n|,/).map((amenity) => amenity.trim()).filter(Boolean),
+            address: form.get("address"), landmark: form.get("landmark"), mapUrl: form.get("mapUrl"),
+          });
+        }}>
+          <div className="admin-record-top"><div><span className="eyebrow">LISTING · {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type} · {property.id.slice(0, 8)}</span><strong translate="no">{property.title}</strong></div><button type="button" className="admin-delete" disabled={busyId === property.id} onClick={() => void remove("property", property.id)}>Delete</button></div>
+          <div className="admin-form-grid">
+            <label>Title<input name="title" required defaultValue={property.title} /></label>
+            <ListingClassificationFields category={property.listingCategory ?? "sale"} type={property.type} pricePeriod={property.pricePeriod ?? "total"}
+              categoryFields={(category) => category === "rent" ? <>
+                <label className="admin-wide">Availability / rental terms<input name="availability" maxLength={240} defaultValue={property.availability ?? ""} /></label>
+                <label>Guest capacity<input name="guestCapacity" type="number" min="1" max="1000" step="1" defaultValue={property.guestCapacity ?? ""} /></label>
+              </> : <>
+                <label>Facing<input name="facing" maxLength={40} defaultValue={property.facing ?? ""} /></label>
+                <label>Approvals<input name="approvals" maxLength={120} defaultValue={property.approvals ?? ""} /></label>
+                <label>Road width<input name="roadWidth" maxLength={40} defaultValue={property.roadWidth ?? ""} /></label>
+                <label>Survey number<input name="surveyNumber" maxLength={80} defaultValue={property.surveyNumber ?? ""} /></label>
+                <label>Soil type<input name="soilType" maxLength={80} defaultValue={property.soilType ?? ""} /></label>
+                <label>Renovation / condition<input name="renovation" maxLength={120} defaultValue={property.renovation ?? ""} /></label>
+                <label>Loan available<select name="loanAvailable" defaultValue={property.loanAvailable ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                <label>Registration available<select name="registrationAvailable" defaultValue={property.registrationAvailable ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                <label>Corner plot<select name="cornerPlot" defaultValue={property.cornerPlot ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                <label>Clear title<select name="clearTitle" defaultValue={property.clearTitle ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+              </>}
+            />
+            <label>City / state<input name="city" required defaultValue={property.city} /></label>
+            <label>Locality<input name="locality" required defaultValue={property.locality} /></label>
+            <label>Owner name<input name="owner" required defaultValue={property.owner} /></label>
+            <label>Phone<input name="phone" required defaultValue={property.phone} /></label>
+            <label>Price or rate (₹)<input name="price" type="number" min="1" required defaultValue={property.price} /></label>
+            <label>Area<input name="area" type="number" min="0.01" step="any" required defaultValue={property.area} /></label>
+            <label>Area unit<input name="unit" required defaultValue={property.unit} /></label>
+            <label className="admin-wide">Amenities (one per line)<textarea name="amenities" rows={2} defaultValue={(property.amenities ?? []).join("\n")} /></label>
+            <label className="admin-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
+            <label className="admin-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
+            <label className="admin-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
+            <label>Badge<input name="badge" required defaultValue={property.badge} /></label>
+            <label>Visibility<select name="status" defaultValue={property.status ?? "published"}><option value="published">Published</option><option value="hidden">Hidden</option></select></label>
+            <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
+            <label className="admin-wide">Photo URLs (one per line)<textarea name="images" rows={3} defaultValue={(property.images ?? [property.image]).join("\n")} /></label>
+            <label className="admin-wide">Description<textarea name="description" rows={3} required defaultValue={property.description} /></label>
+          </div>
+          <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>
+        </form>
+      )}</div>}
+      {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com").map((user) =>
+        <form className="admin-record admin-user-record" key={user.id} onSubmit={(event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          void update("user", user.id, { name: form.get("name"), email: form.get("email") });
+        }}>
+          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · JOINED {new Date(user.createdAt).toLocaleDateString()}</span><strong>{user.name}</strong></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
+          <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email<input name="email" type="email" required defaultValue={user.email} /></label></div>
+          <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
+        </form>
+      )}</div>}
+      {section === "inquiries" && <div className="admin-record-list">{data.inquiries.map((inquiry) =>
+        <article className="admin-record admin-inquiry" key={inquiry.id}>
+          <div className="admin-record-top"><div><span className="eyebrow">{inquiry.email ? "ACCOUNT ENQUIRY" : "LEGACY ENQUIRY"}{inquiry.emailStatus ? ` · EMAIL ${inquiry.emailStatus.toUpperCase()}` : ""} · {formatAdminDate(inquiry.createdAt)}</span><strong>{inquiry.propertyTitle}</strong></div><button type="button" className="admin-delete" disabled={busyId === inquiry.id} onClick={() => void remove("inquiry", inquiry.id)}>Delete</button></div>
+          <div className="admin-inquiry-contact"><strong>{inquiry.name}</strong>{inquiry.email ? <a href={`mailto:${inquiry.email}`}>{inquiry.email}</a> : <span>Email not available</span>}{inquiry.phone && <a href={`tel:${inquiry.phone}`}>{inquiry.phone}</a>}<span>{inquiry.userId ? "Account linked" : inquiry.email ? "Account removed; contact snapshot retained" : "Submitted before account sign-in was required"}</span></div>
+          <p>{inquiry.message}</p>
+        </article>
+      )}</div>}
+      {section === "reviews" && <div className="admin-record-list">{data.reviews.length ? data.reviews.map((review) =>
+        <article className="admin-record admin-review" key={review.id}>
+          <div className="admin-record-top"><div><span className="eyebrow">{review.reviewerName} · {review.rating}/5 · {formatAdminDate(review.updatedAt ?? review.createdAt)}</span><strong>{review.propertyTitle}</strong></div><button type="button" className="admin-delete" disabled={busyId === review.id} onClick={() => void remove("review", review.id)}>Delete review</button></div>
+          <p>{review.comment}</p>
+        </article>
+      ) : <p className="admin-empty">No reviews have been posted yet.</p>}</div>}
+      {section === "users" && <section className="admin-record-list admin-notifications">
+        <h2>Registration email delivery</h2>
+        {data.registrationNotifications.length ? data.registrationNotifications.map((notice) => <article className="admin-record" key={notice.id}>
+          <div className="admin-record-top"><div><span className="eyebrow">{notice.status === "sent" ? `SENT ${notice.sentAt ? new Date(notice.sentAt).toLocaleString() : ""}` : "QUEUED"}</span><strong>{notice.name}</strong></div><span>{notice.email}</span></div>
+          {notice.status === "pending" && <p>Attempts: {notice.attempts}. {notice.lastError ?? "Waiting for mail configuration."}</p>}
+        </article>) : <p className="admin-empty">No registration notifications yet.</p>}
+      </section>}
+    </>}
+  </section>;
+}
