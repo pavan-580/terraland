@@ -15,12 +15,31 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
   const [farmstayIndex, setFarmstayIndex] = useState(0);
   const [farmstayPaused, setFarmstayPaused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
   const farmstayHref = "/search?category=rent";
   useEffect(() => {
     if (farmstayPaused) return;
     const timer = window.setInterval(() => setFarmstayIndex((index) => (index + 1) % 2), 3000);
     return () => window.clearInterval(timer);
   }, [farmstayPaused]);
+  useEffect(() => {
+    let previousY = window.scrollY;
+    function handleScroll() {
+      const currentY = window.scrollY;
+      setHeaderScrolled(currentY > 24);
+      if (mobileMenuOpen || currentY < 80) {
+        setHeaderHidden(false);
+      } else {
+        const delta = currentY - previousY;
+        if (delta > 3 && currentY > 120) setHeaderHidden(true);
+        else if (delta < -3) setHeaderHidden(false);
+      }
+      previousY = currentY;
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [mobileMenuOpen]);
   useEffect(() => {
     let active = true;
     void fetch("/api/auth")
@@ -61,14 +80,14 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
   }
 
   return (
-    <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}`} translate="yes">
+      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${headerHidden && !mobileMenuOpen ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
         <Link className="brand" href="/" aria-label="Terra home">
           <span className="brand-mark">t<span>.</span></span>
           <span className="brand-word">terra<span>land</span></span>
         </Link>
         <div className="header-location"><MapPin size={15} /> Land &amp; plots across India</div>
-        <button className="mobile-menu-toggle" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
+        <button className="mobile-menu-toggle" type="button" onClick={() => { setHeaderHidden(false); setMobileMenuOpen((open) => !open); }} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
           <span className={`mobile-menu-icon${mobileMenuOpen ? " is-open" : ""}`} aria-hidden="true"><span /><span /><span /></span>
         </button>
         {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)} />}
