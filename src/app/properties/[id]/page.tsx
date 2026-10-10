@@ -142,7 +142,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           <span className="seller-private-note">Contact privately</span>
         </div>
         <InquiryForm propertyId={property.id} title={property.title} type={property.type} listingCategory={listingCategory} pricePeriod={property.pricePeriod}
-          city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name, email: user.email } : null} />
+          city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name } : null} />
       </aside>
     </div>
     {listingCategory === "sale" && <EmiCalculator propertyPrice={property.price} />}

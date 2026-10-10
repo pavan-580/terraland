@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight, Check, LockKeyhole } from "lucide-react";
 import { formatListingPrice, type ListingCategory, type PricePeriod } from "@/lib/market";
 
-type InquiryUser = { name: string; email: string } | null;
+type InquiryUser = { name: string } | null;
 
 type InquiryFormProps = {
   propertyId: string;
@@ -27,7 +27,7 @@ export function InquiryForm({ propertyId, title, type, listingCategory = "sale",
   const [departureDate, setDepartureDate] = useState("");
   const [guestCount, setGuestCount] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState<{ notificationPending: boolean; contact: InquiryUser } | null>(null);
+  const [success, setSuccess] = useState<{ notificationPending: boolean; name: string } | null>(null);
   const [sending, setSending] = useState(false);
   const priceLabel = formatListingPrice({ price, listingCategory, pricePeriod });
   const enquiryHeading = listingCategory === "sale" ? "Ask us about this land." : "Enquire about this rental.";
@@ -56,9 +56,9 @@ export function InquiryForm({ propertyId, title, type, listingCategory = "sale",
       });
       const result: unknown = await response.json().catch(() => null);
       if (!result || typeof result !== "object") throw new Error("The enquiry could not be sent. Please try again.");
-      const data = result as { error?: string; message?: string; notificationPending?: boolean; contact?: InquiryUser };
+      const data = result as { error?: string; message?: string; notificationPending?: boolean };
       if (!response.ok) throw new Error(data.error ?? "The enquiry could not be sent. Please try again.");
-      setSuccess({ notificationPending: data.notificationPending === true, contact: data.contact ?? user });
+      setSuccess({ notificationPending: data.notificationPending === true, name: user.name });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The enquiry could not be sent. Please try again.");
     } finally {
@@ -78,14 +78,14 @@ export function InquiryForm({ propertyId, title, type, listingCategory = "sale",
         <div><dt>Property</dt><dd>{title}</dd></div>
         <div><dt>Location</dt><dd>{locality}, {city}</dd></div>
         <div><dt>{listingCategory === "sale" ? "Land" : "Place"}</dt><dd>{type} · {area} {unit} · {priceLabel}</dd></div>
-        {success.contact && <div><dt>Enquirer</dt><dd>{success.contact.name} · {success.contact.email}</dd></div>}
+        <div><dt>Enquirer</dt><dd>{success.name}</dd></div>
       </dl>
     </div> : !user ? <div className="contact-login-prompt">
       <span className="account-enquiry-icon"><LockKeyhole size={17} /></span>
       <p>Sign in to send an enquiry. We&apos;ll use the name and email on your account—no phone number required.</p>
       <Link className="button button-dark" href={signInUrl}>Sign in to enquire <ArrowUpRight size={15} /></Link>
     </div> : <>
-      <div className="inquiry-account"><span>ENQUIRY FROM</span><strong>{user.name}</strong><small>{user.email}</small></div>
+      <div className="inquiry-account"><span>SENDING AS</span><strong>{user.name}</strong></div>
       <div className="inquiry-property-summary"><span>ABOUT THIS LISTING</span><strong>{title}</strong><small>{locality}, {city} · {area} {unit} · {priceLabel}</small></div>
       <form onSubmit={(event) => void submit(event)}>
         {listingCategory === "rent" && <div className="rental-request-fields">

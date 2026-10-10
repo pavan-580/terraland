@@ -46,6 +46,5 @@ export async function POST(request: NextRequest) {
       : "Your enquiry was sent. Our team will reach you shortly using your account email.",
     notificationPending: delivery.pending > 0,
     property: { title: property.title, type: property.type, listingCategory: property.listingCategory, pricePeriod: property.pricePeriod, city: property.city, locality: property.locality, area: property.area, unit: property.unit, price: property.price },
-    contact: { name: user.name, email: user.email },
   }, { status: 201 });
 }

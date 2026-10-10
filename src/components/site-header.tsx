@@ -14,6 +14,7 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
   const [logoutError, setLogoutError] = useState("");
   const [farmstayIndex, setFarmstayIndex] = useState(0);
   const [farmstayPaused, setFarmstayPaused] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const farmstayHref = "/search?category=rent";
   useEffect(() => {
     if (farmstayPaused) return;
@@ -67,7 +68,11 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
           <span className="brand-word">terra<span>land</span></span>
         </Link>
         <div className="header-location"><MapPin size={15} /> Land &amp; plots across India</div>
-        <nav className="main-nav" aria-label="Main navigation">
+        <button className="mobile-menu-toggle" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
+          <span className={`mobile-menu-icon${mobileMenuOpen ? " is-open" : ""}`} aria-hidden="true"><span /><span /><span /></span>
+        </button>
+        {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)} />}
+        <nav className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation">
           <Link href="/search?category=sale">Explore land</Link>
           <div className="farmstay-nav-window" onPointerEnter={() => setFarmstayPaused(true)}
             onPointerLeave={() => setFarmstayPaused(false)} onFocusCapture={() => setFarmstayPaused(true)}
@@ -85,12 +90,17 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
               </button>
             </div>
           </div>
-          {user && <Link href="/my-listings">My listings</Link>}
+          <Link href="/my-listings">My listings</Link>
           <Link href="/about">How it works</Link>
           <a href="https://wa.me/918074399963?text=Hello%20Terraland%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer" aria-label="Get help on WhatsApp">Help</a>
+          <LanguagePicker />
+          <div className="mobile-menu-account">
+            {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/my-listings"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
+            {user && <button className="logout-button" type="button" onClick={() => void logout()}>Sign out</button>}
+            <Link className="button button-dark button-small" href="/sell">List your land for free <ArrowUpRight size={15} /></Link>
+          </div>
         </nav>
         <div className="header-actions">
-          <LanguagePicker />
           <Link className="saved-link" href="/saved" aria-label="Saved listings"><Heart size={17} /></Link>
           {user ? <>
             <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/my-listings"}>{user.role === "admin" ? "Admin" : user.name}</Link>
