@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowUpRight, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 import { PropertyCard } from "@/components/property-card";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -16,6 +16,8 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState("");
   const propertyOptions = category === "rent" ? rentalTypes : propertyTypes;
   const load = useCallback(async () => {
@@ -43,13 +45,18 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
   }, [load]);
+  const submitSearch = () => {
+    setHasSearched(true);
+    setFiltersOpen(false);
+    void load();
+  };
   return <><SiteHeader /><main className="search-page">
-    <div className="search-banner"><div><span className="eyebrow">THE TERRALAND EDIT</span><h1>A place to <em>begin.</em></h1><p>Explore plots for sale and farmhouses, resorts, and other places to rent.</p></div><div className="banner-art">LAND<br /><span>MARKET</span><br />PLACE <ArrowUpRight /></div></div>
     <div className="results-layout">
-      <aside className="filter-panel">
+      <button type="button" className={`mobile-filter-toggle${hasSearched ? " is-compact" : ""}`} aria-label={filtersOpen ? "Close search filters" : "Open search filters"} aria-expanded={filtersOpen} aria-controls="search-filter-panel" onClick={() => setFiltersOpen((open) => !open)}>{hasSearched ? <Search size={18} /> : <SlidersHorizontal size={17} />}<span>{hasSearched ? "Search filters" : "Refine your search"}</span><ChevronDown size={16} className={filtersOpen ? "is-rotated" : ""} /></button>
+      <aside id="search-filter-panel" className={`filter-panel${filtersOpen ? " is-open" : ""}`} aria-label="Search filters">
         <div className="filter-title"><strong>Refine your search</strong><SlidersHorizontal size={17} /></div>
-        <label className="filter-label">KEYWORDS<input value={q} onChange={(event) => setQ(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void load(); }} placeholder="Try “Shankarpally”" /></label>
-        <label className="filter-label">LOCATION<input value={city} onChange={(event) => setCity(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void load(); }} placeholder="Any city or state in India" /></label>
+        <label className="filter-label">KEYWORDS<input value={q} onChange={(event) => setQ(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} placeholder="Try “Shankarpally”" /></label>
+        <label className="filter-label">LOCATION<input value={city} onChange={(event) => setCity(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} placeholder="Any city or state in India" /></label>
         <label className="filter-label">LISTING TYPE<span className="select-wrap"><select value={category} onChange={(event) => {
           const nextCategory = event.target.value as ListingCategory;
           setCategory(nextCategory);
@@ -58,7 +65,7 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
         <label className="filter-label">PROPERTY TYPE<span className="select-wrap"><select value={type} onChange={(event) => setType(event.target.value)}><option value="">All property types</option>{propertyOptions.map((item) => <option key={item}>{item}</option>)}</select><ChevronDown size={14} /></span></label>
         <div className="filter-label">PRICE RANGE <span className="filter-hint">{category === "sale" || !category ? "in lakhs" : "in ₹"}</span></div>
         <div className="price-inputs"><input type="number" min="0" placeholder="Min" value={min} onChange={(event) => setMin(event.target.value)} /><span>—</span><input type="number" min="0" placeholder="Max" value={max} onChange={(event) => setMax(event.target.value)} /></div>
-        <button className="button button-dark filter-button" onClick={() => void load()}>Show places <ArrowUpRight size={16} /></button>
+        <button className="button button-dark filter-button" onClick={submitSearch}>Show places <ArrowUpRight size={16} /></button>
         <button className="reset-button" onClick={() => { setQ(""); setCity(""); setType(""); setCategory("sale"); setMin(""); setMax(""); }}>Clear all filters</button>
         <div className="filter-help"><span>Need a hand?</span><a href="https://wa.me/918074399963?text=Hello%20Terraland%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer">Talk to our team <ArrowUpRight size={14} /></a></div>
       </aside>

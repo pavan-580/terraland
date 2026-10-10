@@ -25,15 +25,29 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
   }, [farmstayPaused]);
   useEffect(() => {
     let previousY = window.scrollY;
+    let direction = 0;
+    let directionDistance = 0;
+    setHeaderScrolled(previousY > 24);
     function handleScroll() {
       const currentY = window.scrollY;
       setHeaderScrolled(currentY > 24);
+      const delta = currentY - previousY;
+      const nextDirection = Math.sign(delta);
+      if (nextDirection !== 0) {
+        directionDistance = nextDirection === direction ? directionDistance + Math.abs(delta) : Math.abs(delta);
+        direction = nextDirection;
+      }
       if (mobileMenuOpen || currentY < 80) {
         setHeaderHidden(false);
+        directionDistance = 0;
       } else {
-        const delta = currentY - previousY;
-        if (delta > 3 && currentY > 120) setHeaderHidden(true);
-        else if (delta < -3) setHeaderHidden(false);
+        if (direction === 1 && directionDistance >= 14 && currentY > 120) {
+          setHeaderHidden(true);
+          directionDistance = 0;
+        } else if (direction === -1 && directionDistance >= 8) {
+          setHeaderHidden(false);
+          directionDistance = 0;
+        }
       }
       previousY = currentY;
     }
