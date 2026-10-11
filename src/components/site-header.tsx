@@ -8,7 +8,7 @@ import { LanguagePicker } from "@/components/language-picker";
 
 type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
-export function SiteHeader({ variant = "standard", keepVisible = false }: { variant?: "standard" | "hero"; keepVisible?: boolean }) {
+export function SiteHeader({ variant = "standard", keepVisible = false, mobileLogoOnly = false }: { variant?: "standard" | "hero"; keepVisible?: boolean; mobileLogoOnly?: boolean }) {
   const router = useRouter();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [logoutError, setLogoutError] = useState("");
@@ -99,7 +99,7 @@ export function SiteHeader({ variant = "standard", keepVisible = false }: { vari
   }
 
   return (
-      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${headerHidden && !mobileMenuOpen && !keepVisible ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
+      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerHidden && !mobileMenuOpen && !keepVisible ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
         <Link className="brand" href="/" aria-label="Terra home">
           <span className="brand-mark">t<span>.</span></span>
