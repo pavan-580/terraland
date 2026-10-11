@@ -17,6 +17,7 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [heroPassed, setHeroPassed] = useState(false);
   const farmstayHref = "/search?category=rent";
   useEffect(() => {
     if (farmstayPaused) return;
@@ -28,9 +29,11 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
     let direction = 0;
     let directionDistance = 0;
     setHeaderScrolled(previousY > 24);
+    if (variant === "hero") setHeroPassed(previousY >= window.innerHeight - 78);
     function handleScroll() {
       const currentY = window.scrollY;
       setHeaderScrolled(currentY > 24);
+      if (variant === "hero") setHeroPassed(currentY >= window.innerHeight - 78);
       if (keepVisible) {
         setHeaderHidden(false);
         previousY = currentY;
@@ -58,7 +61,7 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [keepVisible, mobileMenuOpen]);
+  }, [keepVisible, mobileMenuOpen, variant]);
   useEffect(() => {
     let active = true;
     void fetch("/api/auth")
@@ -99,7 +102,7 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
   }
 
   return (
-      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerHidden && !mobileMenuOpen && !keepVisible ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
+      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerHidden && !mobileMenuOpen && !keepVisible ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}${heroPassed ? " is-past-hero" : ""}`} translate="yes">
       <div className="header-inner">
         <Link className="brand" href="/" aria-label="Terra home">
           <span className="brand-mark">t<span>.</span></span>
