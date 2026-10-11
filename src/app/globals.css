@@ -1001,9 +1001,10 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .mobile-menu-account .language-picker { display: none; }
 }
 
-.site-header { transition: transform .28s cubic-bezier(.22,.75,.25,1), background-color .25s ease, box-shadow .25s ease; }
+.site-header { background: transparent; border-bottom-color: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; transition: transform .28s cubic-bezier(.22,.75,.25,1), background-color .25s ease, border-color .25s ease, box-shadow .25s ease, backdrop-filter .25s ease; }
+.site-header.is-scrolled { background: rgba(15,24,19,.76); border-bottom-color: rgba(255,255,255,.12); box-shadow: 0 5px 24px rgba(0,0,0,.18); backdrop-filter: blur(16px) saturate(135%); -webkit-backdrop-filter: blur(16px) saturate(135%); }
 .site-header.is-scroll-hidden { transform: translateY(-105%); }
-.site-header.site-header-hero.is-scrolled { position: fixed; inset: 0 0 auto; background: rgba(15,24,19,.94); border-bottom: 1px solid rgba(255,255,255,.12); box-shadow: 0 5px 24px rgba(0,0,0,.18); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.site-header.site-header-hero.is-scrolled { position: fixed; inset: 0 0 auto; }
 @media (prefers-reduced-motion: reduce) {
   .site-header { transition-duration: .01ms; }
 }
