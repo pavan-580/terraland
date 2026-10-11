@@ -13,6 +13,9 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
   const [continueTo, setContinueTo] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resetStep, setResetStep] = useState<"closed" | "request" | "verify">("closed");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetComplete, setResetComplete] = useState(false);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -46,8 +49,50 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
       setBusy(false);
     }
   }
+  async function submitPasswordReset(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setBusy(true);
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const email = String(values.email ?? resetEmail).trim().toLowerCase();
+    try {
+      const response = await fetch("/api/auth/password-reset", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resetStep === "request" ? { action: "request", email } : { ...values, action: "reset", email: resetEmail }),
+      });
+      const result = await response.json() as { error?: string; message?: string };
+      if (!response.ok) { setError(result.error ?? "We couldn't complete the password reset. Please try again."); return; }
+      if (resetStep === "request") {
+        setResetEmail(email);
+        setResetStep("verify");
+        setSuccess(result.message ?? "If an account exists for that email, a reset code has been sent.");
+      } else {
+        setResetComplete(true);
+        setSuccess(result.message ?? "Your password has been changed. Sign in with your new password.");
+      }
+    } catch {
+      setError("We couldn't reach the server. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
   return <section className="auth-panel"><span className="eyebrow">YOUR TERRALAND ACCOUNT</span><h2>{signup ? "A new beginning." : "Welcome back."}</h2><p>{signup ? "Create an account to save places and share your land." : "Sign in to pick up where you left off."}</p>
-    {success ? <div className="auth-success" role="status"><p>{success}</p><button className="button button-dark auth-submit" onClick={() => router.push(continueTo)}>Continue <ArrowUpRight size={16} /></button></div> : <>
+    {resetStep !== "closed" ? <>
+      <h3>{resetStep === "request" ? "Reset your password" : "Check your email"}</h3>
+      <p>{resetStep === "request" ? "We’ll email you a one-time code to verify your account." : `Enter the six-digit code sent to ${resetEmail}, then choose a new password.`}</p>
+      {success && <div className="auth-success" role="status"><p>{success}</p></div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
+      <form onSubmit={submitPasswordReset}>
+        {resetStep === "request" ? <label>Email address<input name="email" type="email" required autoComplete="email" defaultValue={resetEmail} placeholder="you@example.com" /></label> : <>
+          <input type="hidden" name="email" value={resetEmail} />
+          <label>Verification code<input name="code" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" placeholder="6-digit code" /></label>
+          <label>New password<input name="password" type="password" required minLength={8} maxLength={72} autoComplete="new-password" placeholder="At least 8 characters" /></label>
+          <label>Confirm new password<input name="confirmPassword" type="password" required minLength={8} maxLength={72} autoComplete="new-password" placeholder="Enter the new password again" /></label>
+        </>}
+        <button className="button button-dark auth-submit" disabled={busy}>{busy ? "One moment…" : resetStep === "request" ? "Send reset code" : "Change password"} <ArrowUpRight size={16} /></button>
+      </form>
+      <div className="auth-switch"><button type="button" onClick={() => { setResetStep("closed"); setError(""); setSuccess(""); }}>Back to sign in</button>{resetStep === "verify" && <button type="button" onClick={() => { setResetStep("request"); setSuccess(""); setError(""); }}>Use another email</button>}</div>
+    </> : resetComplete ? <div className="auth-success" role="status"><p>{success}</p><button className="button button-dark auth-submit" onClick={() => { setResetComplete(false); setSuccess(""); setError(""); }}>Back to sign in <ArrowUpRight size={16} /></button></div> : success ? <div className="auth-success" role="status"><p>{success}</p><button className="button button-dark auth-submit" onClick={() => router.push(continueTo)}>Continue <ArrowUpRight size={16} /></button></div> : <>
       {googleError && <div className="form-error" role="alert">{googleError}</div>}
       {error && <div className="form-error" role="alert">{error}</div>}
       <a className="google-signin-button" href={`/api/auth/google?next=${encodeURIComponent(destination)}`}><span aria-hidden="true">G</span> Continue with Google</a>
@@ -55,7 +100,8 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
       <form onSubmit={submit}>{signup && <label>Your name<input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="How should we address you?" /></label>}<label>Email address<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><label>Password<span className="password-input-wrap"><input name="password" type={showPassword ? "text" : "password"} required minLength={8} maxLength={72} autoComplete={signup ? "new-password" : "current-password"} placeholder="At least 8 characters" /><button type="button" className="password-visibility" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}<span>{showPassword ? "Hide" : "Show"}</span></button></span></label>
         <button className="button button-dark auth-submit" disabled={busy}>{busy ? "One moment…" : signup ? "Create your account" : "Sign in"} <ArrowUpRight size={16} /></button>
       </form>
-    </>}<div className="auth-switch">{signup ? "Already have an account?" : "New to Terraland?"} <button onClick={() => { setSignup(!signup); setError(""); setSuccess(""); }}>{signup ? "Sign in" : "Create an account"}</button></div>
+      {!signup && <div className="auth-switch"><button type="button" onClick={() => { setResetStep("request"); setSuccess(""); setError(""); setResetComplete(false); }}>Forgot password?</button></div>}
+    </>}<div className="auth-switch">{signup ? "Already have an account?" : "New to Terraland?"} <button onClick={() => { setSignup(!signup); setError(""); setSuccess(""); setResetComplete(false); }}>{signup ? "Sign in" : "Create an account"}</button></div>
     <div className="auth-reassurance"><Check size={14} /> Your account details stay private.</div><Link href="/" className="text-link auth-home">Explore without an account <ArrowUpRight size={14} /></Link>
   </section>;
 }

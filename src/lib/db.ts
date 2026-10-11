@@ -40,6 +40,13 @@ function createDatabase() {
       userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       expiresAt TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS password_reset_codes (
+      email TEXT PRIMARY KEY COLLATE NOCASE,
+      codeHash TEXT NOT NULL,
+      expiresAt TEXT NOT NULL,
+      requestedAt TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS properties (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,

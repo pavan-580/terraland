@@ -4,6 +4,28 @@ import { formatListingPrice, type ListingCategory, type PricePeriod } from "@/li
 
 const registrationRecipient = "pavansai580@gmail.com";
 
+export async function sendPasswordResetCode(email: string, code: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  if (!apiKey || !from) throw new Error("Password reset email is not configured.");
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [email],
+      subject: "Your Terraland password reset code",
+      text: `Your Terraland password reset code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
+      html: `<p>Your Terraland password reset code is:</p><p style="font-size:24px;font-weight:bold;letter-spacing:6px">${code}</p><p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>`,
+    }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error("Password reset email delivery failed:", response.status, detail);
+    throw new Error("Password reset email could not be delivered.");
+  }
+}
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",

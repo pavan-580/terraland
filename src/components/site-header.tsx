@@ -8,7 +8,7 @@ import { LanguagePicker } from "@/components/language-picker";
 
 type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
-export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "hero" }) {
+export function SiteHeader({ variant = "standard", keepVisible = false }: { variant?: "standard" | "hero"; keepVisible?: boolean }) {
   const router = useRouter();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [logoutError, setLogoutError] = useState("");
@@ -31,6 +31,11 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
     function handleScroll() {
       const currentY = window.scrollY;
       setHeaderScrolled(currentY > 24);
+      if (keepVisible) {
+        setHeaderHidden(false);
+        previousY = currentY;
+        return;
+      }
       const delta = currentY - previousY;
       const nextDirection = Math.sign(delta);
       if (nextDirection !== 0) {
@@ -53,7 +58,7 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [mobileMenuOpen]);
+  }, [keepVisible, mobileMenuOpen]);
   useEffect(() => {
     let active = true;
     void fetch("/api/auth")
@@ -94,7 +99,7 @@ export function SiteHeader({ variant = "standard" }: { variant?: "standard" | "h
   }
 
   return (
-      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${headerHidden && !mobileMenuOpen ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
+      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${headerHidden && !mobileMenuOpen && !keepVisible ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
         <Link className="brand" href="/" aria-label="Terra home">
           <span className="brand-mark">t<span>.</span></span>
