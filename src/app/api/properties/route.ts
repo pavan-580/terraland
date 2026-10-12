@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
-import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
+import { isGoogleMapsUrl, isListingCategory } from "@/lib/market";
 import { currentUser, newId } from "@/lib/session";
 import { storePropertyPhotos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 
@@ -91,12 +91,12 @@ export async function POST(request: NextRequest) {
     amenities.some((item) => item.length > 60) ||
     !/^\+[1-9]\d{7,14}$/.test(value("phone").replace(/[\s()-]/g, "")) ||
     !isListingCategory(listingCategory) ||
-    !isPropertyTypeForCategory(listingCategory, value("type")) ||
+    value("type").length < 2 ||
     !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
-    !Number.isFinite(price) || price < (listingCategory === "sale" ? 10000 : 1) || price > 10000000000 ||
+    !Number.isFinite(price) || price <= 0 ||
     availability.length > 240 ||
     (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-    !Number.isFinite(area) || area <= 0 || area > 100000) {
+    !Number.isFinite(area) || area <= 0) {
     return NextResponse.json({ error: "Enter a valid price and land area." }, { status: 400 });
   }
   const files = form.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);

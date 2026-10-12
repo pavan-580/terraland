@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Property } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import Link from "next/link";
 
 type AdminUser = { id: string; name: string; email: string; phone: string; createdAt: string; listingCount: number };
 type AdminInquiry = {
@@ -54,6 +55,7 @@ function formatAdminDate(value: string) {
   const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
   return new Date(normalized).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 }
+
 
 export function AdminDashboard() {
   const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], registrationNotifications: [], settings: { showSellerPhones: true } });
@@ -250,6 +252,7 @@ export function AdminDashboard() {
       <div><strong>{data.properties.filter((property) => property.deleteRequestedAt).length} listing deletion request(s) need your approval</strong><p>Requested listings stay online until you approve deletion from the listings panel.</p></div>
       <button className="button button-dark" type="button" onClick={reviewPendingListings}>Review listings</button>
     </div>}
+    <Link className="admin-analytics-link" href="/admin/analytics"><span><span className="eyebrow">VISITOR ANALYTICS</span><strong>Daily and monthly visitor graphs</strong><small>View clear traffic summaries and manage recorded analytics.</small></span><span aria-hidden="true">↗</span></Link>
     <div className="admin-stats">
       <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}><span>LISTINGS</span><strong>{data.properties.length}</strong></button>
       <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>

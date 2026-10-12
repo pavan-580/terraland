@@ -17,7 +17,7 @@ Open `http://localhost:3000`. The SQLite database is initialized and seeded auto
 - Detailed property pages show the photo gallery, approvals, title/registration and loan details, amenities, address, map, a signed-in enquiry form, sharing tools, and an estimated EMI calculator.
 - Sellers can add a Google Maps share URL to show an exact location link on a property page. Public listing APIs do not return the seller's phone number.
 - Property enquiries require a signed-in account. The enquiry form uses the account name and email without requesting a phone number, saves the enquiry, and emails the account and property details to `pavansai580@gmail.com` using Resend.
-- A floating headset call button appears after the visitor scrolls and calls Terraland at +91 8074399963.
+- A floating headset button appears after the visitor scrolls and opens the contact page.
 - View property details, read and post signed-in member reviews, and contact sellers after signing in.
 - Enquiries are linked to the signed-in member and include their account name/email, message, property details, and submission time in the administrator dashboard.
 - Create an account, sign in, upload multiple listing photos, edit or delete your own listings at `/my-listings`, and manage saved properties.

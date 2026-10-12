@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
-import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
+import { isGoogleMapsUrl, isListingCategory } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 import { storePropertyPhotos, storePropertyVideos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 
@@ -57,12 +57,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     choices.some((key) => choice(key) && !["yes", "no"].includes(choice(key))) ||
     amenities.some((item) => item.length > 60) ||
     !/^[+()\d\s-]{8,24}$/.test(phone) ||
-    !isListingCategory(listingCategory) || !isPropertyTypeForCategory(listingCategory, type) ||
+    !isListingCategory(listingCategory) ||
     !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
-    !Number.isFinite(price) || price < (listingCategory === "sale" ? 10000 : 1) || price > 10000000000 ||
+    !Number.isFinite(price) || price <= 0 ||
     availability.length > 240 ||
     (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-    !Number.isFinite(area) || area <= 0 || area > 100000) {
+    !Number.isFinite(area) || area <= 0) {
     return NextResponse.json({ error: "Check the listing details, price, area, and phone number." }, { status: 400 });
   }
   const files = form.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);
@@ -91,7 +91,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       images = [];
     }
   }
-  if (!images.length && typeof row.image === "string" && row.image) images = [row.image];
+  const existingImages = typeof row.images === "string" ? (() => { try { const parsed: unknown = JSON.parse(row.images as string); return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []; } catch { return []; } })() : [];
+  if (!existingImages.length && typeof row.image === "string" && row.image) existingImages.push(row.image);
+  const requestedImages: unknown = form.has("removeImages") ? JSON.parse(value("removeImages") || "[]") : [];
+  if (!Array.isArray(requestedImages) || requestedImages.some((item) => typeof item !== "string")) return NextResponse.json({ error: "Invalid photo removal request." }, { status: 400 });
+  const removedImages = requestedImages.filter((item): item is string => existingImages.includes(item));
+  images = images.filter((image) => !removedImages.includes(image));
+  if (!images.length && typeof row.image === "string" && row.image && !removedImages.includes(row.image)) images = [row.image];
+  if (!images.length) return NextResponse.json({ error: "Keep at least one property photo in your listing." }, { status: 400 });
   if (!images.length) return NextResponse.json({ error: "Upload at least one listing photo." }, { status: 400 });
 
   const videoFiles = form.getAll("videos").filter((file): file is File => file instanceof File && file.size > 0);
@@ -120,6 +127,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       videos = [];
     }
   }
+  const existingVideos = typeof row.videos === "string" ? (() => { try { const parsed: unknown = JSON.parse(row.videos as string); return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []; } catch { return []; } })() : [];
+  const requestedVideos: unknown = form.has("removeVideos") ? JSON.parse(value("removeVideos") || "[]") : [];
+  if (!Array.isArray(requestedVideos) || requestedVideos.some((item) => typeof item !== "string")) return NextResponse.json({ error: "Invalid video removal request." }, { status: 400 });
+  const removedVideos = requestedVideos.filter((item): item is string => existingVideos.includes(item));
+  videos = videos.filter((video) => !removedVideos.includes(video));
 
   db.prepare(`
     UPDATE properties SET title = ?, type = ?, listingCategory = ?, pricePeriod = ?, availability = ?, guestCapacity = ?, city = ?, locality = ?, price = ?, area = ?, unit = ?,

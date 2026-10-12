@@ -19,6 +19,7 @@ export function MyListings() {
   const [photoProgress, setPhotoProgress] = useState<{ listingId: string; uploaded: number; total: number } | null>(null);
   const [videoProgress, setVideoProgress] = useState<{ listingId: string; uploaded: number; total: number } | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<Property | null>(null);
+  const [removedMedia, setRemovedMedia] = useState<Record<string, { images: string[]; videos: string[] }>>({});
 
   async function load() {
     try {
@@ -50,6 +51,9 @@ export function MyListings() {
     setVideoProgress(null);
     try {
       const formData = new FormData(event.currentTarget);
+      const removal = removedMedia[property.id] ?? { images: [], videos: [] };
+      formData.set("removeImages", JSON.stringify(removal.images));
+      formData.set("removeVideos", JSON.stringify(removal.videos));
       const media = formData.getAll("media").filter((file): file is File => file instanceof File && file.size > 0);
       const photos = media.filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp)$/i.test(file.name));
       if (photos.length) {
@@ -69,6 +73,7 @@ export function MyListings() {
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "Your listing could not be updated.");
       setMessage(result.message ?? "Your listing has been updated.");
+      setRemovedMedia((current) => { const next = { ...current }; delete next[property.id]; return next; });
       await load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Your listing could not be updated.");
@@ -125,10 +130,10 @@ export function MyListings() {
             <div className="my-listing-editor-content">
               <p className="my-listing-instructions">Update the information customers see. Your current photos and videos stay in place unless you choose replacements below.</p>
               <div className="my-listing-current-photos" aria-label={`${property.images?.length ?? 1} current listing photos`}>
-                {(property.images?.length ? property.images : [property.image]).map((image, index) => <div key={`${image}-${index}`} role="img" aria-label={`Current listing photo ${index + 1}`} style={{ backgroundImage: `url("${image}")` }} />)}
+                {(property.images?.length ? property.images : [property.image]).filter((image) => !(removedMedia[property.id]?.images ?? []).includes(image)).map((image, index) => <div className="my-listing-media-item" key={`${image}-${index}`}><div role="img" aria-label={`Current listing photo ${index + 1}`} style={{ backgroundImage: `url("${image}")` }} /><button type="button" aria-label={`Remove photo ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: [...(current[property.id]?.images ?? []), image], videos: current[property.id]?.videos ?? [] } }))}>Remove</button></div>)}
               </div>
               {property.videos?.length ? <div className="my-listing-current-photos" aria-label={`${property.videos.length} current listing videos`}>
-                {property.videos.map((video, index) => <video key={`${video}-${index}`} src={video} controls preload="metadata" aria-label={`Current listing video ${index + 1}`} />)}
+                {property.videos.filter((video) => !(removedMedia[property.id]?.videos ?? []).includes(video)).map((video, index) => <div className="my-listing-media-item" key={`${video}-${index}`}><video src={video} controls preload="metadata" aria-label={`Current listing video ${index + 1}`} /><button type="button" aria-label={`Remove video ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: current[property.id]?.images ?? [], videos: [...(current[property.id]?.videos ?? []), video] } }))}>Remove</button></div>)}
               </div> : null}
               <div className="my-listing-fields">
             <label>Listing title<input name="title" required minLength={4} maxLength={100} defaultValue={property.title} /></label>
@@ -151,9 +156,9 @@ export function MyListings() {
             />
             <label>City or state<input name="city" required maxLength={80} defaultValue={property.city} /></label>
             <label>Neighbourhood or village<input name="locality" required maxLength={80} defaultValue={property.locality} /></label>
-            <label>Land area<input name="area" required type="number" min="0.01" max="100000" step="any" defaultValue={property.area} /></label>
+            <label>Land area<input name="area" required type="number" min="0.01" step="any" defaultValue={property.area} placeholder="Enter the land area" /></label>
             <label>Area unit<input name="unit" required maxLength={20} defaultValue={property.unit} /></label>
-            <label className="my-listing-wide">Price or rate (₹)<input name="price" required type="number" min="1" max="10000000000" defaultValue={property.price} /></label>
+            <label className="my-listing-wide">Price or rate (₹)<input name="price" required type="number" min="1" step="1" defaultValue={property.price} /></label>
             <AmenitySelector key={`${property.id}-${(property.amenities ?? []).join("|")}`} selected={property.amenities ?? []} className="my-listing-wide" />
             <label className="my-listing-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
             <label className="my-listing-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>

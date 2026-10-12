@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div className="footer-brand">
           <Link className="brand brand-light" href="/" aria-label="NILAY Real Estate home"><BrandLogo placement="footer" /></Link>
           <p>A more considered way to find your place on the map. Discover verified land and make your next move with confidence.</p>
-          <a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20have%20a%20question." target="_blank" rel="noreferrer">Message us on WhatsApp · 8074399963 <ArrowUpRight size={14} /></a>
+          <Link href="/contact">Contact our team <ArrowUpRight size={14} /></Link>
         </div>
         <div className="footer-col"><strong>Explore</strong><Link href="/search?category=sale">Land for sale</Link><Link href="/search?category=sale&type=Residential%20plot">Residential plots</Link><Link href="/search?category=sale&type=Farm%20land">Farm land</Link><Link href="/search?category=sale&type=Agricultural%20land">Agricultural land</Link></div>
         <div className="footer-col"><strong>For owners</strong><Link href="/sell">List your land for free</Link><Link href="/sign-in">Your account</Link><Link href="/about">How it works</Link><Link href="/contact">Get in touch</Link></div>

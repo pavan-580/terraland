@@ -23,7 +23,6 @@ const pages: Record<string, { kicker: string; title: string; emphasis: string; i
     emphasis: "one hello away.",
     intro: "Questions about a listing, a property you want to share, or how NILAY works? We would love to hear from you.",
     sections: [
-      { title: "Message us on WhatsApp.", text: "Chat with NILAY on WhatsApp at 8074399963 and our team will get back to you as soon as we can." },
       { title: "For listing help.", text: "If you are an owner, you can start a listing in just a few minutes. Sign in first so you can manage your property details." },
       { title: "Good to know.", text: "For legal, title, or survey advice, please consult an independent qualified professional in your area." },
     ],
@@ -72,7 +71,7 @@ const pages: Record<string, { kicker: string; title: string; emphasis: string; i
     sections: [
       { title: "Account details", text: "We store your name, email address, mobile number, and a securely hashed password to provide account features and protect your sign-in." },
       { title: "Enquiries", text: "You can enquire without signing in. Guests provide a name, email address, and mobile number; signed-in members provide a mobile number if their account does not already have one. We send the contact details, property details, and optional message to the NILAY team at pavansai580@gmail.com." },
-      { title: "Contacting NILAY", text: "Use the Help link to message us on WhatsApp or the floating phone icon to call. Listing enquiries include the contact details you provide so the NILAY team can follow up." },
+      { title: "Contacting NILAY", text: "Use the contact page or send a listing enquiry. Listing enquiries include the details you provide so the NILAY team can follow up." },
       { title: "Listing contact details", text: "The name supplied for a published property listing is public. The phone number is displayed while the administrator phone-display setting is on, so interested people can contact the seller directly. Request listing removal if those details should no longer be public; the listing stays online until an administrator approves the request." },
       { title: "Your choices", text: "You may contact hello@terraland.in with questions about your information or account. Do not submit sensitive identity or financial documents through public listing forms." },
       { title: "Optional page translation", text: "The English, Hindi, and Telugu selector translates supported interface text in your browser. Your language choice is saved in this browser. Seller-entered listing titles and descriptions remain in their original language." },
@@ -90,5 +89,5 @@ export default async function ContentPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const page = pages[slug];
   if (!page) notFound();
-  return <><SiteHeader /><main className="content-page"><div className="content-hero"><span className="eyebrow">{page.kicker}</span><h1>{page.title}<br /><em>{page.emphasis}</em></h1><p>{page.intro}</p></div><div className="content-sections">{page.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><div><h2>{section.title}</h2><p>{section.text}</p></div><Check size={18} /></article>)}</div><div className="content-cta"><div><span className="eyebrow">{slug === "contact" ? "WE'RE ONE MESSAGE AWAY" : "READY WHEN YOU ARE"}</span><h2>{slug === "contact" ? "Need a hand?" : "Let's find your place."}</h2></div>{slug === "contact" ? <a className="button button-dark" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer">Chat on WhatsApp <ArrowUpRight size={16} /></a> : <Link className="button button-dark" href="/search">Explore land <ArrowUpRight size={16} /></Link>}</div></main><SiteFooter /></>;
+  return <><SiteHeader /><main className="content-page"><div className="content-hero"><span className="eyebrow">{page.kicker}</span><h1>{page.title}<br /><em>{page.emphasis}</em></h1><p>{page.intro}</p></div><div className="content-sections">{page.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><div><h2>{section.title}</h2><p>{section.text}</p></div><Check size={18} /></article>)}</div><div className="content-cta"><div><span className="eyebrow">{slug === "contact" ? "WE'RE ONE MESSAGE AWAY" : "READY WHEN YOU ARE"}</span><h2>{slug === "contact" ? "Need a hand?" : "Let's find your place."}</h2></div><Link className="button button-dark" href="/contact">Contact our team <ArrowUpRight size={16} /></Link></div></main><SiteFooter /></>;
 }

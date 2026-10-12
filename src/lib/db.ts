@@ -202,6 +202,16 @@ function createDatabase() {
 export const db = globalForDb.landDb ?? createDatabase();
 globalForDb.landDb = db;
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS visitor_daily_counts (
+    visitorId TEXT NOT NULL,
+    visitDate TEXT NOT NULL,
+    pageViews INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (visitorId, visitDate)
+  );
+  CREATE INDEX IF NOT EXISTS visitor_daily_counts_date_idx ON visitor_daily_counts(visitDate);
+`);
+
 db.exec(
   "CREATE TABLE IF NOT EXISTS lender_interests (" +
   "id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, " +

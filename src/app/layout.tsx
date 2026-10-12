@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ChatWidget } from "@/components/chat-widget";
 import { AccountPhoneGate } from "@/components/account-phone-gate";
+import { VisitTracker } from "@/components/visit-tracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-IN">
-      <body>{children}<ChatWidget /><AccountPhoneGate /></body>
+      <body>{children}<ChatWidget /><AccountPhoneGate /><VisitTracker /></body>
     </html>
   );
 }

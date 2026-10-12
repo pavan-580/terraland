@@ -34,10 +34,12 @@ export function ListingClassificationFields({ category, type, pricePeriod, categ
       setSelectedType(typesForCategory(nextCategory)[0]);
       setSelectedPeriod(pricePeriodsByCategory[nextCategory][0].value);
     }}>{listingCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-    <label>Property type<select name="type" value={selectedType} onChange={(event) => setSelectedType(event.target.value)}>
-      {!propertyOptions.includes(selectedType) && <option value={selectedType}>{selectedType}</option>}
+    <label>Property type<select name="propertyTypeChoice" value={propertyOptions.includes(selectedType) ? selectedType : "other"} onChange={(event) => setSelectedType(event.target.value === "other" ? "" : event.target.value)}>
       {propertyOptions.map((item) => <option key={item}>{item}</option>)}
+      <option value="other">Other</option>
     </select></label>
+    {!selectedType && <label>Enter property type<input name="type" required maxLength={60} placeholder="Describe the property type" /></label>}
+    {selectedType && <input type="hidden" name="type" value={selectedType} />}
     <label>Rate period<select name="pricePeriod" value={selectedPeriod} onChange={(event) => setSelectedPeriod(event.target.value as PricePeriod)}>
       {pricePeriodsByCategory[selectedCategory].map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
     </select></label>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, propertyFromRow, setSiteSetting } from "@/lib/db";
-import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
+import { isGoogleMapsUrl, isListingCategory } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
 async function requireAdmin() {
@@ -44,7 +44,19 @@ export async function GET() {
     SELECT id, name, email, status, attempts, lastError, createdAt, sentAt
     FROM registration_notifications ORDER BY createdAt DESC LIMIT 100
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, registrationNotifications, inquiryNotifications, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
+  const dailyVisits = db.prepare(`
+    SELECT visitDate AS period, COUNT(*) AS visitors, SUM(pageViews) AS pageViews
+    FROM visitor_daily_counts
+    WHERE visitDate >= date('now', '+330 minutes', '-29 days')
+    GROUP BY visitDate ORDER BY visitDate DESC
+  `).all();
+  const monthlyVisits = db.prepare(`
+    SELECT substr(visitDate, 1, 7) AS period, COUNT(DISTINCT visitorId) AS visitors, SUM(pageViews) AS pageViews
+    FROM visitor_daily_counts
+    WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
+    GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
+  `).all();
+  return NextResponse.json({ users, properties, inquiries, reviews, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -151,12 +163,12 @@ export async function PATCH(request: NextRequest) {
     if (!id || title.length < 4 || title.length > 100 || city.length < 2 || city.length > 80 ||
       locality.length < 2 || locality.length > 80 || owner.length < 2 || owner.length > 80 ||
       !/^[+()\d\s-]{8,24}$/.test(phone) || description.length < 10 || description.length > 1500 ||
-      !isListingCategory(listingCategory) || !isPropertyTypeForCategory(listingCategory, type) ||
+      !isListingCategory(listingCategory) ||
       !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
-      !Number.isFinite(price) || price < (listingCategory === "sale" ? 10000 : 1) || price > 10000000000 ||
+      !Number.isFinite(price) || price <= 0 ||
       availability.length > 240 ||
       (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-      !Number.isFinite(area) || area <= 0 || area > 100000 || !status || !type || type.length > 60 || !images.length ||
+      !Number.isFinite(area) || area <= 0 || !status || !type || type.length > 60 || !images.length ||
       !unit || unit.length > 20 || !badge || badge.length > 60 || verified < 0 ||
       detailText("facing").length > 40 || detailText("approvals").length > 120 || detailText("renovation").length > 120 ||
       detailText("roadWidth").length > 40 || detailText("surveyNumber").length > 80 || detailText("soilType").length > 80 ||

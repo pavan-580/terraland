@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowUpRight, Heart, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Heart } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
 import { BackButton } from "@/components/back-button";
@@ -118,7 +118,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
             {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/profile"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
             {user && <button className="logout-button" type="button" onClick={() => void logout()}>Sign out</button>}
             <Link className="button button-dark button-small" href="/sell">List your land for free <ArrowUpRight size={15} /></Link>
-            <a className="button button-whatsapp button-small mobile-menu-whatsapp" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20want%20to%20post%20my%20property." target="_blank" rel="noopener noreferrer"><MessageCircle size={17} /> Post via WhatsApp <ArrowUpRight size={15} /></a>
+            <Link className="mobile-menu-favorites" href="/saved"><Heart size={17} /> Favorites</Link>
           </div>
         </nav>
         <div className="header-actions">

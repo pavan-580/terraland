@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { translatePhrase, type SiteLanguage } from "@/lib/translations";
 
 const languages: { code: SiteLanguage; name: string }[] = [
@@ -87,6 +88,7 @@ function translatePage(language: SiteLanguage) {
 export function LanguagePicker() {
   const [language, setLanguage] = useState<SiteLanguage>(activeLanguage);
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -121,12 +123,14 @@ export function LanguagePicker() {
   }
 
   return <>
-    <label className="language-picker">
-      <span className="visually-hidden">Choose page language</span>
-      <select aria-label="Choose page language" value={language} onChange={(event) => chooseLanguage(event.target.value)}>
-        {languages.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-      </select>
-    </label>
+    <div className={`language-picker${open ? " is-open" : ""}`}>
+      <button className="language-picker-trigger" type="button" aria-label="Choose page language" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <span>{languages.find((item) => item.code === language)?.name ?? "English"}</span><ChevronDown size={15} aria-hidden="true" />
+      </button>
+      {open && <div className="language-picker-options" role="listbox" aria-label="Page language">
+        {languages.map((item) => <button key={item.code} className={item.code === language ? "is-selected" : ""} type="button" role="option" aria-selected={item.code === language} onClick={() => { chooseLanguage(item.code); setOpen(false); }}>{item.name}</button>)}
+      </div>}
+    </div>
     {error && <span className="translation-error" role="status">{error}</span>}
   </>;
 }
