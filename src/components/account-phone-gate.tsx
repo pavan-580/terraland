@@ -13,8 +13,8 @@ export function AccountPhoneGate() {
     async function loadAccount() {
       try {
         const response = await fetch("/api/auth", { cache: "no-store" });
-        const result = await response.json() as { user?: { phone?: string } | null };
-        if (active && result.user && !result.user.phone) setRequired(true);
+        const result = await response.json() as { user?: { phone?: string; role?: string } | null };
+        if (active && result.user && result.user.role !== "admin" && !result.user.phone) setRequired(true);
         if (active && result.user?.phone) setPhone(result.user.phone);
       } catch {
         // Account pages and the enquiry form handle their own connection errors.
