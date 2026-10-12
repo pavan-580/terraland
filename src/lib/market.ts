@@ -33,6 +33,7 @@ export type Property = {
   mapUrl?: string;
   verified: boolean;
   status?: "published" | "hidden";
+  deleteRequestedAt?: string | null;
   createdAt?: string;
 };
 
@@ -60,6 +61,15 @@ export const pricePeriodsByCategory: Record<ListingCategory, { value: PricePerio
 export const pricePeriods = Object.values(pricePeriodsByCategory)
   .flat()
   .filter((period, index, periods) => periods.findIndex((candidate) => candidate.value === period.value) === index);
+
+export const amenityGroups = [
+  { title: "Land & site", items: ["Road access", "Electricity", "Water supply", "Borewell", "Farm irrigation", "Fencing", "Boundary wall", "Drainage", "Gated layout"] },
+  { title: "Community & security", items: ["24/7 security", "CCTV", "Street lighting", "Park / open space", "Children's play area", "Clubhouse", "Gym"] },
+  { title: "Stay & comfort", items: ["Parking", "Power backup", "Garden / lawn", "Wi-Fi", "Air conditioning", "Kitchen", "Dining area", "Swimming pool", "Caretaker", "Housekeeping", "Pet friendly"] },
+  { title: "Recreation & access", items: ["Indoor games", "Outdoor games", "Event space", "Campfire / barbecue", "Nature / lake view", "Private access", "Restrooms", "Public transport nearby", "Farmhouse"] },
+] as const;
+
+export const amenityOptions = amenityGroups.flatMap((group) => group.items);
 
 export const seedProperties: Property[] = [
   {

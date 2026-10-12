@@ -31,6 +31,7 @@ function createDatabase() {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      phone TEXT NOT NULL DEFAULT '',
       passwordHash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -83,7 +84,12 @@ function createDatabase() {
       mapUrl TEXT NOT NULL DEFAULT '',
       verified INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'published',
+      deleteRequestedAt TEXT,
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS favorites (
       userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -135,7 +141,10 @@ function createDatabase() {
     CREATE INDEX IF NOT EXISTS properties_type_idx ON properties(type);
   `);
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
+  addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "properties", "images", "ALTER TABLE properties ADD COLUMN images TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing(db, "properties", "deleteRequestedAt", "ALTER TABLE properties ADD COLUMN deleteRequestedAt TEXT");
+  db.prepare("INSERT OR IGNORE INTO site_settings (key, value) VALUES ('showSellerPhones', 'true')").run();
   addColumnIfMissing(db, "properties", "listingCategory", "ALTER TABLE properties ADD COLUMN listingCategory TEXT NOT NULL DEFAULT 'sale'");
   addColumnIfMissing(db, "properties", "pricePeriod", "ALTER TABLE properties ADD COLUMN pricePeriod TEXT NOT NULL DEFAULT 'total'");
   addColumnIfMissing(db, "properties", "availability", "ALTER TABLE properties ADD COLUMN availability TEXT NOT NULL DEFAULT ''");
@@ -189,6 +198,16 @@ function createDatabase() {
 
 export const db = globalForDb.landDb ?? createDatabase();
 globalForDb.landDb = db;
+
+export function getSiteSetting(key: string): string | null {
+  const setting = db.prepare("SELECT value FROM site_settings WHERE key = ?").get(key) as { value: string } | undefined;
+  return setting?.value ?? null;
+}
+
+export function setSiteSetting(key: string, value: string) {
+  db.prepare("INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, value);
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS registration_notifications (
     id TEXT PRIMARY KEY,

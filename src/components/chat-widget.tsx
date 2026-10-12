@@ -17,7 +17,7 @@ export function ChatWidget() {
 
   return (
     <div className="chat-widget">
-      <a className="chat-launcher" href="tel:+918074399963" aria-label="Call Terraland">
+      <a className="chat-launcher" href="tel:+918074399963" aria-label="Call NILAY">
         <span className="call-launcher-icon"><Headset size={22} /></span>
       </a>
     </div>

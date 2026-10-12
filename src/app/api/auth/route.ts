@@ -10,6 +10,17 @@ export async function GET() {
   return NextResponse.json({ user: await currentUser() });
 }
 
+export async function PATCH(request: NextRequest) {
+  const user = await currentUser();
+  if (!user) return NextResponse.json({ error: "Sign in to save your phone number." }, { status: 401 });
+  const body: unknown = await request.json().catch(() => null);
+  const input = body && typeof body === "object" && !Array.isArray(body) ? body as Record<string, unknown> : {};
+  const phone = String(input.phone ?? "").trim().replace(/[\s()-]/g, "");
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) return NextResponse.json({ error: "Enter a valid mobile number with country code, such as +91 98765 43210." }, { status: 400 });
+  db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(phone, user.id);
+  return NextResponse.json({ message: "Mobile number saved." });
+}
+
 export async function POST(request: NextRequest) {
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Please send valid account details." }, { status: 400 });
@@ -20,10 +31,12 @@ export async function POST(request: NextRequest) {
   }
   const email = String(input.email ?? "").trim().toLowerCase();
   const password = String(input.password ?? "");
+  const phone = String(input.phone ?? "").trim().replace(/[\s()-]/g, "");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password.trim() || password.length < 8 || password.length > 72) {
     return NextResponse.json({ error: "Enter a valid email and a password of at least 8 characters." }, { status: 400 });
   }
-  let user: { id: string; name: string; email: string; role: "user" | "admin" } | undefined;
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) return NextResponse.json({ error: "Enter a valid mobile number with country code, such as +91 98765 43210." }, { status: 400 });
+  let user: { id: string; name: string; email: string; phone: string; role: "user" | "admin" } | undefined;
   if (action === "signup") {
     const name = String(input.name ?? "").trim();
     if (name.length < 2 || name.length > 80) return NextResponse.json({ error: "Enter your name (2–80 characters)." }, { status: 400 });
@@ -38,13 +51,13 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hash(password, 12);
     try {
       const createAccount = db.transaction(() => {
-        db.prepare("INSERT INTO users (id, name, email, passwordHash, role) VALUES (?, ?, ?, ?, 'user')")
-          .run(id, name, email, passwordHash);
+        db.prepare("INSERT INTO users (id, name, email, phone, passwordHash, role) VALUES (?, ?, ?, ?, ?, 'user')")
+          .run(id, name, email, phone, passwordHash);
         db.prepare("INSERT INTO registration_notifications (id, name, email) VALUES (?, ?, ?)")
           .run(notificationId, name, email);
       });
       createAccount();
-      user = { id, name, email, role: "user" };
+      user = { id, name, email, phone, role: "user" };
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
         return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
@@ -64,18 +77,20 @@ export async function POST(request: NextRequest) {
     const adminId = id?.id ?? newId();
     db.prepare(`
       INSERT INTO users (id, name, email, passwordHash, role)
-      VALUES (?, 'Terraland Admin', ?, ?, 'admin')
+      VALUES (?, 'NILAY Admin', ?, ?, 'admin')
       ON CONFLICT(email) DO UPDATE SET
         name = excluded.name, passwordHash = excluded.passwordHash, role = 'admin'
     `).run(adminId, ADMIN_EMAIL, await hash(adminPassword, 12));
-    user = { id: adminId, name: "Terraland Admin", email: ADMIN_EMAIL, role: "admin" };
+    db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(phone, adminId);
+    user = { id: adminId, name: "NILAY Admin", email: ADMIN_EMAIL, phone, role: "admin" };
   } else {
-    const row = db.prepare("SELECT id, name, email, passwordHash, role FROM users WHERE email = ?").get(email) as
-      { id: string; name: string; email: string; passwordHash: string; role: "user" | "admin" } | undefined;
+    const row = db.prepare("SELECT id, name, email, phone, passwordHash, role FROM users WHERE email = ?").get(email) as
+      { id: string; name: string; email: string; phone: string; passwordHash: string; role: "user" | "admin" } | undefined;
     if (!row || !(await compare(password, row.passwordHash))) {
       return NextResponse.json({ error: "The email or password is incorrect." }, { status: 401 });
     }
-    user = { id: row.id, name: row.name, email: row.email, role: row.role };
+    db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(phone, row.id);
+    user = { id: row.id, name: row.name, email: row.email, phone, role: row.role };
   }
   const token = startSession(user.id);
   const pendingEmail = action === "signup"

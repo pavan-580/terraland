@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { AmenitySelector } from "@/components/amenity-selector";
 import { listingCategories, pricePeriodsByCategory, propertyTypes, rentalTypes, type ListingCategory } from "@/lib/market";
 import { uploadPropertyPhotos } from "@/lib/upload-property-photos";
 
@@ -17,6 +18,14 @@ export default function SellPage() {
   const [listingCategory, setListingCategory] = useState<ListingCategory>("sale");
   const [pricePeriod, setPricePeriod] = useState("total");
   const [propertyType, setPropertyType] = useState("");
+  const [contactPhone, setContactPhone] = useState("+91 ");
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/auth", { cache: "no-store" }).then((response) => response.json()).then((result: { user?: { phone?: string } | null }) => {
+      if (active && result.user?.phone) setContactPhone(result.user.phone);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, []);
   const propertyOptions = listingCategory === "sale" ? propertyTypes : rentalTypes;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,8 +60,8 @@ export default function SellPage() {
       setPhotoProgress(null);
     }
   }
-  return <><SiteHeader /><main className="sell-page"><div className="sell-intro"><Link href="/" className="back-link"><ArrowLeft size={15} /> Back to home</Link><span className="eyebrow">A GOOD INTRODUCTION STARTS HERE</span><h1>{listingCategory === "sale" ? <>Let&apos;s find your land<br />its <em>next owner.</em></> : <>Make room for<br /><em>something special.</em></>}</h1><p>{listingCategory === "sale" ? "Share a few details about your property. Your listing will be visible to buyers across India." : "Showcase your farmhouse, private land, resort, or villa to people looking to rent it. Enquiries come through Terraland."}</p><div className="sell-points"><span><Check size={15} /> Free to list</span><span><Check size={15} /> You stay in control</span><span><Check size={15} /> Enquiries through Terraland</span></div><div className="sell-visual" /></div>
-    <form className="sell-form" onSubmit={submit}><div className="form-heading"><span className="eyebrow">PROPERTY DETAILS</span><span>01 <i>/</i> 01</span></div><h2>{listingCategory === "sale" ? "Tell us about the place." : "List your place for rent."}</h2><p>{listingCategory === "sale" ? "Start with the essentials. You can share more with a buyer later." : "Set your rental rate, availability, and guest capacity. Interested visitors enquire through Terraland; no online payment is collected."}</p>
+  return <><SiteHeader /><main className="sell-page"><div className="sell-intro"><Link href="/" className="back-link"><ArrowLeft size={15} /> Back to home</Link><span className="eyebrow">A GOOD INTRODUCTION STARTS HERE</span><h1>{listingCategory === "sale" ? <>Let&apos;s find your land<br />its <em>next owner.</em></> : <>Make room for<br /><em>something special.</em></>}</h1><p>{listingCategory === "sale" ? "Share a few details about your property. Your listing will be visible to buyers across India." : "Showcase your farmhouse, private land, resort, or villa to people looking to rent it. Enquiries come through NILAY."}</p><div className="sell-points"><span><Check size={15} /> Free to list</span><span><Check size={15} /> You stay in control</span><span><Check size={15} /> Enquiries through NILAY</span></div><div className="sell-visual" /></div>
+    <form className="sell-form" onSubmit={submit}><div className="form-heading"><span className="eyebrow">PROPERTY DETAILS</span><span>01 <i>/</i> 01</span></div><h2>{listingCategory === "sale" ? "Tell us about the place." : "List your place for rent."}</h2><p>{listingCategory === "sale" ? "Start with the essentials. You can share more with a buyer later." : "Set your rental rate, availability, and guest capacity. Interested visitors enquire through NILAY; no online payment is collected."}</p>
       <div className="listing-mode-field">
         <span className="listing-mode-label">Choose listing type</span>
         <input type="hidden" name="listingCategory" value={listingCategory} />
@@ -88,9 +97,8 @@ export default function SellPage() {
         <label>Clear title<select name="clearTitle" defaultValue=""><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
       </div>
       </>}
-      <label>Amenities<input name="amenities" maxLength={720} placeholder="e.g. Fencing, water supply, near highway" /></label>
-      <p className="photo-help">{listingCategory === "sale" ? "Separate amenities with commas." : "Separate amenities with commas, such as private access, pool, dining, or event facilities."}</p>
-      <div className="listing-form-section"><span className="eyebrow">ADDRESS & CONTACT</span><p>Give interested {listingCategory === "sale" ? "buyers" : "renters and guests"} enough information to find the area and reach you through Terraland.</p></div>
+      <AmenitySelector key={listingCategory} />
+      <div className="listing-form-section"><span className="eyebrow">ADDRESS & CONTACT</span><p>Give interested {listingCategory === "sale" ? "buyers" : "renters and guests"} enough information to find the area and reach you through NILAY.</p></div>
       <label>Property address<input name="address" maxLength={240} placeholder="Street, village, mandal, district" /></label>
       <label>Nearby landmark<input name="landmark" maxLength={120} placeholder="A nearby road, school, or landmark" /></label>
       <label>Google Maps location link<input name="mapUrl" type="url" maxLength={500} placeholder="https://maps.app.goo.gl/..." /></label>
@@ -99,10 +107,10 @@ export default function SellPage() {
       <label>Property photos<input required name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label>
       <p className="photo-help">Upload as many JPEG, PNG, or WebP photos as you need. Each image must be 5 MB or smaller.</p>
       {photoProgress && <div className="photo-upload-progress" role="status"><span>Uploading property photos… {photoProgress.uploaded}/{photoProgress.total}</span><progress value={photoProgress.uploaded} max={photoProgress.total} /></div>}
-      <label>Contact phone<input required name="phone" type="tel" pattern="[+()0-9 -]{8,24}" placeholder="+91 98765 43210" /></label>
+      <label>Contact phone<input required name="phone" type="tel" inputMode="tel" pattern="[+()0-9 -]{8,24}" value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} placeholder="+91 98765 43210" /><small>Your account phone is filled in. Admins can see it in this listing&apos;s details.</small></label>
       {error && <div className="form-error">{error}</div>}
       <button type="submit" className="button button-dark sell-submit" disabled={busy}>{busy ? photoProgress ? "Uploading photos…" : "Publishing your listing…" : "Publish your listing"} <ArrowUpRight size={16} /></button>
-      <p className="privacy-note">By publishing, you confirm you are authorized to share this property. Your phone number will not be shown publicly. Interested people send enquiries privately through Terraland.</p>
+      <p className="privacy-note">By publishing, you confirm you are authorized to share this property and contact details. The listing owner name is public; the contact phone is visible to anyone viewing a published listing while the administrator phone-display setting is on. Interested people can also send an enquiry through NILAY.</p>
     </form>
   </main><SiteFooter /></>;
 }

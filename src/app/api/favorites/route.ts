@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
@@ -16,7 +16,11 @@ export async function GET(request: NextRequest) {
     JOIN properties ON properties.id = favorites.propertyId
     WHERE favorites.userId = ? ORDER BY favorites.createdAt DESC
   `).all(user.id) as Record<string, unknown>[];
-  return NextResponse.json(rows.map(propertyFromRow));
+  const showSellerPhones = getSiteSetting("showSellerPhones") !== "false";
+  return NextResponse.json(rows.map((row) => {
+    const property = propertyFromRow(row);
+    return showSellerPhones ? property : { ...property, phone: "" };
+  }), { headers: { "Cache-Control": "no-store, max-age=0" } });
 }
 
 export async function POST(request: NextRequest) {

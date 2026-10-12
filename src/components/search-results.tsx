@@ -67,7 +67,7 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
         <div className="price-inputs"><input type="number" min="0" placeholder="Min" value={min} onChange={(event) => setMin(event.target.value)} /><span>—</span><input type="number" min="0" placeholder="Max" value={max} onChange={(event) => setMax(event.target.value)} /></div>
         <button className="button button-dark filter-button" onClick={submitSearch}>Show places <ArrowUpRight size={16} /></button>
         <button className="reset-button" onClick={() => { setQ(""); setCity(""); setType(""); setCategory("sale"); setMin(""); setMax(""); }}>Clear all filters</button>
-        <div className="filter-help"><span>Need a hand?</span><a href="https://wa.me/918074399963?text=Hello%20Terraland%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer">Talk to our team <ArrowUpRight size={14} /></a></div>
+        <div className="filter-help"><span>Need a hand?</span><a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer">Talk to our team <ArrowUpRight size={14} /></a></div>
       </aside>
       <section className="results-main">
         <div className="results-header"><div><span className="eyebrow">GOOD PLACES, REAL POSSIBILITIES</span><h2>{loading ? "Finding your place…" : `${properties.length} ${properties.length === 1 ? "place" : "places"} to explore`}</h2></div><span className="sort-note">Curated for you <ChevronDown size={15} /></span></div>

@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: siteUrl, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/search`, changeFrequency: "daily", priority: 0.9 },
+    ...["/services", "/services/dharani-title-check", "/services/legal-verification", "/services/ec-verification", "/services/stamp-duty-calculator", "/services/plot-loan-emi-calculator"].map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "monthly" as const, priority: path === "/services" ? 0.8 : 0.6 })),
     ...properties.map((property) => ({
       url: `${siteUrl}/properties/${encodeURIComponent(property.id)}`,
       lastModified: new Date(property.createdAt),

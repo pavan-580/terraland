@@ -8,6 +8,7 @@ export function SaveButton({ propertyId }: { propertyId: string }) {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
     fetch(`/api/favorites?propertyId=${encodeURIComponent(propertyId)}`)
@@ -22,6 +23,7 @@ export function SaveButton({ propertyId }: { propertyId: string }) {
   }, [propertyId]);
   async function toggle() {
     setBusy(true);
+    setError("");
     try {
       const response = saved
         ? await fetch(`/api/favorites?propertyId=${encodeURIComponent(propertyId)}`, { method: "DELETE" })
@@ -33,10 +35,10 @@ export function SaveButton({ propertyId }: { propertyId: string }) {
       if (!response.ok) throw new Error("Could not update saved listings.");
       setSaved(!saved);
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "Could not update saved listings.");
+      setError(error instanceof Error ? error.message : "Could not update saved listings.");
     } finally {
       setBusy(false);
     }
   }
-  return <button className={`save-button${saved ? " is-saved" : ""}`} onClick={toggle} disabled={busy} aria-label={saved ? "Remove from saved" : "Save listing"} aria-pressed={saved}><Heart size={17} fill={saved ? "currentColor" : "none"} /></button>;
+  return <div className="save-button-control"><button type="button" className={`save-button${saved ? " is-saved" : ""}`} onClick={toggle} disabled={busy} aria-label={saved ? "Remove from saved" : "Save listing"} aria-pressed={saved}><Heart size={17} fill={saved ? "currentColor" : "none"} /></button>{error && <span className="save-button-error" role="alert">{error}</span>}</div>;
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, propertyFromRow, setSiteSetting } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
@@ -11,7 +11,7 @@ async function requireAdmin() {
 export async function GET() {
   if (!await requireAdmin()) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   const users = db.prepare(`
-    SELECT users.id, users.name, users.email, users.createdAt,
+    SELECT users.id, users.name, users.email, users.phone, users.createdAt,
       (SELECT COUNT(*) FROM properties WHERE properties.ownerId = users.id) AS listingCount
     FROM users ORDER BY users.createdAt DESC
   `).all();
@@ -44,7 +44,7 @@ export async function GET() {
     SELECT id, name, email, status, attempts, lastError, createdAt, sentAt
     FROM registration_notifications ORDER BY createdAt DESC LIMIT 100
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, registrationNotifications, inquiryNotifications });
+  return NextResponse.json({ users, properties, inquiries, reviews, registrationNotifications, inquiryNotifications, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -69,6 +69,20 @@ export async function PATCH(request: NextRequest) {
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return NextResponse.json({ error: "Invalid update details." }, { status: 400 });
   const input = body as Record<string, unknown>;
+
+  if (input.resource === "setting" && input.key === "showSellerPhones") {
+    if (typeof input.value !== "boolean") return NextResponse.json({ error: "Choose whether seller phone numbers should be shown." }, { status: 400 });
+    setSiteSetting("showSellerPhones", input.value ? "true" : "false");
+    return NextResponse.json({ message: `Seller phone numbers are now ${input.value ? "visible" : "hidden"}.` });
+  }
+
+  if (input.resource === "property" && input.action === "dismiss-deletion") {
+    const id = String(input.id ?? "");
+    if (!id) return NextResponse.json({ error: "A listing ID is required." }, { status: 400 });
+    const result = db.prepare("UPDATE properties SET deleteRequestedAt = NULL WHERE id = ? AND deleteRequestedAt IS NOT NULL").run(id);
+    if (!result.changes) return NextResponse.json({ error: "No pending deletion request was found." }, { status: 404 });
+    return NextResponse.json({ message: "Deletion request declined. The listing remains active." });
+  }
 
   if (input.resource === "user") {
     const id = String(input.id ?? "");
@@ -125,7 +139,7 @@ export async function PATCH(request: NextRequest) {
     const detailText = (key: string) => typeof input[key] === "string" ? input[key].trim() : "";
     const detailChoices = ["loanAvailable", "registrationAvailable", "cornerPlot", "clearTitle"] as const;
     const detailAmenities = Array.isArray(input.amenities)
-      ? input.amenities.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean).slice(0, 12)
+      ? input.amenities.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean).slice(0, 40)
       : [];
     const choiceIsInvalid = detailChoices.some((key) => detailText(key) && !["yes", "no"].includes(detailText(key)));
     if (detailText("mapUrl").length > 500 ||

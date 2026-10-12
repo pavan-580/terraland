@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Property } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
-type AdminUser = { id: string; name: string; email: string; createdAt: string; listingCount: number };
+type AdminUser = { id: string; name: string; email: string; phone: string; createdAt: string; listingCount: number };
 type AdminInquiry = {
   id: string;
   propertyId: string;
@@ -46,6 +47,7 @@ type DashboardData = {
   inquiryNotifications: InquiryEmailNotification[];
   reviews: AdminReview[];
   registrationNotifications: RegistrationNotification[];
+  settings: { showSellerPhones: boolean };
 };
 
 function formatAdminDate(value: string) {
@@ -54,14 +56,24 @@ function formatAdminDate(value: string) {
 }
 
 export function AdminDashboard() {
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], registrationNotifications: [] });
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], registrationNotifications: [], settings: { showSellerPhones: true } });
   const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews">("properties");
+  const [listingTab, setListingTab] = useState<"sale" | "rent" | "pending">("sale");
+  const listingsRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [retryingEmail, setRetryingEmail] = useState(false);
   const [retryingInquiryEmail, setRetryingInquiryEmail] = useState(false);
+  const [savingPhoneSetting, setSavingPhoneSetting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ type: "user" | "property" | "inquiry" | "review"; id: string } | null>(null);
+
+  function reviewPendingListings() {
+    setSection("properties");
+    setListingTab("pending");
+    window.requestAnimationFrame(() => listingsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   async function load() {
     setError("");
@@ -104,7 +116,14 @@ export function AdminDashboard() {
   }
 
   async function remove(type: "user" | "property" | "inquiry" | "review", id: string) {
-    if (!window.confirm("Delete this record? This action cannot be undone.")) return;
+    setError("");
+    setMessage("");
+    setPendingDelete({ type, id });
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    const { type, id } = pendingDelete;
     setBusyId(id);
     setError("");
     setMessage("");
@@ -117,11 +136,55 @@ export function AdminDashboard() {
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "The record could not be deleted.");
       setMessage(result.message ?? "Deleted.");
+      setPendingDelete(null);
       await load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The record could not be deleted.");
     } finally {
       setBusyId("");
+    }
+  }
+
+  async function keepListing(id: string) {
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resource: "property", action: "dismiss-deletion", id }),
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The request could not be declined.");
+      setMessage(result.message ?? "Deletion request declined.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The request could not be declined.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function toggleSellerPhones() {
+    const value = !data.settings.showSellerPhones;
+    setSavingPhoneSetting(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resource: "setting", key: "showSellerPhones", value }),
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The phone visibility setting could not be updated.");
+      setMessage(result.message ?? "Phone visibility updated.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The phone visibility setting could not be updated.");
+    } finally {
+      setSavingPhoneSetting(false);
     }
   }
 
@@ -168,6 +231,13 @@ export function AdminDashboard() {
   }
 
   return <section className="admin-content">
+    {pendingDelete && <ConfirmDialog title="Delete this record?" description="This action cannot be undone. The selected record will be permanently deleted." confirmLabel="Delete permanently" error={error} busy={busyId === pendingDelete.id} onCancel={() => setPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
+    <div className="admin-setting-card">
+      <div><strong>Seller phone numbers</strong><p>Control whether seller mobile numbers appear on public listing cards and details.</p></div>
+      <button type="button" className={`admin-setting-toggle${data.settings.showSellerPhones ? " is-on" : ""}`} aria-pressed={data.settings.showSellerPhones} disabled={savingPhoneSetting} onClick={() => void toggleSellerPhones()}>
+        <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Visible" : "OFF · Hidden"}
+      </button>
+    </div>
     {data.registrationNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
       <div><strong>Registration emails are queued</strong><p>New accounts can sign in. Configure a Resend API key and verified sender to deliver notices to pavansai580@gmail.com.</p></div>
       <button className="button button-dark" type="button" disabled={retryingEmail} onClick={() => void retryRegistrationEmails()}>{retryingEmail ? "Retrying…" : "Retry queued emails"}</button>
@@ -176,17 +246,33 @@ export function AdminDashboard() {
       <div><strong>Enquiry emails are queued</strong><p>Configure the Resend sender and API key to deliver saved buyer enquiries to pavansai580@gmail.com.</p></div>
       <button className="button button-dark" type="button" disabled={retryingInquiryEmail} onClick={() => void retryInquiryEmails()}>{retryingInquiryEmail ? "Retrying…" : "Retry enquiry emails"}</button>
     </div>}
+    {data.properties.some((property) => property.deleteRequestedAt) && <div className="admin-email-alert">
+      <div><strong>{data.properties.filter((property) => property.deleteRequestedAt).length} listing deletion request(s) need your approval</strong><p>Requested listings stay online until you approve deletion from the listings panel.</p></div>
+      <button className="button button-dark" type="button" onClick={reviewPendingListings}>Review listings</button>
+    </div>}
     <div className="admin-stats">
       <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}><span>LISTINGS</span><strong>{data.properties.length}</strong></button>
       <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>
       <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
       <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
     </div>
-    {error && <div className="form-error" role="alert">{error}</div>}
+    {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
     {loading ? <p className="admin-empty">Loading site records…</p> : <>
-      {section === "properties" && <div className="admin-record-list">{data.properties.map((property) =>
-        <form className="admin-record" key={property.id} onSubmit={(event) => {
+      {section === "properties" && <>
+        <div className="listing-admin-tabs">
+          <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
+            {([["sale", "For sale"], ["rent", "For rent"]] as const).map(([tab, label]) => {
+              const count = data.properties.filter((property) => (property.listingCategory ?? "sale") === tab).length;
+              return <button key={tab} type="button" role="tab" aria-selected={listingTab === tab} className={listingTab === tab ? "is-active" : ""} onClick={() => setListingTab(tab)}>{label} <span>{count}</span></button>;
+            })}
+          </div>
+          <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending approval <span>{data.properties.filter((property) => property.deleteRequestedAt).length}</span></button>
+        </div>
+        <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "pending" ? Boolean(property.deleteRequestedAt) : (property.listingCategory ?? "sale") === listingTab).map((property) =>
+        <details className="admin-listing-details" key={property.id} open={Boolean(property.deleteRequestedAt && listingTab === "pending")}>
+        <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : listingTab === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span></span><span className="admin-listing-open">Open details</span></summary>
+        <form className="admin-record" onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
           void update("property", property.id, {
@@ -205,7 +291,7 @@ export function AdminDashboard() {
             address: form.get("address"), landmark: form.get("landmark"), mapUrl: form.get("mapUrl"),
           });
         }}>
-          <div className="admin-record-top"><div><span className="eyebrow">LISTING · {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type} · {property.id.slice(0, 8)}</span><strong translate="no">{property.title}</strong></div><button type="button" className="admin-delete" disabled={busyId === property.id} onClick={() => void remove("property", property.id)}>Delete</button></div>
+          <div className="admin-record-top"><div><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST · AWAITING YOUR APPROVAL · " : "LISTING · "}{property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type} · {property.id.slice(0, 8)}</span><strong translate="no">{property.title}</strong></div><div className="admin-record-actions">{property.deleteRequestedAt && <button type="button" className="text-link" disabled={busyId === property.id} onClick={() => void keepListing(property.id)}>Keep listing</button>}<button type="button" className="admin-delete" disabled={busyId === property.id} onClick={() => void remove("property", property.id)}>{property.deleteRequestedAt ? "Approve & delete" : "Delete listing"}</button></div></div>
           <div className="admin-form-grid">
             <label>Title<input name="title" required defaultValue={property.title} /></label>
             <ListingClassificationFields category={property.listingCategory ?? "sale"} type={property.type} pricePeriod={property.pricePeriod ?? "total"}
@@ -244,14 +330,16 @@ export function AdminDashboard() {
           </div>
           <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>
         </form>
-      )}</div>}
+        </details>
+      )}{!data.properties.some((property) => listingTab === "pending" ? Boolean(property.deleteRequestedAt) : (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "pending" ? "No listing deletion requests are waiting for approval." : `No ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
+      </>}
       {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com").map((user) =>
         <form className="admin-record admin-user-record" key={user.id} onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
           void update("user", user.id, { name: form.get("name"), email: form.get("email") });
         }}>
-          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · JOINED {new Date(user.createdAt).toLocaleDateString()}</span><strong>{user.name}</strong></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
+          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · JOINED {new Date(user.createdAt).toLocaleDateString()}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
           <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email<input name="email" type="email" required defaultValue={user.email} /></label></div>
           <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
         </form>

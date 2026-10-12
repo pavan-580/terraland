@@ -3,21 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Heart, MapPin } from "lucide-react";
+import { ArrowUpRight, Heart } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
+import { BrandLogo } from "@/components/brand-logo";
 
 type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
-export function SiteHeader({ variant = "standard", keepVisible = false, mobileLogoOnly = false }: { variant?: "standard" | "hero"; keepVisible?: boolean; mobileLogoOnly?: boolean }) {
+export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { variant?: "standard" | "hero"; mobileLogoOnly?: boolean }) {
   const router = useRouter();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [logoutError, setLogoutError] = useState("");
   const [farmstayIndex, setFarmstayIndex] = useState(0);
   const [farmstayPaused, setFarmstayPaused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [headerHidden, setHeaderHidden] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
-  const [heroPassed, setHeroPassed] = useState(false);
   const farmstayHref = "/search?category=rent";
   useEffect(() => {
     if (farmstayPaused) return;
@@ -25,43 +24,11 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
     return () => window.clearInterval(timer);
   }, [farmstayPaused]);
   useEffect(() => {
-    let previousY = window.scrollY;
-    let direction = 0;
-    let directionDistance = 0;
-    setHeaderScrolled(previousY > 24);
-    if (variant === "hero") setHeroPassed(previousY >= window.innerHeight - 78);
-    function handleScroll() {
-      const currentY = window.scrollY;
-      setHeaderScrolled(currentY > 24);
-      if (variant === "hero") setHeroPassed(currentY >= window.innerHeight - 78);
-      if (keepVisible) {
-        setHeaderHidden(false);
-        previousY = currentY;
-        return;
-      }
-      const delta = currentY - previousY;
-      const nextDirection = Math.sign(delta);
-      if (nextDirection !== 0) {
-        directionDistance = nextDirection === direction ? directionDistance + Math.abs(delta) : Math.abs(delta);
-        direction = nextDirection;
-      }
-      if (mobileMenuOpen || currentY < 80) {
-        setHeaderHidden(false);
-        directionDistance = 0;
-      } else {
-        if (direction === 1 && directionDistance >= 14 && currentY > 120) {
-          setHeaderHidden(true);
-          directionDistance = 0;
-        } else if (direction === -1 && directionDistance >= 8) {
-          setHeaderHidden(false);
-          directionDistance = 0;
-        }
-      }
-      previousY = currentY;
-    }
+    function handleScroll() { setHeaderScrolled(window.scrollY > 8); }
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [keepVisible, mobileMenuOpen, variant]);
+  }, []);
   useEffect(() => {
     let active = true;
     void fetch("/api/auth")
@@ -102,19 +69,28 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
   }
 
   return (
-      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerHidden && !mobileMenuOpen && !keepVisible ? " is-scroll-hidden" : ""}${headerScrolled ? " is-scrolled" : ""}${heroPassed ? " is-past-hero" : ""}`} translate="yes">
+      <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
-        <Link className="brand" href="/" aria-label="Terra home">
-          <span className="brand-mark">t<span>.</span></span>
-          <span className="brand-word">terra<span>land</span></span>
+        <Link className="brand" href="/" aria-label="NILAY Real Estate home">
+          <BrandLogo />
         </Link>
-        <div className="header-location"><MapPin size={15} /> Land &amp; plots across India</div>
-        <button className="mobile-menu-toggle" type="button" onClick={() => { setHeaderHidden(false); setMobileMenuOpen((open) => !open); }} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
+        <button className="mobile-menu-toggle" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
           <span className={`mobile-menu-icon${mobileMenuOpen ? " is-open" : ""}`} aria-hidden="true"><span /><span /><span /></span>
         </button>
         {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)} />}
         <nav className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation">
           <Link href="/search?category=sale">Explore land</Link>
+          <details className="services-nav">
+            <summary className="services-nav-trigger">Services</summary>
+            <div className="services-nav-menu">
+              <Link href="/services">All services</Link>
+              <Link href="/services/dharani-title-check">Dharani / Bhu Bharati check</Link>
+              <Link href="/services/legal-verification">Legal verification guide</Link>
+              <Link href="/services/ec-verification">Encumbrance certificate</Link>
+              <Link href="/services/stamp-duty-calculator">Stamp duty calculator</Link>
+              <Link href="/services/plot-loan-emi-calculator">Plot loan EMI calculator</Link>
+            </div>
+          </details>
           <div className="farmstay-nav-window" onPointerEnter={() => setFarmstayPaused(true)}
             onPointerLeave={() => setFarmstayPaused(false)} onFocusCapture={() => setFarmstayPaused(true)}
             onBlurCapture={(event) => {
@@ -133,7 +109,7 @@ export function SiteHeader({ variant = "standard", keepVisible = false, mobileLo
           </div>
           <Link href="/my-listings">My listings</Link>
           <Link href="/about">How it works</Link>
-          <a href="https://wa.me/918074399963?text=Hello%20Terraland%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer" aria-label="Get help on WhatsApp">Help</a>
+          <a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer" aria-label="Get help on WhatsApp">Help</a>
           <LanguagePicker />
           <div className="mobile-menu-account">
             {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/my-listings"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}

@@ -14,9 +14,9 @@ export async function sendPasswordResetCode(email: string, code: string) {
     body: JSON.stringify({
       from,
       to: [email],
-      subject: "Your Terraland password reset code",
-      text: `Your Terraland password reset code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
-      html: `<p>Your Terraland password reset code is:</p><p style="font-size:24px;font-weight:bold;letter-spacing:6px">${code}</p><p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>`,
+      subject: "Your NILAY password reset code",
+      text: `Your NILAY password reset code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
+      html: `<p>Your NILAY password reset code is:</p><p style="font-size:24px;font-weight:bold;letter-spacing:6px">${code}</p><p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>`,
     }),
   });
   if (!response.ok) {
@@ -51,7 +51,7 @@ export async function sendRegistrationNotice(name: string, email: string) {
     body: JSON.stringify({
       from,
       to: [registrationRecipient],
-      subject: "New Terraland account registration",
+      subject: "New NILAY account registration",
       text: `A new account was registered.\nName: ${name}\nEmail: ${email}`,
       html: `<p>A new account was registered.</p><p><strong>Name:</strong> ${escapeHtml(name)}<br><strong>Email:</strong> ${escapeHtml(email)}</p>`,
     }),
@@ -67,6 +67,7 @@ export type InquiryNotice = {
   propertyId: string;
   name: string;
   email: string;
+  phone: string;
   message: string;
   propertyTitle: string;
   propertyType: string;
@@ -98,6 +99,7 @@ export async function sendInquiryNotice(inquiry: InquiryNotice) {
   const rows = [
     ["Buyer name", inquiry.name],
     ["Buyer email", inquiry.email],
+    ["Buyer phone", inquiry.phone],
     ["Property", inquiry.propertyTitle],
     ["Listing type", `${categoryLabel} · ${inquiry.propertyType}`],
     ["Location", `${inquiry.locality}, ${inquiry.city}`],
@@ -110,8 +112,8 @@ export async function sendInquiryNotice(inquiry: InquiryNotice) {
     ["Enquiry", inquiry.message],
     ["Received", inquiry.createdAt],
   ].filter(([, value]) => value);
-  const text = `New Terraland ${categoryLabel.toLowerCase()} enquiry\n\n${rows.map(([label, value]) => `${label}: ${value}`).join("\n")}${propertyUrl ? `\n\nListing page: ${propertyUrl}` : ""}`;
-  const html = `<h2>New Terraland ${escapeHtml(categoryLabel.toLowerCase())} enquiry</h2><table>${rows.map(([label, value]) => `<tr><th align="left" valign="top">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join("")}</table>${propertyUrl ? `<p><a href="${escapeHtml(propertyUrl)}">Open listing</a></p>` : ""}`;
+  const text = `New NILAY ${categoryLabel.toLowerCase()} enquiry\n\n${rows.map(([label, value]) => `${label}: ${value}`).join("\n")}${propertyUrl ? `\n\nListing page: ${propertyUrl}` : ""}`;
+  const html = `<h2>New NILAY ${escapeHtml(categoryLabel.toLowerCase())} enquiry</h2><table>${rows.map(([label, value]) => `<tr><th align="left" valign="top">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join("")}</table>${propertyUrl ? `<p><a href="${escapeHtml(propertyUrl)}">Open listing</a></p>` : ""}`;
   const authorization = ["Bearer", apiKey].join(" ");
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -167,7 +169,7 @@ export async function deliverPendingRegistrationNotices(notificationId?: string)
 
 export async function deliverPendingInquiryNotices(inquiryId?: string) {
   const pending = db.prepare(`
-    SELECT inquiry_notifications.id AS notificationId, inquiries.id, inquiries.propertyId, inquiries.name, inquiries.email,
+    SELECT inquiry_notifications.id AS notificationId, inquiries.id, inquiries.propertyId, inquiries.name, inquiries.email, inquiries.phone,
       inquiries.message, inquiries.createdAt, properties.title AS propertyTitle, properties.type AS propertyType,
       properties.city, properties.locality, properties.price, properties.area, properties.unit,
       properties.listingCategory, properties.pricePeriod, properties.availability, properties.guestCapacity,

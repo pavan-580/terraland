@@ -76,7 +76,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
       setBusy(false);
     }
   }
-  return <section className="auth-panel"><span className="eyebrow">YOUR TERRALAND ACCOUNT</span><h2>{signup ? "A new beginning." : "Welcome back."}</h2><p>{signup ? "Create an account to save places and share your land." : "Sign in to pick up where you left off."}</p>
+  return <section className="auth-panel"><span className="eyebrow">YOUR NILAY ACCOUNT</span><h2>{signup ? "A new beginning." : "Welcome back."}</h2><p>{signup ? "Create an account to save places and share your land." : "Sign in to pick up where you left off."}</p>
     {resetStep !== "closed" ? <>
       <h3>{resetStep === "request" ? "Reset your password" : "Check your email"}</h3>
       <p>{resetStep === "request" ? "We’ll email you a one-time code to verify your account." : `Enter the six-digit code sent to ${resetEmail}, then choose a new password.`}</p>
@@ -97,11 +97,11 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
       {error && <div className="form-error" role="alert">{error}</div>}
       <a className="google-signin-button" href={`/api/auth/google?next=${encodeURIComponent(destination)}`}><span aria-hidden="true">G</span> Continue with Google</a>
       <div className="auth-divider"><span>or use email</span></div>
-      <form onSubmit={submit}>{signup && <label>Your name<input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="How should we address you?" /></label>}<label>Email address<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><label>Password<span className="password-input-wrap"><input name="password" type={showPassword ? "text" : "password"} required minLength={8} maxLength={72} autoComplete={signup ? "new-password" : "current-password"} placeholder="At least 8 characters" /><button type="button" className="password-visibility" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}<span>{showPassword ? "Hide" : "Show"}</span></button></span></label>
+      <form onSubmit={submit}>{signup && <label>Your name<input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="How should we address you?" /></label>}<label>Mobile number with country code<input name="phone" type="tel" required autoComplete="tel" inputMode="tel" pattern="\+[1-9][0-9 ()-]{7,22}" defaultValue="+91 " placeholder="+91 98765 43210" /><small>Enter your number when signing in. Change +91 to your country code if needed.</small></label><label>Email address<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><label>Password<span className="password-input-wrap"><input name="password" type={showPassword ? "text" : "password"} required minLength={8} maxLength={72} autoComplete={signup ? "new-password" : "current-password"} placeholder="At least 8 characters" /><button type="button" className="password-visibility" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}<span>{showPassword ? "Hide" : "Show"}</span></button></span></label>
         <button className="button button-dark auth-submit" disabled={busy}>{busy ? "One moment…" : signup ? "Create your account" : "Sign in"} <ArrowUpRight size={16} /></button>
       </form>
       {!signup && <div className="auth-switch"><button type="button" onClick={() => { setResetStep("request"); setSuccess(""); setError(""); setResetComplete(false); }}>Forgot password?</button></div>}
-    </>}<div className="auth-switch">{signup ? "Already have an account?" : "New to Terraland?"} <button onClick={() => { setSignup(!signup); setError(""); setSuccess(""); setResetComplete(false); }}>{signup ? "Sign in" : "Create an account"}</button></div>
+    </>}<div className="auth-switch">{signup ? "Already have an account?" : "New to NILAY?"} <button onClick={() => { setSignup(!signup); setError(""); setSuccess(""); setResetComplete(false); }}>{signup ? "Sign in" : "Create an account"}</button></div>
     <div className="auth-reassurance"><Check size={14} /> Your account details stay private.</div><Link href="/" className="text-link auth-home">Explore without an account <ArrowUpRight size={14} /></Link>
   </section>;
 }

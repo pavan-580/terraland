@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 import { storePropertyPhotos, validateStoredPropertyPhotos } from "@/lib/property-images";
@@ -8,7 +8,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const row = db.prepare("SELECT * FROM properties WHERE id = ? AND status = 'published'").get(id) as Record<string, unknown> | undefined;
   if (!row) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
-  return NextResponse.json({ ...propertyFromRow(row), phone: "" });
+  const property = propertyFromRow(row);
+  return NextResponse.json(getSiteSetting("showSellerPhones") === "false" ? { ...property, phone: "" } : property, {
+    headers: { "Cache-Control": "no-store, max-age=0" },
+  });
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -43,13 +46,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   const choice = (key: string) => value(key);
   const choices = ["loanAvailable", "registrationAvailable", "cornerPlot", "clearTitle"];
-  const amenities = value("amenities").split(/[,\n]/).map((item) => item.trim()).filter(Boolean).slice(0, 12);
+  const amenities = [...new Set(form.getAll("amenities").map((item) => String(item).trim()).filter(Boolean))].slice(0, 40);
   if (title.length < 4 || title.length > 100 || type.length < 2 || type.length > 60 ||
     city.length < 2 || city.length > 80 || locality.length < 2 || locality.length > 80 ||
     unit.length < 1 || unit.length > 20 || description.length < 10 || description.length > 1500 ||
     value("facing").length > 40 || value("approvals").length > 120 || value("renovation").length > 120 ||
     value("roadWidth").length > 40 || value("surveyNumber").length > 80 || value("soilType").length > 80 ||
-    value("address").length > 240 || value("landmark").length > 120 || value("amenities").length > 720 ||
+    value("address").length > 240 || value("landmark").length > 120 || amenities.join(", ").length > 2400 ||
     choices.some((key) => choice(key) && !["yes", "no"].includes(choice(key))) ||
     amenities.some((item) => item.length > 60) ||
     !/^[+()\d\s-]{8,24}$/.test(phone) ||
@@ -113,7 +116,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sign in to delete your listing." }, { status: 401 });
   const { id } = await params;
-  const result = db.prepare("DELETE FROM properties WHERE id = ? AND ownerId = ?").run(id, user.id);
-  if (!result.changes) return NextResponse.json({ error: "Listing not found or you do not own it." }, { status: 404 });
-  return NextResponse.json({ message: "Your listing has been deleted." });
+  const result = db.prepare(`
+    UPDATE properties SET deleteRequestedAt = CURRENT_TIMESTAMP
+    WHERE id = ? AND ownerId = ? AND deleteRequestedAt IS NULL
+  `).run(id, user.id);
+  if (!result.changes) {
+    const existing = db.prepare("SELECT deleteRequestedAt FROM properties WHERE id = ? AND ownerId = ?").get(id, user.id) as { deleteRequestedAt: string | null } | undefined;
+    if (!existing) return NextResponse.json({ error: "Listing not found or you do not own it." }, { status: 404 });
+    return NextResponse.json({ message: "Your deletion request is already awaiting administrator approval." });
+  }
+  return NextResponse.json({ message: "Deletion request sent. Your listing will remain visible until an administrator approves it." });
 }

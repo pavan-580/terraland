@@ -6,7 +6,9 @@ import { ArrowUpRight } from "lucide-react";
 import type { Property } from "@/lib/market";
 import { formatListingPrice } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
+import { AmenitySelector } from "@/components/amenity-selector";
 import { uploadPropertyPhotos } from "@/lib/upload-property-photos";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export function MyListings() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -15,6 +17,7 @@ export function MyListings() {
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState("");
   const [photoProgress, setPhotoProgress] = useState<{ listingId: string; uploaded: number; total: number } | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<Property | null>(null);
 
   async function load() {
     try {
@@ -68,7 +71,13 @@ export function MyListings() {
   }
 
   async function remove(property: Property) {
-    if (!window.confirm(`Delete "${property.title}"? This cannot be undone.`)) return;
+    setError("");
+    setPendingRemoval(property);
+  }
+
+  async function confirmRemoval() {
+    if (!pendingRemoval) return;
+    const property = pendingRemoval;
     setBusyId(property.id);
     setError("");
     setMessage("");
@@ -76,7 +85,8 @@ export function MyListings() {
       const response = await fetch(`/api/properties/${encodeURIComponent(property.id)}`, { method: "DELETE" });
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "Your listing could not be deleted.");
-      setMessage(result.message ?? "Your listing has been deleted.");
+      setMessage(result.message ?? "Your deletion request is awaiting administrator approval.");
+      setPendingRemoval(null);
       await load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Your listing could not be deleted.");
@@ -86,7 +96,8 @@ export function MyListings() {
   }
 
   return <section className="my-listings">
-    {error && <div className="form-error" role="alert">{error}</div>}
+    {pendingRemoval && <ConfirmDialog title="Request listing deletion?" description={`Send a deletion request for “${pendingRemoval.title}”? It will remain online until an administrator approves it.`} confirmLabel="Send deletion request" error={error} busy={busyId === pendingRemoval.id} onCancel={() => setPendingRemoval(null)} onConfirm={() => void confirmRemoval()} />}
+    {error && !pendingRemoval && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
     {loading ? <div className="loading-state">Loading your listings…</div> :
       properties.length ? <div className="my-listings-grid">{properties.map((property) =>
@@ -94,7 +105,7 @@ export function MyListings() {
           <div className="my-listing-top">
             <div className="my-listing-image" style={{ backgroundImage: `url("${property.images?.[0] ?? property.image}")` }} />
             <div className="my-listing-title">
-              <span className="eyebrow">{property.status === "hidden" ? "HIDDEN" : "PUBLISHED"} · {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.locality}, {property.city}</span>
+              <span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUESTED · AWAITING APPROVAL" : property.status === "hidden" ? "HIDDEN" : "PUBLISHED"} · {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.locality}, {property.city}</span>
               <strong translate="no">{property.title}</strong>
               <span className="my-listing-price">{formatListingPrice(property)} · {property.area} {property.unit}</span>
               <Link href={`/properties/${encodeURIComponent(property.id)}`}>View listing <ArrowUpRight size={14} /></Link>
@@ -131,7 +142,7 @@ export function MyListings() {
             <label>Land area<input name="area" required type="number" min="0.01" max="100000" step="any" defaultValue={property.area} /></label>
             <label>Area unit<input name="unit" required maxLength={20} defaultValue={property.unit} /></label>
             <label className="my-listing-wide">Price or rate (₹)<input name="price" required type="number" min="1" max="10000000000" defaultValue={property.price} /></label>
-            <label className="my-listing-wide">Amenities<input name="amenities" maxLength={720} defaultValue={(property.amenities ?? []).join(", ")} placeholder="Separate amenities with commas" /></label>
+            <AmenitySelector key={`${property.id}-${(property.amenities ?? []).join("|")}`} selected={property.amenities ?? []} className="my-listing-wide" />
             <label className="my-listing-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
             <label className="my-listing-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
             <label className="my-listing-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
@@ -148,7 +159,7 @@ export function MyListings() {
             </div>
           </details>
           <div className="my-listing-actions">
-            <button className="admin-delete" type="button" disabled={busyId === property.id} onClick={() => void remove(property)}>Delete listing</button>
+            <button className="admin-delete" type="button" disabled={busyId === property.id || Boolean(property.deleteRequestedAt)} onClick={() => void remove(property)}>{property.deleteRequestedAt ? "Deletion awaiting approval" : "Request listing deletion"}</button>
           </div>
         </form>
       )}</div> : <div className="empty-state"><h3>You haven&apos;t listed land yet.</h3><p>Create your first listing and manage its details and photos from here.</p><Link className="button button-dark" href="/sell">List your land for free <ArrowUpRight size={16} /></Link></div>}

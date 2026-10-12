@@ -10,7 +10,7 @@ import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyReviews } from "@/components/property-reviews";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { db, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
 import { formatListingPrice, formatPrice } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
@@ -57,9 +57,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const row = db.prepare("SELECT * FROM properties WHERE id = ? AND status = 'published'").get(id) as Record<string, unknown> | undefined;
   if (!row) notFound();
   const property = propertyFromRow(row);
+  const showSellerPhone = getSiteSetting("showSellerPhones") !== "false";
   const relatedRows = db.prepare("SELECT * FROM properties WHERE id != ? AND status = 'published' AND listingCategory = ? ORDER BY createdAt DESC, rowid DESC LIMIT 2")
     .all(property.id, property.listingCategory ?? "sale") as Record<string, unknown>[];
   const related = relatedRows.map(propertyFromRow);
+  if (!showSellerPhone) related.forEach((item) => { item.phone = ""; });
   const user = await currentUser();
   const photos = property.images?.length ? property.images : [property.image];
   const listingCategory = property.listingCategory ?? "sale";
@@ -75,9 +77,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
       ? `${currency.format(property.price / property.area)} / ${property.unit}`
       : formatListingPrice(property)],
     ...(listingCategory === "rent" ? [
-      ["Availability", property.availability || "Ask Terraland"],
+      ["Availability", property.availability || "Ask NILAY"],
       ...(property.guestCapacity ? [["Guest capacity", `${property.guestCapacity} guests`] as [string, string]] : []),
-      ["Enquiries", "Send a request through Terraland"],
+      ["Enquiries", "Send a request through NILAY"],
     ] as [string, string][] : []),
     ...(listingCategory === "sale" ? [
     ["Approvals", property.approvals || "Not specified"],
@@ -133,16 +135,16 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           <iframe title={`Map showing ${property.title}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={`https://www.google.com/maps?q=${encodeURIComponent(embeddedMapQuery)}&output=embed`} />
           <a className="text-link" href={property.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noreferrer">Open exact location in Google Maps <ArrowUpRight size={14} /></a>
         </section>
-        <div className="land-check"><BadgeCheck size={20} /><div><strong>{listingCategory === "sale" ? "A note on due diligence" : "Plan with confidence"}</strong><p>{listingCategory === "sale" ? "Listing details are provided by the seller. Independently verify title, approvals, boundaries, and local requirements before purchase." : "Details are provided by the owner. Send an enquiry to Terraland to confirm availability, rental terms, and amenities."}</p></div></div>
+        <div className="land-check"><BadgeCheck size={20} /><div><strong>{listingCategory === "sale" ? "A note on due diligence" : "Plan with confidence"}</strong><p>{listingCategory === "sale" ? "Listing details are provided by the seller. Independently verify title, approvals, boundaries, and local requirements before purchase." : "Details are provided by the owner. Send an enquiry to NILAY to confirm availability, rental terms, and amenities."}</p></div></div>
       </div>
       <aside className="inquiry-aside detail-sidebar">
         <div className="seller-profile">
           <span className="seller-avatar">{property.owner.slice(0, 1)}</span>
           <div><strong>{property.owner}</strong><span>Seller {property.verified ? "· Details reviewed" : ""}</span></div>
-          <span className="seller-private-note">Contact privately</span>
+          {showSellerPhone && property.phone && <a className="seller-public-phone" href={`tel:${property.phone}`} aria-label={`Call seller ${property.owner}`}>{property.phone}</a>}
         </div>
         <InquiryForm propertyId={property.id} title={property.title} type={property.type} listingCategory={listingCategory} pricePeriod={property.pricePeriod}
-          city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name } : null} />
+          city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name, email: user.email, phone: user.phone } : null} />
       </aside>
     </div>
     {listingCategory === "sale" && <EmiCalculator propertyPrice={property.price} />}
