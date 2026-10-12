@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { seedProperties, type Property } from "@/lib/market";
-import { getAppDataDirectory, getDatabaseFilePath } from "@/lib/storage-path";
+import { getDatabaseFilePath } from "@/lib/storage-path";
 
 const globalForDb = globalThis as typeof globalThis & { landDb?: Database.Database };
 
@@ -22,13 +22,6 @@ function addColumnIfMissing(db: Database.Database, table: string, columnName: st
 }
 
 function createDatabase() {
-  const dataDirectory = getAppDataDirectory();
-  if (process.env.RENDER === "true" && process.env.NEXT_PHASE !== "phase-production-build" && !process.env.APP_DATA_DIR?.trim()) {
-    throw new Error("APP_DATA_DIR is required on Render. Attach a persistent disk mounted at /var/data and set APP_DATA_DIR=/var/data.");
-  }
-  if (process.env.RENDER === "true" && process.env.NEXT_PHASE !== "phase-production-build" && !existsSync(dataDirectory)) {
-    throw new Error(`Persistent app storage is missing at ${dataDirectory}. Attach a Render disk mounted at /var/data.`);
-  }
   const filePath = getDatabaseFilePath();
   mkdirSync(path.dirname(filePath), { recursive: true });
   const previousDatabasePath = path.join(process.cwd(), "data", "landmark.db");
