@@ -63,6 +63,37 @@ export async function sendRegistrationNotice(name: string, email: string) {
   }
 }
 
+export async function sendLenderInterestNotice(lead: { name: string; email: string; phone: string; amount: number; message: string; createdAt: string }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  if (!apiKey || !from) throw new Error("Lender interest email is not configured.");
+  const amount = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(lead.amount);
+  const rows = [
+    ["Name", lead.name],
+    ["Email", lead.email],
+    ["Phone", lead.phone],
+    ["Amount they may be able to lend", amount],
+    ["Additional details", lead.message],
+    ["Received", lead.createdAt],
+  ].filter(([, value]) => value);
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: ["Bearer", apiKey].join(" "), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [registrationRecipient],
+      reply_to: lead.email,
+      subject: "New NILAY lender interest",
+      text: "New lender interest registered.\n\n" + rows.map(([label, value]) => label + ": " + value).join("\n"),
+      html: "<h2>New NILAY lender interest</h2><table>" + rows.map(([label, value]) => "<tr><th align=\"left\" valign=\"top\">" + escapeHtml(label) + "</th><td>" + escapeHtml(value) + "</td></tr>").join("") + "</table>",
+    }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error("Lender interest notification failed:", response.status, detail);
+    throw new Error("The lender interest notification could not be delivered.");
+  }
+}
 export type InquiryNotice = {
   propertyId: string;
   name: string;
@@ -121,7 +152,7 @@ export async function sendInquiryNotice(inquiry: InquiryNotice) {
     body: JSON.stringify({
       from,
       to: [registrationRecipient],
-      reply_to: inquiry.email,
+    ...(inquiry.email ? { reply_to: inquiry.email } : {}),
       subject: `New ${categoryLabel.toLowerCase()} enquiry: ${inquiry.propertyTitle}`,
       text,
       html,

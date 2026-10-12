@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, getSiteSetting } from "@/lib/db";
 import { currentUser, newId } from "@/lib/session";
 import { deliverPendingInquiryNotices } from "@/lib/notifications";
 
 export async function POST(request: NextRequest) {
   const user = await currentUser();
+  if (getSiteSetting("showSellerPhones") !== "false" && user) {
+    return NextResponse.json({ error: "This listing uses direct seller contact. Please use the phone or email shown on the listing." }, { status: 409 });
+  }
 
   const body: unknown = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -14,10 +17,11 @@ export async function POST(request: NextRequest) {
   const propertyId = typeof input.propertyId === "string" ? input.propertyId.trim() : "";
   const message = typeof input.message === "string" ? input.message.trim() : "";
   const name = user?.name ?? (typeof input.name === "string" ? input.name.trim() : "");
-  const email = user?.email ?? (typeof input.email === "string" ? input.email.trim().toLowerCase() : "");
+  const email = user?.email || (typeof input.email === "string" ? input.email.trim().toLowerCase() : "");
   const phone = typeof input.phone === "string" ? input.phone.trim().replace(/[\s()-]/g, "") : user?.phone ?? "";
   if (!propertyId || propertyId.length > 100 || message.length > 1000 ||
-    name.length < 2 || name.length > 80 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    name.length < 2 || name.length > 80 || (!user && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
+    (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
     !/^\+[1-9]\d{7,14}$/.test(phone)) {
     return NextResponse.json({ error: "Please check the enquiry and try again." }, { status: 400 });
   }

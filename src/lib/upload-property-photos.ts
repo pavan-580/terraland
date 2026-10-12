@@ -26,3 +26,30 @@ export async function uploadPropertyPhotos(files: File[], onProgress?: (uploaded
   }
   return images;
 }
+
+export async function uploadPropertyVideos(files: File[], onProgress?: (uploaded: number, total: number) => void) {
+  const videos: string[] = [];
+  onProgress?.(0, files.length);
+
+  for (const [index, file] of files.entries()) {
+    const form = new FormData();
+    form.append("video", file, file.name);
+    let response: Response;
+    try {
+      response = await fetch("/api/property-photos", { method: "POST", body: form });
+    } catch {
+      throw new Error(`Video ${index + 1} of ${files.length} could not be uploaded. Check your connection and try again.`);
+    }
+
+    const result: unknown = await response.json().catch(() => null);
+    if (!result || typeof result !== "object") throw new Error(`Video ${index + 1} of ${files.length} could not be uploaded. Please try again.`);
+    const data = result as { error?: string; video?: string };
+    if (!response.ok) throw new Error(data.error ?? `Video ${index + 1} of ${files.length} could not be uploaded.`);
+    if (typeof data.video !== "string" || !/^\/uploads\/[a-zA-Z0-9._-]+\.(mp4|webm)$/.test(data.video)) {
+      throw new Error(`Video ${index + 1} of ${files.length} returned an invalid upload result.`);
+    }
+    videos.push(data.video);
+    onProgress?.(videos.length, files.length);
+  }
+  return videos;
+}

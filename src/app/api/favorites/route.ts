@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
@@ -12,14 +12,14 @@ export async function GET(request: NextRequest) {
   }
   if (!user) return NextResponse.json({ error: "Sign in to view your saved listings." }, { status: 401 });
   const rows = db.prepare(`
-    SELECT properties.* FROM favorites
+    SELECT properties.*, users.email AS sellerEmail FROM favorites
     JOIN properties ON properties.id = favorites.propertyId
+    LEFT JOIN users ON users.id = properties.ownerId
     WHERE favorites.userId = ? ORDER BY favorites.createdAt DESC
   `).all(user.id) as Record<string, unknown>[];
-  const showSellerPhones = getSiteSetting("showSellerPhones") !== "false";
+  const showSellerPhones = getSiteSetting("showSellerPhones") !== "false" && Boolean(user);
   return NextResponse.json(rows.map((row) => {
-    const property = propertyFromRow(row);
-    return showSellerPhones ? property : { ...property, phone: "" };
+    return publicPropertyFromRow(row, showSellerPhones);
   }), { headers: { "Cache-Control": "no-store, max-age=0" } });
 }
 

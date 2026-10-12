@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
 import { currentUser } from "@/lib/session";
-import { storePropertyPhotos, validateStoredPropertyPhotos } from "@/lib/property-images";
+import { storePropertyPhotos, storePropertyVideos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const user = await currentUser();
   const { id } = await params;
-  const row = db.prepare("SELECT * FROM properties WHERE id = ? AND status = 'published'").get(id) as Record<string, unknown> | undefined;
+  const row = db.prepare("SELECT properties.*, users.email AS sellerEmail FROM properties LEFT JOIN users ON users.id = properties.ownerId WHERE properties.id = ? AND properties.status = 'published'").get(id) as Record<string, unknown> | undefined;
   if (!row) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
-  const property = propertyFromRow(row);
-  return NextResponse.json(getSiteSetting("showSellerPhones") === "false" ? { ...property, phone: "" } : property, {
+  const property = publicPropertyFromRow(row, getSiteSetting("showSellerPhones") !== "false" && Boolean(user));
+  return NextResponse.json(property, {
     headers: { "Cache-Control": "no-store, max-age=0" },
   });
 }
@@ -93,16 +94,43 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!images.length && typeof row.image === "string" && row.image) images = [row.image];
   if (!images.length) return NextResponse.json({ error: "Upload at least one listing photo." }, { status: 400 });
 
+  const videoFiles = form.getAll("videos").filter((file): file is File => file instanceof File && file.size > 0);
+  let videos: string[] = [];
+  if (videoFiles.length) {
+    try {
+      videos = await storePropertyVideos(videoFiles);
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Videos could not be saved." }, { status: 400 });
+    }
+  } else if (form.has("videoUrls")) {
+    let submittedVideos: unknown;
+    try {
+      submittedVideos = JSON.parse(value("videoUrls"));
+    } catch {
+      return NextResponse.json({ error: "One or more uploaded videos are unavailable. Please upload them again." }, { status: 400 });
+    }
+    const validatedVideos = await validateStoredPropertyVideos(submittedVideos);
+    if (!validatedVideos) return NextResponse.json({ error: "One or more uploaded videos are unavailable. Please upload them again." }, { status: 400 });
+    videos = validatedVideos;
+  } else if (typeof row.videos === "string") {
+    try {
+      const parsed: unknown = JSON.parse(row.videos);
+      if (Array.isArray(parsed)) videos = parsed.filter((video): video is string => typeof video === "string");
+    } catch {
+      videos = [];
+    }
+  }
+
   db.prepare(`
     UPDATE properties SET title = ?, type = ?, listingCategory = ?, pricePeriod = ?, availability = ?, guestCapacity = ?, city = ?, locality = ?, price = ?, area = ?, unit = ?,
-      description = ?, phone = ?, images = ?, image = ?, owner = ?, facing = ?, approvals = ?,
+      description = ?, phone = ?, images = ?, image = ?, videos = ?, owner = ?, facing = ?, approvals = ?,
       loanAvailable = ?, registrationAvailable = ?, renovation = ?, cornerPlot = ?, roadWidth = ?,
       surveyNumber = ?, soilType = ?, clearTitle = ?, amenities = ?, address = ?, landmark = ?, mapUrl = ?
     WHERE id = ? AND ownerId = ?
   `).run(
     title, type, listingCategory, pricePeriod, listingCategory === "rent" ? availability : "",
     listingCategory === "rent" ? guestCapacity : null, city, locality, Math.round(price), area, unit, description, phone,
-    JSON.stringify(images), images[0], user.name,
+    JSON.stringify(images), images[0], JSON.stringify(videos), user.name,
     value("facing").slice(0, 40), value("approvals").slice(0, 120), choice("loanAvailable"),
     choice("registrationAvailable"), value("renovation").slice(0, 120), choice("cornerPlot"),
     value("roadWidth").slice(0, 40), value("surveyNumber").slice(0, 80), value("soilType").slice(0, 80),

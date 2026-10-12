@@ -13,10 +13,12 @@ export type Property = {
   unit: string;
   image: string;
   images?: string[];
+  videos?: string[];
   badge: string;
   description: string;
   owner: string;
   phone: string;
+  sellerEmail?: string;
   facing?: string;
   approvals?: string;
   loanAvailable?: string;

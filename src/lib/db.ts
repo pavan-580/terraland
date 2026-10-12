@@ -63,6 +63,7 @@ function createDatabase() {
       unit TEXT NOT NULL,
       image TEXT NOT NULL,
       images TEXT NOT NULL DEFAULT '[]',
+      videos TEXT NOT NULL DEFAULT '[]',
       ownerId TEXT REFERENCES users(id) ON DELETE SET NULL,
       badge TEXT NOT NULL,
       description TEXT NOT NULL,
@@ -143,6 +144,7 @@ function createDatabase() {
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "properties", "images", "ALTER TABLE properties ADD COLUMN images TEXT NOT NULL DEFAULT '[]'");
+  addColumnIfMissing(db, "properties", "videos", "ALTER TABLE properties ADD COLUMN videos TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, "properties", "deleteRequestedAt", "ALTER TABLE properties ADD COLUMN deleteRequestedAt TEXT");
   db.prepare("INSERT OR IGNORE INTO site_settings (key, value) VALUES ('showSellerPhones', 'true')").run();
   addColumnIfMissing(db, "properties", "listingCategory", "ALTER TABLE properties ADD COLUMN listingCategory TEXT NOT NULL DEFAULT 'sale'");
@@ -196,8 +198,17 @@ function createDatabase() {
   return db;
 }
 
+
 export const db = globalForDb.landDb ?? createDatabase();
 globalForDb.landDb = db;
+
+db.exec(
+  "CREATE TABLE IF NOT EXISTS lender_interests (" +
+  "id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, " +
+  "amount INTEGER NOT NULL, message TEXT NOT NULL DEFAULT '', consentedAt TEXT NOT NULL, " +
+  "notificationStatus TEXT NOT NULL DEFAULT 'pending', notificationError TEXT, " +
+  "createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+);
 
 export function getSiteSetting(key: string): string | null {
   const setting = db.prepare("SELECT value FROM site_settings WHERE key = ?").get(key) as { value: string } | undefined;
@@ -223,6 +234,7 @@ db.exec(`
 
 export function propertyFromRow(row: Record<string, unknown>): Property {
   let images: string[] = [];
+  let videos: string[] = [];
   let amenities: string[] = [];
   if (typeof row.images === "string") {
     try {
@@ -230,6 +242,14 @@ export function propertyFromRow(row: Record<string, unknown>): Property {
       if (Array.isArray(parsed)) images = parsed.filter((image): image is string => typeof image === "string");
     } catch {
       images = [];
+    }
+  }
+  if (typeof row.videos === "string") {
+    try {
+      const parsed: unknown = JSON.parse(row.videos);
+      if (Array.isArray(parsed)) videos = parsed.filter((video): video is string => typeof video === "string");
+    } catch {
+      videos = [];
     }
   }
   if (typeof row.amenities === "string") {
@@ -245,7 +265,20 @@ export function propertyFromRow(row: Record<string, unknown>): Property {
     ...row,
     image,
     images: images.length ? images : image ? [image] : [],
+    videos,
     amenities,
     verified: Boolean(row.verified),
   } as Property;
+}
+
+export function publicPropertyFromRow(row: Record<string, unknown>, showSellerContacts: boolean): Property {
+  const property = propertyFromRow(row) as Property & { ownerId?: string; sellerEmail?: string };
+  const { sellerEmail, ...publicProperty } = property;
+  delete publicProperty.ownerId;
+  const safeEmail = typeof sellerEmail === "string" && !sellerEmail.endsWith("@phone.nilay.invalid") ? sellerEmail : "";
+  return {
+    ...publicProperty,
+    phone: showSellerContacts ? publicProperty.phone : "",
+    ...(showSellerContacts && safeEmail ? { sellerEmail: safeEmail } : {}),
+  };
 }

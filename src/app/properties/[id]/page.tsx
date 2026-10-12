@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, BadgeCheck, Check, MapPin } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, MapPin } from "lucide-react";
 import { EmiCalculator } from "@/components/emi-calculator";
 import { InquiryForm } from "@/components/inquiry-form";
 import { ListingShare } from "@/components/listing-share";
@@ -10,7 +10,7 @@ import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyReviews } from "@/components/property-reviews";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
 import { formatListingPrice, formatPrice } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
@@ -54,15 +54,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const row = db.prepare("SELECT * FROM properties WHERE id = ? AND status = 'published'").get(id) as Record<string, unknown> | undefined;
+  const row = db.prepare("SELECT properties.*, users.email AS sellerEmail FROM properties LEFT JOIN users ON users.id = properties.ownerId WHERE properties.id = ? AND properties.status = 'published'").get(id) as Record<string, unknown> | undefined;
   if (!row) notFound();
-  const property = propertyFromRow(row);
-  const showSellerPhone = getSiteSetting("showSellerPhones") !== "false";
-  const relatedRows = db.prepare("SELECT * FROM properties WHERE id != ? AND status = 'published' AND listingCategory = ? ORDER BY createdAt DESC, rowid DESC LIMIT 2")
-    .all(property.id, property.listingCategory ?? "sale") as Record<string, unknown>[];
-  const related = relatedRows.map(propertyFromRow);
-  if (!showSellerPhone) related.forEach((item) => { item.phone = ""; });
   const user = await currentUser();
+  const showSellerContacts = getSiteSetting("showSellerPhones") !== "false" && Boolean(user);
+  const property = publicPropertyFromRow(row, showSellerContacts);
+  const relatedRows = db.prepare("SELECT properties.*, users.email AS sellerEmail FROM properties LEFT JOIN users ON users.id = properties.ownerId WHERE properties.id != ? AND properties.status = 'published' AND properties.listingCategory = ? ORDER BY properties.createdAt DESC, properties.rowid DESC LIMIT 2")
+    .all(property.id, property.listingCategory ?? "sale") as Record<string, unknown>[];
+  const related = relatedRows.map((item) => publicPropertyFromRow(item, showSellerContacts));
   const photos = property.images?.length ? property.images : [property.image];
   const listingCategory = property.listingCategory ?? "sale";
   const listingLabel = listingCategory === "rent" ? "FOR RENT" : "FOR SALE";
@@ -95,7 +94,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     ] : []),
   ];
   return <><SiteHeader /><main className="detail-page">
-    <div className="detail-breadcrumb"><Link href={`/search?category=${listingCategory}`}><ArrowLeft size={14} /> Back to explore</Link><span>{listingLabel} / {property.city.toUpperCase()}</span></div>
+    <div className="detail-breadcrumb"><span>{listingLabel} / {property.city.toUpperCase()}</span></div>
     <section className="detail-heading">
       <div className="detail-heading-copy">
         <div className="detail-meta"><span className="property-badge detail-status">{listingLabel}</span><span>{property.type}</span>{property.verified && <span className="verified-pill"><BadgeCheck size={14} /> Seller details reviewed</span>}</div>
@@ -107,6 +106,10 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     </section>
 
     <PropertyGallery images={photos} title={property.title} badge={property.badge} />
+    {property.videos?.length ? <section className="detail-video-gallery" aria-label="Property videos">
+      <div className="detail-card-heading"><span className="eyebrow">PROPERTY VIDEOS</span><h2>Take a closer look</h2></div>
+      <div className="detail-video-grid">{property.videos.map((video, index) => <video key={`${video}-${index}`} src={video} controls playsInline preload="metadata" aria-label={`${property.title} video ${index + 1}`} />)}</div>
+    </section> : null}
 
     <div className="detail-layout detail-layout-rich">
       <div className="detail-main detail-cards">
@@ -138,13 +141,16 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         <div className="land-check"><BadgeCheck size={20} /><div><strong>{listingCategory === "sale" ? "A note on due diligence" : "Plan with confidence"}</strong><p>{listingCategory === "sale" ? "Listing details are provided by the seller. Independently verify title, approvals, boundaries, and local requirements before purchase." : "Details are provided by the owner. Send an enquiry to NILAY to confirm availability, rental terms, and amenities."}</p></div></div>
       </div>
       <aside className="inquiry-aside detail-sidebar">
-        <div className="seller-profile">
+        {showSellerContacts ? <div className="seller-profile">
           <span className="seller-avatar">{property.owner.slice(0, 1)}</span>
-          <div><strong>{property.owner}</strong><span>Seller {property.verified ? "· Details reviewed" : ""}</span></div>
-          {showSellerPhone && property.phone && <a className="seller-public-phone" href={`tel:${property.phone}`} aria-label={`Call seller ${property.owner}`}>{property.phone}</a>}
-        </div>
-        <InquiryForm propertyId={property.id} title={property.title} type={property.type} listingCategory={listingCategory} pricePeriod={property.pricePeriod}
-          city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name, email: user.email, phone: user.phone } : null} />
+          <div><strong>{property.owner}</strong><span>Contact the seller directly</span></div>
+          {property.phone && <a className="seller-public-phone" href={`tel:${property.phone}`} aria-label={`Call seller ${property.owner}`}>{property.phone}</a>}
+          {property.sellerEmail && <a className="seller-public-email" href={`mailto:${property.sellerEmail}`}>{property.sellerEmail}</a>}
+        </div> : <>
+          <div className="seller-profile"><span className="seller-avatar">{property.owner.slice(0, 1)}</span><div><strong>{property.owner}</strong><span>Send us an enquiry and our team will contact you shortly.</span></div></div>
+          <InquiryForm propertyId={property.id} title={property.title} type={property.type} listingCategory={listingCategory} pricePeriod={property.pricePeriod}
+            city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name, email: user.email, phone: user.phone } : null} />
+        </>}
       </aside>
     </div>
     {listingCategory === "sale" && <EmiCalculator propertyPrice={property.price} />}

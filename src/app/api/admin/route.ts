@@ -11,7 +11,7 @@ async function requireAdmin() {
 export async function GET() {
   if (!await requireAdmin()) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   const users = db.prepare(`
-    SELECT users.id, users.name, users.email, users.phone, users.createdAt,
+    SELECT users.id, users.name, CASE WHEN users.email LIKE '%@phone.nilay.invalid' THEN '' ELSE users.email END AS email, users.phone, users.createdAt,
       (SELECT COUNT(*) FROM properties WHERE properties.ownerId = users.id) AS listingCount
     FROM users ORDER BY users.createdAt DESC
   `).all();
@@ -88,12 +88,14 @@ export async function PATCH(request: NextRequest) {
     const id = String(input.id ?? "");
     const name = String(input.name ?? "").trim();
     const email = String(input.email ?? "").trim().toLowerCase();
-    if (!id || name.length < 2 || name.length > 80 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email === "pavansai580@gmail.com") {
-      return NextResponse.json({ error: "Enter a valid user name and email address." }, { status: 400 });
+    const phoneRow = db.prepare("SELECT phone FROM users WHERE id = ? AND role != 'admin'").get(id) as { phone: string } | undefined;
+    const storedEmail = email || ("phone-" + (phoneRow?.phone ?? "").replace(/\D/g, "") + "@phone.nilay.invalid");
+    if (!id || name.length < 2 || name.length > 80 || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) || email === "pavansai580@gmail.com" || (!email && !phoneRow?.phone)) {
+      return NextResponse.json({ error: "Enter a valid name and email, or keep the member's phone number for phone-only sign-in." }, { status: 400 });
     }
     try {
       const updateUser = db.transaction(() => {
-        const result = db.prepare("UPDATE users SET name = ?, email = ? WHERE id = ? AND role != 'admin'").run(name, email, id);
+        const result = db.prepare("UPDATE users SET name = ?, email = ? WHERE id = ? AND role != 'admin'").run(name, storedEmail, id);
         if (!result.changes) return false;
         db.prepare("UPDATE properties SET owner = ? WHERE ownerId = ?").run(name, id);
         return true;
@@ -200,6 +202,8 @@ export async function DELETE(request: NextRequest) {
     result = db.prepare("DELETE FROM inquiries WHERE id = ?").run(id);
   } else if (input.resource === "review") {
     result = db.prepare("DELETE FROM property_reviews WHERE id = ?").run(id);
+  } else if (input.resource === "lender-interest") {
+    result = db.prepare("DELETE FROM lender_interests WHERE id = ?").run(id);
   } else {
     return NextResponse.json({ error: "Unknown record type." }, { status: 400 });
   }

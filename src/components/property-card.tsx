@@ -14,7 +14,7 @@ export function PropertyCard({ property }: { property: Property }) {
         <div className="card-topline"><span>{property.listingCategory === "rent" ? "For rent" : "For sale"} · {property.type}</span><SaveButton propertyId={property.id} /></div>
         <Link href={`/properties/${property.id}`} className="property-title" translate="no">{property.title}</Link>
         <div className="property-place"><MapPin size={14} /> {property.locality}, {property.city}</div>
-        <div className="card-seller-contact"><div><span>Seller</span><strong>{property.owner}</strong></div>{property.phone && <a href={`tel:${property.phone}`} aria-label={`Call seller ${property.owner}`}>{property.phone}</a>}</div>
+        <div className="card-seller-contact"><div><span>{property.owner === "NILAY" ? "Enquiries through" : "Seller"}</span><strong>{property.owner}</strong></div>{(property.phone || property.sellerEmail) && <div className="card-seller-links">{property.phone && <a href={`tel:${property.phone}`} aria-label={`Call seller ${property.owner}`}>{property.phone}</a>}{property.sellerEmail && <a href={`mailto:${property.sellerEmail}`} aria-label={`Email seller ${property.owner}`}>Email seller</a>}</div>}</div>
         <div className="card-divider" />
         <div className="card-bottom">
           <div><strong>{formatListingPrice(property)}</strong><span>{property.area} {property.unit}</span></div>

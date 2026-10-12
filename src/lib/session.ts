@@ -7,7 +7,7 @@ export async function currentUser() {
   const token = (await cookies()).get("landmark_session")?.value;
   if (!token) return null;
   return db.prepare(`
-    SELECT users.id, users.name, users.email, users.phone, users.role
+    SELECT users.id, users.name, CASE WHEN users.email LIKE '%@phone.nilay.invalid' THEN '' ELSE users.email END AS email, users.phone, users.role
     FROM sessions JOIN users ON users.id = sessions.userId
     WHERE sessions.token = ? AND sessions.expiresAt > ?
   `).get(token, new Date().toISOString()) as { id: string; name: string; email: string; phone: string; role: "user" | "admin" } | undefined ?? null;

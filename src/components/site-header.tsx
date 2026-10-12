@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowUpRight, Heart } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ArrowUpRight, Heart, MessageCircle } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
+import { BackButton } from "@/components/back-button";
 
 type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
 export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { variant?: "standard" | "hero"; mobileLogoOnly?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [logoutError, setLogoutError] = useState("");
   const [farmstayIndex, setFarmstayIndex] = useState(0);
@@ -71,6 +73,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
   return (
       <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
+        {pathname !== "/" && pathname !== "/sell" && <BackButton className="header-back-button" />}
         <Link className="brand" href="/" aria-label="NILAY Real Estate home">
           <BrandLogo />
         </Link>
@@ -80,17 +83,6 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
         {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)} />}
         <nav className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation">
           <Link href="/search?category=sale">Explore land</Link>
-          <details className="services-nav">
-            <summary className="services-nav-trigger">Services</summary>
-            <div className="services-nav-menu">
-              <Link href="/services">All services</Link>
-              <Link href="/services/dharani-title-check">Dharani / Bhu Bharati check</Link>
-              <Link href="/services/legal-verification">Legal verification guide</Link>
-              <Link href="/services/ec-verification">Encumbrance certificate</Link>
-              <Link href="/services/stamp-duty-calculator">Stamp duty calculator</Link>
-              <Link href="/services/plot-loan-emi-calculator">Plot loan EMI calculator</Link>
-            </div>
-          </details>
           <div className="farmstay-nav-window" onPointerEnter={() => setFarmstayPaused(true)}
             onPointerLeave={() => setFarmstayPaused(false)} onFocusCapture={() => setFarmstayPaused(true)}
             onBlurCapture={(event) => {
@@ -109,18 +101,30 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
           </div>
           <Link href="/my-listings">My listings</Link>
           <Link href="/about">How it works</Link>
-          <a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20need%20help." target="_blank" rel="noopener noreferrer" aria-label="Get help on WhatsApp">Help</a>
+          <Link href="/lender-interest">Become a lender</Link>
+          <details className="services-nav">
+            <summary className="services-nav-trigger">Services</summary>
+            <div className="services-nav-menu">
+              <Link href="/services">All services</Link>
+              <Link href="/services/dharani-title-check">Dharani / Bhu Bharati check</Link>
+              <Link href="/services/legal-verification">Legal verification guide</Link>
+              <Link href="/services/ec-verification">Encumbrance certificate</Link>
+              <Link href="/services/stamp-duty-calculator">Stamp duty calculator</Link>
+              <Link href="/services/plot-loan-emi-calculator">Plot loan EMI calculator</Link>
+            </div>
+          </details>
           <LanguagePicker />
           <div className="mobile-menu-account">
-            {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/my-listings"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
+            {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/profile"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
             {user && <button className="logout-button" type="button" onClick={() => void logout()}>Sign out</button>}
             <Link className="button button-dark button-small" href="/sell">List your land for free <ArrowUpRight size={15} /></Link>
+            <a className="button button-whatsapp button-small mobile-menu-whatsapp" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20want%20to%20post%20my%20property." target="_blank" rel="noopener noreferrer"><MessageCircle size={17} /> Post via WhatsApp <ArrowUpRight size={15} /></a>
           </div>
         </nav>
         <div className="header-actions">
           <Link className="saved-link" href="/saved" aria-label="Saved listings"><Heart size={17} /></Link>
           {user ? <>
-            <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/my-listings"}>{user.role === "admin" ? "Admin" : user.name}</Link>
+            <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/profile"}>{user.role === "admin" ? "Admin" : user.name}</Link>
             <button className="logout-button" type="button" onClick={() => void logout()}>Sign out</button>
           </> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
           <Link className="button button-dark button-small header-listing-cta" href="/sell" aria-label="List your land for free" title="List your land for free"><span>List your land for free</span><ArrowUpRight size={15} /></Link>

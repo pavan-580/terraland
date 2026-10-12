@@ -233,9 +233,9 @@ export function AdminDashboard() {
   return <section className="admin-content">
     {pendingDelete && <ConfirmDialog title="Delete this record?" description="This action cannot be undone. The selected record will be permanently deleted." confirmLabel="Delete permanently" error={error} busy={busyId === pendingDelete.id} onCancel={() => setPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
     <div className="admin-setting-card">
-      <div><strong>Seller phone numbers</strong><p>Control whether seller mobile numbers appear on public listing cards and details.</p></div>
+      <div><strong>Seller contact details</strong><p>When on, buyers can contact sellers directly using available phone or email. When off, seller details are hidden and enquiries are sent to NILAY so our team can connect both sides.</p></div>
       <button type="button" className={`admin-setting-toggle${data.settings.showSellerPhones ? " is-on" : ""}`} aria-pressed={data.settings.showSellerPhones} disabled={savingPhoneSetting} onClick={() => void toggleSellerPhones()}>
-        <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Visible" : "OFF · Hidden"}
+        <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
       </button>
     </div>
     {data.registrationNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
@@ -340,7 +340,7 @@ export function AdminDashboard() {
           void update("user", user.id, { name: form.get("name"), email: form.get("email") });
         }}>
           <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · JOINED {new Date(user.createdAt).toLocaleDateString()}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
-          <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email<input name="email" type="email" required defaultValue={user.email} /></label></div>
+          <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label></div>
           <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
         </form>
       )}</div>}

@@ -4,7 +4,8 @@ import { PropertyCard } from "@/components/property-card";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { allPropertyTypes } from "@/lib/market";
-import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
+import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -14,16 +15,15 @@ const places = [
   { city: "Anandapuram", area: "Visakhapatnam", count: "28 listings", image: "photo-1472396961693-142e6e269027" },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const user = await currentUser();
   const latestProperties = (db.prepare(`
-    SELECT * FROM properties
-    WHERE status = 'published' AND listingCategory = 'sale'
-    ORDER BY createdAt DESC, rowid DESC
+    SELECT properties.*, users.email AS sellerEmail FROM properties
+    LEFT JOIN users ON users.id = properties.ownerId
+    WHERE properties.status = 'published' AND properties.listingCategory = 'sale'
+    ORDER BY properties.createdAt DESC, properties.rowid DESC
     LIMIT 3
-  `).all() as Record<string, unknown>[]).map(propertyFromRow);
-  if (getSiteSetting("showSellerPhones") === "false") {
-    latestProperties.forEach((property) => { property.phone = ""; });
-  }
+  `).all() as Record<string, unknown>[]).map((row) => publicPropertyFromRow(row, getSiteSetting("showSellerPhones") !== "false" && Boolean(user)));
 
   return (
     <>

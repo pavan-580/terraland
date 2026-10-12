@@ -8,13 +8,15 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { AmenitySelector } from "@/components/amenity-selector";
 import { listingCategories, pricePeriodsByCategory, propertyTypes, rentalTypes, type ListingCategory } from "@/lib/market";
-import { uploadPropertyPhotos } from "@/lib/upload-property-photos";
+import { uploadPropertyPhotos, uploadPropertyVideos } from "@/lib/upload-property-photos";
 
 export default function SellPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const [photoProgress, setPhotoProgress] = useState<{ uploaded: number; total: number } | null>(null);
+  const [videoProgress, setVideoProgress] = useState<{ uploaded: number; total: number } | null>(null);
   const [listingCategory, setListingCategory] = useState<ListingCategory>("sale");
   const [pricePeriod, setPricePeriod] = useState("total");
   const [propertyType, setPropertyType] = useState("");
@@ -22,23 +24,37 @@ export default function SellPage() {
   useEffect(() => {
     let active = true;
     void fetch("/api/auth", { cache: "no-store" }).then((response) => response.json()).then((result: { user?: { phone?: string } | null }) => {
-      if (active && result.user?.phone) setContactPhone(result.user.phone);
-    }).catch(() => undefined);
+      if (!active) return;
+      if (!result.user) {
+        router.replace("/sign-in?next=%2Fsell");
+        return;
+      }
+      if (result.user.phone) setContactPhone(result.user.phone);
+      setCheckingAccess(false);
+    }).catch(() => {
+      if (active) router.replace("/sign-in?next=%2Fsell");
+    });
     return () => { active = false; };
-  }, []);
+  }, [router]);
   const propertyOptions = listingCategory === "sale" ? propertyTypes : rentalTypes;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
     setPhotoProgress(null);
+    setVideoProgress(null);
     try {
       const formData = new FormData(event.currentTarget);
-      const photos = formData.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);
+      const media = formData.getAll("media").filter((file): file is File => file instanceof File && file.size > 0);
+      const photos = media.filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp)$/i.test(file.name));
+      const videos = media.filter((file) => file.type.startsWith("video/") || /\.(mp4|webm)$/i.test(file.name));
       const photoUrls = await uploadPropertyPhotos(photos, (uploaded, total) => setPhotoProgress({ uploaded, total }));
-      formData.delete("photos");
+      formData.delete("media");
       formData.set("photoUrls", JSON.stringify(photoUrls));
+      const videoUrls = await uploadPropertyVideos(videos, (uploaded, total) => setVideoProgress({ uploaded, total }));
+      formData.set("videoUrls", JSON.stringify(videoUrls));
       setPhotoProgress(null);
+      setVideoProgress(null);
       const response = await fetch("/api/properties", {
         method: "POST",
         body: formData,
@@ -58,8 +74,10 @@ export default function SellPage() {
     } finally {
       setBusy(false);
       setPhotoProgress(null);
+      setVideoProgress(null);
     }
   }
+  if (checkingAccess) return <main className="sell-page"><div className="loading-state" role="status">Checking your sign-in…</div></main>;
   return <><SiteHeader /><main className="sell-page"><div className="sell-intro"><Link href="/" className="back-link"><ArrowLeft size={15} /> Back to home</Link><span className="eyebrow">A GOOD INTRODUCTION STARTS HERE</span><h1>{listingCategory === "sale" ? <>Let&apos;s find your land<br />its <em>next owner.</em></> : <>Make room for<br /><em>something special.</em></>}</h1><p>{listingCategory === "sale" ? "Share a few details about your property. Your listing will be visible to buyers across India." : "Showcase your farmhouse, private land, resort, or villa to people looking to rent it. Enquiries come through NILAY."}</p><div className="sell-points"><span><Check size={15} /> Free to list</span><span><Check size={15} /> You stay in control</span><span><Check size={15} /> Enquiries through NILAY</span></div><div className="sell-visual" /></div>
     <form className="sell-form" onSubmit={submit}><div className="form-heading"><span className="eyebrow">PROPERTY DETAILS</span><span>01 <i>/</i> 01</span></div><h2>{listingCategory === "sale" ? "Tell us about the place." : "List your place for rent."}</h2><p>{listingCategory === "sale" ? "Start with the essentials. You can share more with a buyer later." : "Set your rental rate, availability, and guest capacity. Interested visitors enquire through NILAY; no online payment is collected."}</p>
       <div className="listing-mode-field">
@@ -104,12 +122,13 @@ export default function SellPage() {
       <label>Google Maps location link<input name="mapUrl" type="url" maxLength={500} placeholder="https://maps.app.goo.gl/..." /></label>
       <p className="photo-help">Open the exact location in Google Maps, choose Share, and paste the link here. Buyers can open this precise pin.</p>
       <label>{listingCategory === "sale" ? "A few words about the land" : "Describe this place"}<textarea required name="description" minLength={10} maxLength={1500} placeholder={listingCategory === "sale" ? "What makes this place special? Mention access, approvals, or anything buyers should know." : "Describe the setting, facilities, access, and what makes this place special."} /></label>
-      <label>Property photos<input required name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label>
-      <p className="photo-help">Upload as many JPEG, PNG, or WebP photos as you need. Each image must be 5 MB or smaller.</p>
+      <label>Property photos and videos<input required name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm" multiple /></label>
+      <p className="photo-help">Select photos and videos together. Add as many JPEG, PNG, WebP (up to 5 MB each), MP4, or WebM (up to 100 MB each) files as you need. Include at least one photo.</p>
       {photoProgress && <div className="photo-upload-progress" role="status"><span>Uploading property photos… {photoProgress.uploaded}/{photoProgress.total}</span><progress value={photoProgress.uploaded} max={photoProgress.total} /></div>}
-      <label>Contact phone<input required name="phone" type="tel" inputMode="tel" pattern="[+()0-9 -]{8,24}" value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} placeholder="+91 98765 43210" /><small>Your account phone is filled in. Admins can see it in this listing&apos;s details.</small></label>
+      {videoProgress && <div className="photo-upload-progress" role="status"><span>Uploading property videos… {videoProgress.uploaded}/{videoProgress.total}</span><progress value={videoProgress.uploaded} max={videoProgress.total} /></div>}
+      <label>Contact phone<input required name="phone" type="tel" inputMode="tel" pattern="[+()0-9 -]{8,24}" value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} placeholder="98765 43210" /><small>Your account phone is filled in. Admins can see it in this listing&apos;s details.</small></label>
       {error && <div className="form-error">{error}</div>}
-      <button type="submit" className="button button-dark sell-submit" disabled={busy}>{busy ? photoProgress ? "Uploading photos…" : "Publishing your listing…" : "Publish your listing"} <ArrowUpRight size={16} /></button>
+      <button type="submit" className="button button-dark sell-submit" disabled={busy}>{busy ? photoProgress ? "Uploading photos…" : videoProgress ? "Uploading videos…" : "Publishing your listing…" : "Publish your listing"} <ArrowUpRight size={16} /></button>
       <p className="privacy-note">By publishing, you confirm you are authorized to share this property and contact details. The listing owner name is public; the contact phone is visible to anyone viewing a published listing while the administrator phone-display setting is on. Interested people can also send an enquiry through NILAY.</p>
     </form>
   </main><SiteFooter /></>;

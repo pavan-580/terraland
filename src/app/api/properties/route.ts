@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, propertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, isPropertyTypeForCategory } from "@/lib/market";
 import { currentUser, newId } from "@/lib/session";
-import { storePropertyPhotos, validateStoredPropertyPhotos } from "@/lib/property-images";
+import { storePropertyPhotos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 
 export async function GET(request: NextRequest) {
+  const user = await currentUser();
   const params = request.nextUrl.searchParams;
   const clauses = ["status = 'published'"];
   const values: (string | number)[] = [];
@@ -40,13 +41,14 @@ export async function GET(request: NextRequest) {
     values.push(max);
   }
   const rows = db.prepare(`
-    SELECT * FROM properties WHERE ${clauses.join(" AND ")}
-    ORDER BY createdAt DESC, rowid DESC
+    SELECT properties.*, users.email AS sellerEmail FROM properties
+    LEFT JOIN users ON users.id = properties.ownerId
+    WHERE ${clauses.join(" AND ")}
+    ORDER BY properties.createdAt DESC, properties.rowid DESC
   `).all(...values) as Record<string, unknown>[];
-  const showSellerPhones = getSiteSetting("showSellerPhones") !== "false";
+  const showSellerPhones = getSiteSetting("showSellerPhones") !== "false" && Boolean(user);
   return NextResponse.json(rows.map((row) => {
-    const property = propertyFromRow(row);
-    return showSellerPhones ? property : { ...property, phone: "" };
+    return publicPropertyFromRow(row, showSellerPhones);
   }), {
     headers: { "Cache-Control": "no-store, max-age=0" },
   });
@@ -116,6 +118,14 @@ export async function POST(request: NextRequest) {
     if (!validatedImages) return NextResponse.json({ error: "One or more uploaded photos are unavailable. Please upload them again." }, { status: 400 });
     images = validatedImages;
   }
+  let submittedVideos: unknown = [];
+  try {
+    submittedVideos = JSON.parse(value("videoUrls") || "[]");
+  } catch {
+    return NextResponse.json({ error: "One or more uploaded videos are unavailable. Please upload them again." }, { status: 400 });
+  }
+  const videos = await validateStoredPropertyVideos(submittedVideos);
+  if (!videos) return NextResponse.json({ error: "One or more uploaded videos are unavailable. Please upload them again." }, { status: 400 });
   const property = {
     id: newId(),
     title: value("title").slice(0, 100),
@@ -131,6 +141,7 @@ export async function POST(request: NextRequest) {
     unit: value("unit").slice(0, 20),
     image: images[0],
     images: JSON.stringify(images),
+    videos: JSON.stringify(videos),
     ownerId: user.id,
     badge: "New listing",
     description: value("description").slice(0, 1500),
@@ -154,14 +165,14 @@ export async function POST(request: NextRequest) {
   };
   db.prepare(`
     INSERT INTO properties
-      (id, title, type, listingCategory, pricePeriod, availability, guestCapacity, city, locality, price, area, unit, image, images, ownerId, badge, description, owner, phone,
+      (id, title, type, listingCategory, pricePeriod, availability, guestCapacity, city, locality, price, area, unit, image, images, videos, ownerId, badge, description, owner, phone,
        facing, approvals, loanAvailable, registrationAvailable, renovation, cornerPlot, roadWidth, surveyNumber,
        soilType, clearTitle, amenities, address, landmark, mapUrl, verified)
     VALUES
-      (@id, @title, @type, @listingCategory, @pricePeriod, @availability, @guestCapacity, @city, @locality, @price, @area, @unit, @image, @images, @ownerId, @badge, @description, @owner, @phone,
+      (@id, @title, @type, @listingCategory, @pricePeriod, @availability, @guestCapacity, @city, @locality, @price, @area, @unit, @image, @images, @videos, @ownerId, @badge, @description, @owner, @phone,
        @facing, @approvals, @loanAvailable, @registrationAvailable, @renovation, @cornerPlot, @roadWidth, @surveyNumber,
        @soilType, @clearTitle, @amenities, @address, @landmark, @mapUrl, @verified)
   `).run(property);
   db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(property.phone, user.id);
-  return NextResponse.json({ ...property, images, amenities, verified: false }, { status: 201 });
+  return NextResponse.json({ ...property, images, videos, amenities, verified: false }, { status: 201 });
 }

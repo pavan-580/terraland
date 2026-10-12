@@ -7,7 +7,7 @@ import type { Property } from "@/lib/market";
 import { formatListingPrice } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
 import { AmenitySelector } from "@/components/amenity-selector";
-import { uploadPropertyPhotos } from "@/lib/upload-property-photos";
+import { uploadPropertyPhotos, uploadPropertyVideos } from "@/lib/upload-property-photos";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export function MyListings() {
@@ -17,6 +17,7 @@ export function MyListings() {
   const [message, setMessage] = useState("");
   const [busyId, setBusyId] = useState("");
   const [photoProgress, setPhotoProgress] = useState<{ listingId: string; uploaded: number; total: number } | null>(null);
+  const [videoProgress, setVideoProgress] = useState<{ listingId: string; uploaded: number; total: number } | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<Property | null>(null);
 
   async function load() {
@@ -46,14 +47,21 @@ export function MyListings() {
     setError("");
     setMessage("");
     setPhotoProgress(null);
+    setVideoProgress(null);
     try {
       const formData = new FormData(event.currentTarget);
-      const photos = formData.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);
+      const media = formData.getAll("media").filter((file): file is File => file instanceof File && file.size > 0);
+      const photos = media.filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp)$/i.test(file.name));
       if (photos.length) {
         const photoUrls = await uploadPropertyPhotos(photos, (uploaded, total) => setPhotoProgress({ listingId: property.id, uploaded, total }));
-        formData.delete("photos");
         formData.set("photoUrls", JSON.stringify(photoUrls));
       }
+      const videos = media.filter((file) => file.type.startsWith("video/") || /\.(mp4|webm)$/i.test(file.name));
+      if (videos.length) {
+        const videoUrls = await uploadPropertyVideos(videos, (uploaded, total) => setVideoProgress({ listingId: property.id, uploaded, total }));
+        formData.set("videoUrls", JSON.stringify(videoUrls));
+      }
+      formData.delete("media");
       const response = await fetch(`/api/properties/${encodeURIComponent(property.id)}`, {
         method: "PATCH",
         body: formData,
@@ -67,6 +75,7 @@ export function MyListings() {
     } finally {
       setBusyId("");
       setPhotoProgress(null);
+      setVideoProgress(null);
     }
   }
 
@@ -112,12 +121,15 @@ export function MyListings() {
             </div>
           </div>
           <details className="my-listing-editor">
-            <summary><span>Edit listing details and photos</span><small>Changes are saved only when you select Save changes.</small></summary>
+            <summary><span>Edit listing details, photos, and videos</span><small>Changes are saved only when you select Save changes.</small></summary>
             <div className="my-listing-editor-content">
-              <p className="my-listing-instructions">Update the information customers see. Your current photos stay in place unless you choose replacement photos below.</p>
+              <p className="my-listing-instructions">Update the information customers see. Your current photos and videos stay in place unless you choose replacements below.</p>
               <div className="my-listing-current-photos" aria-label={`${property.images?.length ?? 1} current listing photos`}>
                 {(property.images?.length ? property.images : [property.image]).map((image, index) => <div key={`${image}-${index}`} role="img" aria-label={`Current listing photo ${index + 1}`} style={{ backgroundImage: `url("${image}")` }} />)}
               </div>
+              {property.videos?.length ? <div className="my-listing-current-photos" aria-label={`${property.videos.length} current listing videos`}>
+                {property.videos.map((video, index) => <video key={`${video}-${index}`} src={video} controls preload="metadata" aria-label={`Current listing video ${index + 1}`} />)}
+              </div> : null}
               <div className="my-listing-fields">
             <label>Listing title<input name="title" required minLength={4} maxLength={100} defaultValue={property.title} /></label>
             <ListingClassificationFields category={property.listingCategory ?? "sale"} type={property.type} pricePeriod={property.pricePeriod ?? "total"}
@@ -146,11 +158,12 @@ export function MyListings() {
             <label className="my-listing-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
             <label className="my-listing-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
             <label className="my-listing-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
-            <label className="my-listing-wide">Contact phone<input name="phone" required type="tel" pattern="[+()0-9 -]{8,24}" defaultValue={property.phone} /></label>
+            <label className="my-listing-wide">Contact phone<input name="phone" required type="tel" inputMode="tel" pattern="[+()0-9 -]{8,24}" defaultValue={property.phone} placeholder="98765 43210" /></label>
             <label className="my-listing-wide">Description<textarea name="description" required minLength={10} maxLength={1500} rows={4} defaultValue={property.description} /></label>
-            <label className="my-listing-wide">Replace listing photos<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label>
-            <p className="my-listing-wide photo-help">Leave photos empty to keep the current gallery. Choose as many JPEG, PNG, or WebP files as you need (up to 5 MB each) to replace it.</p>
+            <label className="my-listing-wide">Replace listing photos and videos<input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm" multiple /></label>
+            <p className="my-listing-wide photo-help">Choose photos and videos together. Selected photos replace current photos; selected videos replace current videos. Leave either type unselected to keep it. Up to 5 MB per photo and 100 MB per video.</p>
             {photoProgress?.listingId === property.id && <p className="my-listing-wide photo-help" role="status">Uploading property photos… {photoProgress.uploaded}/{photoProgress.total}</p>}
+            {videoProgress?.listingId === property.id && <p className="my-listing-wide photo-help" role="status">Uploading property videos… {videoProgress.uploaded}/{videoProgress.total}</p>}
               </div>
               <div className="my-listing-actions">
                 <button className="button button-dark" type="submit" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save changes"}</button>

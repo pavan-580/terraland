@@ -45,6 +45,11 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
   }, [load]);
+  useEffect(() => {
+    const refreshContacts = () => { void load(); };
+    window.addEventListener("terraland:account-changed", refreshContacts);
+    return () => window.removeEventListener("terraland:account-changed", refreshContacts);
+  }, [load]);
   const submitSearch = () => {
     setHasSearched(true);
     setFiltersOpen(false);
@@ -55,8 +60,8 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
       <button type="button" className={`mobile-filter-toggle${hasSearched ? " is-compact" : ""}`} aria-label={filtersOpen ? "Close search filters" : "Open search filters"} aria-expanded={filtersOpen} aria-controls="search-filter-panel" onClick={() => setFiltersOpen((open) => !open)}>{hasSearched ? <Search size={18} /> : <SlidersHorizontal size={17} />}<span>{hasSearched ? "Search filters" : "Refine your search"}</span><ChevronDown size={16} className={filtersOpen ? "is-rotated" : ""} /></button>
       <aside id="search-filter-panel" className={`filter-panel${filtersOpen ? " is-open" : ""}`} aria-label="Search filters">
         <div className="filter-title"><strong>Refine your search</strong><SlidersHorizontal size={17} /></div>
-        <label className="filter-label">KEYWORDS<input value={q} onChange={(event) => setQ(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} placeholder="Try “Shankarpally”" /></label>
-        <label className="filter-label">LOCATION<input value={city} onChange={(event) => setCity(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} placeholder="Any city or state in India" /></label>
+        <label className="filter-label">KEYWORDS<input autoComplete="off" value={q} onChange={(event) => setQ(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} placeholder="Try “Shankarpally”" /></label>
+        <label className="filter-label">LOCATION<input autoComplete="off" value={city} onChange={(event) => setCity(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitSearch(); }} placeholder="Any city or state in India" /></label>
         <label className="filter-label">LISTING TYPE<span className="select-wrap"><select value={category} onChange={(event) => {
           const nextCategory = event.target.value as ListingCategory;
           setCategory(nextCategory);
