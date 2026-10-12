@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { SearchResults } from "@/components/search-results";
 import { rentalTypes } from "@/lib/market";
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Explore land & plots" };
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const requestedType = typeof params.type === "string" ? params.type.replace(/\s/g, "").toLowerCase() : "";
-  const requestedTypeIsRental = rentalTypes.some((type) => type.replace(/\s/g, "").toLowerCase() === requestedType);
+  const requestedTypeCategory = requestedType ? db.prepare("SELECT listingCategory FROM properties WHERE status = 'published' AND REPLACE(LOWER(type), ' ', '') = ? ORDER BY createdAt DESC LIMIT 1").get(requestedType) as { listingCategory: string } | undefined : undefined;
+  const requestedTypeIsRental = rentalTypes.some((type) => type.replace(/\s/g, "").toLowerCase() === requestedType) || requestedTypeCategory?.listingCategory === "rent";
   const initial = {
     q: typeof params.q === "string" ? params.q : "",
     city: typeof params.city === "string" ? params.city : "",

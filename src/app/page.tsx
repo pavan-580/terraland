@@ -17,6 +17,9 @@ const places = [
 
 export default async function Home() {
   const user = await currentUser();
+  const savedPropertyTypes = (db.prepare("SELECT DISTINCT type FROM properties WHERE status = 'published' AND TRIM(type) != '' ORDER BY type COLLATE NOCASE").all() as { type: string }[])
+    .map(({ type }) => type.trim()).filter(Boolean);
+  const searchablePropertyTypes = [...new Map([...allPropertyTypes, ...savedPropertyTypes].map((type) => [type.toLocaleLowerCase(), type])).values()];
   const latestProperties = (db.prepare(`
     SELECT properties.*, users.email AS sellerEmail FROM properties
     LEFT JOIN users ON users.id = properties.ownerId
@@ -40,7 +43,7 @@ export default async function Home() {
             <p>Explore land and plots for sale, plus farmhouses, resorts, and other places to rent.</p>
             <form action="/search" className="hero-search">
               <label className="search-field"><span>LOCATION</span><input name="q" placeholder="City, state, neighbourhood or project" /></label>
-              <label className="search-field type-field"><span>WHAT ARE YOU LOOKING FOR?</span><select name="type" defaultValue=""><option value="">Any property type</option>{allPropertyTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label className="search-field type-field"><span>WHAT ARE YOU LOOKING FOR?</span><select name="type" defaultValue=""><option value="">Any property type</option>{searchablePropertyTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
               <button className="button button-dark search-submit" type="submit">Find a place <ArrowUpRight size={17} /></button>
             </form>
             <div className="hero-under"><span><Check size={14} /> Clear, detailed listings</span><Link href="/search?category=sale">Browse land for sale <ArrowUpRight size={14} /></Link></div>

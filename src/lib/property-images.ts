@@ -1,7 +1,27 @@
 import "server-only";
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { newId } from "@/lib/session";
+import { getPropertyUploadDirectory } from "@/lib/storage-path";
+
+let uploadDirectoryReady: Promise<string> | undefined;
+
+export async function ensurePropertyUploadDirectory() {
+  if (!uploadDirectoryReady) uploadDirectoryReady = (async () => {
+    const uploadDirectory = getPropertyUploadDirectory();
+    await mkdir(uploadDirectory, { recursive: true });
+    const previousDirectory = path.join(process.cwd(), "public", "uploads");
+    if (previousDirectory !== uploadDirectory) {
+      try {
+        for (const filename of await readdir(previousDirectory)) {
+          if (/^[a-zA-Z0-9._-]+$/.test(filename)) await copyFile(path.join(previousDirectory, filename), path.join(uploadDirectory, filename)).catch(() => undefined);
+        }
+      } catch { /* No earlier local upload directory to migrate. */ }
+    }
+    return uploadDirectory;
+  })();
+  return uploadDirectoryReady;
+}
 
 export async function storePropertyPhotos(files: File[]) {
   const validatedFiles: { file: File; extension: string }[] = [];
@@ -16,8 +36,7 @@ export async function storePropertyPhotos(files: File[]) {
     validatedFiles.push({ file, extension });
   }
 
-  const uploadDirectory = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDirectory, { recursive: true });
+  const uploadDirectory = await ensurePropertyUploadDirectory();
   const images: string[] = [];
   for (const photo of validatedFiles) {
     const filename = `${newId()}.${photo.extension}`;
@@ -39,8 +58,7 @@ export async function storePropertyVideos(files: File[]) {
     validatedFiles.push({ file, extension });
   }
 
-  const uploadDirectory = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDirectory, { recursive: true });
+  const uploadDirectory = await ensurePropertyUploadDirectory();
   const videos: string[] = [];
   for (const video of validatedFiles) {
     const filename = `${newId()}.${video.extension}`;
@@ -52,7 +70,7 @@ export async function storePropertyVideos(files: File[]) {
 
 export async function validateStoredPropertyPhotos(value: unknown): Promise<string[] | null> {
   if (!Array.isArray(value) || value.length === 0) return null;
-  const uploadDirectory = path.join(process.cwd(), "public", "uploads");
+  const uploadDirectory = await ensurePropertyUploadDirectory();
   const images: string[] = [];
   for (const image of value) {
     if (typeof image !== "string" || !/^\/uploads\/[a-zA-Z0-9._-]+$/.test(image)) return null;
@@ -68,7 +86,7 @@ export async function validateStoredPropertyPhotos(value: unknown): Promise<stri
 
 export async function validateStoredPropertyVideos(value: unknown): Promise<string[] | null> {
   if (!Array.isArray(value)) return null;
-  const uploadDirectory = path.join(process.cwd(), "public", "uploads");
+  const uploadDirectory = await ensurePropertyUploadDirectory();
   const videos: string[] = [];
   for (const video of value) {
     if (typeof video !== "string" || !/^\/uploads\/[a-zA-Z0-9._-]+\.(mp4|webm)$/.test(video)) return null;

@@ -20,7 +20,8 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState("");
-  const propertyOptions = category === "rent" ? rentalTypes : propertyTypes;
+  const propertyOptions = [...new Map([...(category === "rent" ? rentalTypes : propertyTypes), type, ...properties.map((property) => property.type)]
+    .filter((item): item is string => Boolean(item?.trim())).map((item) => [item.toLocaleLowerCase(), item])).values()];
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
