@@ -278,32 +278,14 @@ export function AdminDashboard() {
     setBackupError("");
     setBackupMessage("");
     try {
-      const response = await fetch("/api/admin/backup", { cache: "no-store" });
-      if (!response.ok) {
-        const result = await response.json() as { error?: string };
-        throw new Error(result.error ?? "The backup could not be downloaded.");
-      }
-      const blob = await response.blob();
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
-      let filename = `terraland-backup-${new Date().toISOString().slice(0, 10)}.terraland-backup.gz`;
-      if (!isGzip) {
-        const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "").trim();
-        const backup = JSON.parse(text) as { format?: string; version?: number };
-        if (backup.format !== "terraland-backup" || backup.version !== 1) {
-          throw new Error("The server did not return a valid backup file. No file was downloaded.");
-        }
-        filename = filename.replace(/\.gz$/, ".json");
-      }
-      const objectUrl = URL.createObjectURL(blob);
+      const response = await fetch("/api/admin/backup", { method: "HEAD", cache: "no-store" });
+      if (!response.ok) throw new Error("Your admin session expired. Sign in again and retry the download.");
       const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = filename;
+      link.href = "/api/admin/backup";
       document.body.append(link);
       link.click();
       link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      setBackupMessage("Backup downloaded. You can upload this file here to restore it.");
+      setBackupMessage("Backup download started directly to your device. Wait for it to finish before uploading the .gz file.");
     } catch (reason) {
       setBackupError(reason instanceof Error ? reason.message : "The backup could not be downloaded.");
     } finally {
@@ -349,7 +331,7 @@ export function AdminDashboard() {
     <section className="admin-backup-card" aria-labelledby="admin-backup-title">
       {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
       {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}
-      <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Download all site data and listing photos/videos. To restore, choose the downloaded .gz backup from your device.</p></div>
+      <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Stream a portable copy of all site data and listing photos/videos to your device. Upload the completed .gz file to restore it.</p></div>
       <div className="admin-backup-actions">
         <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".gz,.json,.terraland-backup,application/gzip,application/json" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
         <button className="admin-backup-button admin-backup-upload" type="button" disabled={backupBusy} onClick={() => backupInputRef.current?.click()}><Upload size={16} aria-hidden="true" />{backupBusy ? "Working…" : "Upload backup"}</button>
