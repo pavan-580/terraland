@@ -452,7 +452,7 @@ export function AdminDashboard() {
             <label>Owner name<input name="owner" required defaultValue={property.owner} /></label>
             <label>Phone<input name="phone" required defaultValue={property.phone} /></label>
             <label>Price or rate (₹)<input name="price" type="number" min="1" required defaultValue={property.price} /></label>
-            <label>Area<input name="area" type="number" min="0.01" step="any" required defaultValue={property.area} /></label>
+            <label>Area<input name="area" type="text" inputMode="decimal" maxLength={80} required defaultValue={property.area} /></label>
             <label>Area unit<input name="unit" required defaultValue={property.unit} /></label>
             <label className="admin-wide">Amenities (one per line)<textarea name="amenities" rows={2} defaultValue={(property.amenities ?? []).join("\n")} /></label>
             <label className="admin-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>

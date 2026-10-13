@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
-import { isGoogleMapsUrl, isListingCategory } from "@/lib/market";
+import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 import { storePropertyPhotos, storePropertyVideos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 
@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const description = value("description");
   const phone = value("phone");
   const price = Number(value("price"));
-  const area = Number(value("area"));
+  const area = parseListingArea(value("area"));
   const listingCategory = value("listingCategory") || String(row.listingCategory ?? "sale");
   const pricePeriod = value("pricePeriod") || String(row.pricePeriod ?? "total");
   const availability = form.has("availability") ? value("availability") : String(row.availability ?? "");
@@ -45,6 +45,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (value("mapUrl").length > 500 || (value("mapUrl") !== "" && !isGoogleMapsUrl(value("mapUrl")))) {
     return NextResponse.json({ error: "Paste a valid HTTPS Google Maps link for this property." }, { status: 400 });
   }
+  if (area === null) return NextResponse.json({ error: "Enter a positive land area. Commas are allowed, for example 58,741." }, { status: 400 });
+  if (!Number.isFinite(price) || price <= 0) return NextResponse.json({ error: "Enter a price greater than zero." }, { status: 400 });
+  if (!/^[+()\d\s-]{8,24}$/.test(phone)) return NextResponse.json({ error: "Enter a valid contact phone number." }, { status: 400 });
   const choice = (key: string) => value(key);
   const choices = ["loanAvailable", "registrationAvailable", "cornerPlot", "clearTitle"];
   const amenities = [...new Set(form.getAll("amenities").map((item) => String(item).trim()).filter(Boolean))].slice(0, 40);
@@ -56,14 +59,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     value("address").length > 240 || value("landmark").length > 120 || amenities.join(", ").length > 2400 ||
     choices.some((key) => choice(key) && !["yes", "no"].includes(choice(key))) ||
     amenities.some((item) => item.length > 60) ||
-    !/^[+()\d\s-]{8,24}$/.test(phone) ||
     !isListingCategory(listingCategory) ||
     !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
-    !Number.isFinite(price) || price <= 0 ||
     availability.length > 240 ||
-    (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-    !Number.isFinite(area) || area <= 0) {
-    return NextResponse.json({ error: "Check the listing details, price, area, and phone number." }, { status: 400 });
+    (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000))) {
+    return NextResponse.json({ error: "Check the title, property type, location, description, and other required details." }, { status: 400 });
   }
   const files = form.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);
   let images: string[] = [];

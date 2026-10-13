@@ -40,6 +40,13 @@ export type Property = {
   createdAt?: string;
 };
 
+export function parseListingArea(value: unknown): number | null {
+  const areaText = String(value ?? "").trim().replace(/[\s,]/g, "");
+  if (!/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(areaText)) return null;
+  const area = Number(areaText);
+  return Number.isFinite(area) && area > 0 ? area : null;
+}
+
 export type ListingCategory = "sale" | "rent";
 export type PricePeriod = "total" | "per-day" | "per-night" | "per-month" | "per-event";
 

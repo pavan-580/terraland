@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, propertyFromRow, setSiteSetting } from "@/lib/db";
-import { isGoogleMapsUrl, isListingCategory } from "@/lib/market";
+import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
 async function requireAdmin() {
@@ -166,7 +166,7 @@ export async function PATCH(request: NextRequest) {
     const phone = String(input.phone ?? "").trim();
     const description = String(input.description ?? "").trim();
     const price = Number(input.price);
-    const area = Number(input.area);
+    const area = parseListingArea(input.area);
     const images = Array.isArray(input.images)
       ? input.images.filter((image): image is string => typeof image === "string").map((image) => image.trim()).filter(Boolean)
       : [];
@@ -190,6 +190,8 @@ export async function PATCH(request: NextRequest) {
     const detailAmenities = Array.isArray(input.amenities)
       ? input.amenities.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean).slice(0, 40)
       : [];
+    if (area === null) return NextResponse.json({ error: "Enter a positive land area. Commas are allowed, for example 58,741." }, { status: 400 });
+    if (!Number.isFinite(price) || price <= 0) return NextResponse.json({ error: "Enter a price greater than zero." }, { status: 400 });
     const choiceIsInvalid = detailChoices.some((key) => detailText(key) && !["yes", "no"].includes(detailText(key)));
     if (detailText("mapUrl").length > 500 ||
       (detailText("mapUrl") !== "" && !isGoogleMapsUrl(detailText("mapUrl")))) {
@@ -200,10 +202,9 @@ export async function PATCH(request: NextRequest) {
       !/^[+()\d\s-]{8,24}$/.test(phone) || description.length < 10 || description.length > 1500 ||
       !isListingCategory(listingCategory) ||
       !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
-      !Number.isFinite(price) || price <= 0 ||
       availability.length > 240 ||
       (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-      !Number.isFinite(area) || area <= 0 || !status || !type || type.length > 60 || !images.length ||
+      !status || !type || type.length > 60 || !images.length ||
       !unit || unit.length > 20 || !badge || badge.length > 60 || verified < 0 ||
       detailText("facing").length > 40 || detailText("approvals").length > 120 || detailText("renovation").length > 120 ||
       detailText("roadWidth").length > 40 || detailText("surveyNumber").length > 80 || detailText("soilType").length > 80 ||

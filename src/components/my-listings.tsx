@@ -156,7 +156,7 @@ export function MyListings() {
             />
             <label>City or state<input name="city" required maxLength={80} defaultValue={property.city} /></label>
             <label>Neighbourhood or village<input name="locality" required maxLength={80} defaultValue={property.locality} /></label>
-            <label>Land area<input name="area" required type="number" min="0.01" step="any" defaultValue={property.area} placeholder="Enter the land area" /></label>
+            <label>Land area<input name="area" required type="text" inputMode="decimal" maxLength={80} defaultValue={property.area} placeholder="e.g. 58,741 or 1.25" /></label>
             <label>Area unit<input name="unit" required maxLength={20} defaultValue={property.unit} /></label>
             <label className="my-listing-wide">Price or rate (₹)<input name="price" required type="number" min="1" step="1" defaultValue={property.price} /></label>
             <AmenitySelector key={`${property.id}-${(property.amenities ?? []).join("|")}`} selected={property.amenities ?? []} className="my-listing-wide" />

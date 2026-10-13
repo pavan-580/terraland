@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
-import { isGoogleMapsUrl, isListingCategory } from "@/lib/market";
+import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser, newId } from "@/lib/session";
 import { storePropertyPhotos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Complete all required listing details." }, { status: 400 });
   }
   const price = Number(value("price"));
-  const area = Number(value("area"));
+  const area = parseListingArea(value("area"));
   const listingCategory = value("listingCategory") || "sale";
   const pricePeriod = value("pricePeriod") || "total";
   const allowedPricePeriods: Record<string, string[]> = {
@@ -78,6 +78,11 @@ export async function POST(request: NextRequest) {
   if (value("mapUrl").length > 500 || (value("mapUrl") !== "" && !isGoogleMapsUrl(value("mapUrl")))) {
     return NextResponse.json({ error: "Paste a valid HTTPS Google Maps link for this property." }, { status: 400 });
   }
+  if (area === null) return NextResponse.json({ error: "Enter a positive land area. Commas are allowed, for example 58,741." }, { status: 400 });
+  if (!Number.isFinite(price) || price <= 0) return NextResponse.json({ error: "Enter a price greater than zero." }, { status: 400 });
+  if (!/^\+[1-9]\d{7,14}$/.test(value("phone").replace(/[\s()-]/g, ""))) {
+    return NextResponse.json({ error: "Enter a valid contact phone number." }, { status: 400 });
+  }
   const choice = (key: string) => value(key);
   const choices = ["loanAvailable", "registrationAvailable", "cornerPlot", "clearTitle"];
   const amenities = [...new Set(form.getAll("amenities").map((item) => String(item).trim()).filter(Boolean))].slice(0, 40);
@@ -89,15 +94,12 @@ export async function POST(request: NextRequest) {
     value("address").length > 240 || value("landmark").length > 120 || amenities.join(", ").length > 2400 ||
     choices.some((key) => choice(key) && !["yes", "no"].includes(choice(key))) ||
     amenities.some((item) => item.length > 60) ||
-    !/^\+[1-9]\d{7,14}$/.test(value("phone").replace(/[\s()-]/g, "")) ||
     !isListingCategory(listingCategory) ||
     value("type").length < 2 ||
     !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
-    !Number.isFinite(price) || price <= 0 ||
     availability.length > 240 ||
-    (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-    !Number.isFinite(area) || area <= 0) {
-    return NextResponse.json({ error: "Enter a valid price and land area." }, { status: 400 });
+    (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000))) {
+    return NextResponse.json({ error: "Check the title, property type, location, description, and other required details." }, { status: 400 });
   }
   const files = form.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);
   let images: string[];
