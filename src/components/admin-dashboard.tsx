@@ -5,6 +5,8 @@ import type { Property } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import Link from "next/link";
+import { Download, Upload } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type AdminUser = { id: string; name: string; email: string; phone: string; createdAt: string; listingCount: number };
 type AdminInquiry = {
@@ -58,10 +60,12 @@ function formatAdminDate(value: string) {
 
 
 export function AdminDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], registrationNotifications: [], settings: { showSellerPhones: true } });
   const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews">("properties");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
+  const backupInputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -69,6 +73,7 @@ export function AdminDashboard() {
   const [retryingEmail, setRetryingEmail] = useState(false);
   const [retryingInquiryEmail, setRetryingInquiryEmail] = useState(false);
   const [savingPhoneSetting, setSavingPhoneSetting] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ type: "user" | "property" | "inquiry" | "review"; id: string } | null>(null);
 
   function reviewPendingListings() {
@@ -266,6 +271,59 @@ export function AdminDashboard() {
     }
   }
 
+  async function downloadBackup() {
+    setBackupBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/backup", { cache: "no-store" });
+      if (!response.ok) {
+        const result = await response.json() as { error?: string };
+        throw new Error(result.error ?? "The backup could not be downloaded.");
+      }
+      const objectUrl = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `terraland-backup-${new Date().toISOString().slice(0, 10)}.terraland-backup.gz`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      setMessage("Backup downloaded with the database and listing photos/videos.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The backup could not be downloaded.");
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  async function uploadBackup(file: File | undefined) {
+    if (!file) return;
+    if (!window.confirm("Restore this backup? It will replace the current site data and listing media.")) {
+      if (backupInputRef.current) backupInputRef.current.value = "";
+      return;
+    }
+    setBackupBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/backup", {
+        method: "POST",
+        headers: { "Content-Type": "application/gzip" },
+        body: file,
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The backup could not be restored.");
+      setMessage(`${result.message ?? "Backup restored."} Refreshing the dashboard…`);
+      window.setTimeout(() => router.replace("/sign-in?next=%2Fadmin"), 1200);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The backup could not be restored.");
+    } finally {
+      setBackupBusy(false);
+      if (backupInputRef.current) backupInputRef.current.value = "";
+    }
+  }
+
   return <section className="admin-content">
     {pendingDelete && <ConfirmDialog title="Delete this record?" description="This action cannot be undone. The selected record will be permanently deleted." confirmLabel="Delete permanently" error={error} busy={busyId === pendingDelete.id} onCancel={() => setPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
     <div className="admin-setting-card">
@@ -274,6 +332,14 @@ export function AdminDashboard() {
         <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
       </button>
     </div>
+    <section className="admin-backup-card" aria-labelledby="admin-backup-title">
+      <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Download a portable copy of the database and listing photos/videos. Upload a backup to restore the site on this server.</p></div>
+      <div className="admin-backup-actions">
+        <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".terraland-backup.gz,application/gzip" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
+        <button className="admin-backup-button admin-backup-upload" type="button" disabled={backupBusy} onClick={() => backupInputRef.current?.click()}><Upload size={16} aria-hidden="true" />{backupBusy ? "Working…" : "Upload backup"}</button>
+        <button className="admin-backup-button admin-backup-download" type="button" disabled={backupBusy} onClick={() => void downloadBackup()}><Download size={16} aria-hidden="true" />Download backup</button>
+      </div>
+    </section>
     {data.registrationNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
       <div><strong>Registration emails are queued</strong><p>New accounts can sign in. Configure a Resend API key and verified sender to deliver notices to pavansai580@gmail.com.</p></div>
       <button className="button button-dark" type="button" disabled={retryingEmail} onClick={() => void retryRegistrationEmails()}>{retryingEmail ? "Retrying…" : "Retry queued emails"}</button>

@@ -31,21 +31,24 @@ DEPLOY
 
    Replace the example with the same public HTTPS URL configured in .env.
 
-5. Start the app with persistent database and uploaded-photo volumes:
+5. Start the app with persistent storage for the database and all uploaded listing media:
 
       docker run -d --name terraland --restart unless-stopped \
         -p 3000:3000 --env-file .env \
         -v terraland-data:/app/data \
-        -v terraland-uploads:/app/public/uploads \
         terraland:latest
 
 6. Configure your TLS reverse proxy to forward HTTPS traffic to port 3000.
-   Keep port 3000 private to the server or trusted proxy.
+   Keep port 3000 private to the server or trusted proxy. Allow request bodies
+   up to 1 GB and a 300-second upload timeout for /api/admin/backup; for nginx,
+   set client_max_body_size 1g in the site configuration.
 
 BACKUPS AND UPDATES
 
-- Back up both terraland-data and terraland-uploads volumes regularly.
+- The terraland-data volume contains both the SQLite database and listing media.
+  Back up this volume regularly. The admin dashboard also provides a portable
+  Download backup / Upload backup file containing both.
 - This SQLite/local-photo deployment supports one app instance only.
 - For an update, build a new image from the new source and restart the
-  container while retaining both named volumes.
+  container while retaining the named volume.
 - For multiple app instances, migrate to managed database and image storage.

@@ -650,6 +650,21 @@ button:disabled { opacity: .55; cursor: wait; }
 .admin-setting-card { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 17px 19px; border: 1px solid var(--line); background: var(--white); }
 .admin-setting-card strong { color: var(--ink); font-size: 13px; }
 .admin-setting-card p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.admin-backup-card { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 22px 24px; border: 1px solid var(--line); background: var(--white); }
+.admin-backup-copy { max-width: 620px; }
+.admin-backup-copy .eyebrow { color: var(--clay); font-size: 9px; letter-spacing: .9px; }
+.admin-backup-copy h2 { margin: 7px 0 5px; color: var(--ink); font: 400 23px/1.15 var(--serif); }
+.admin-backup-copy p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.admin-backup-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; flex: 0 0 auto; }
+.admin-backup-file { display: none; }
+.admin-backup-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 43px; padding: 0 16px; border: 1px solid var(--forest); border-radius: 2px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease; }
+.admin-backup-button:hover:not(:disabled) { transform: translateY(-1px); }
+.admin-backup-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.admin-backup-button:disabled { cursor: wait; opacity: .65; }
+.admin-backup-upload { background: var(--forest); color: var(--white); }
+.admin-backup-upload:hover:not(:disabled) { background: var(--lime); border-color: var(--lime); }
+.admin-backup-download { background: transparent; color: var(--forest); }
+.admin-backup-download:hover:not(:disabled) { background: var(--forest); color: var(--white); }
 .admin-setting-toggle { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-width: 112px; padding: 9px 12px; border: 1px solid #b8c0b6; border-radius: 999px; background: #eef0ed; color: #59635a; font-size: 10px; font-weight: 700; }
 .admin-setting-toggle > span { width: 9px; height: 9px; border-radius: 50%; background: #8a918a; }
 .admin-setting-toggle.is-on { border-color: #3a7651; background: #e8f2eb; color: #27613d; }
@@ -870,6 +885,9 @@ fieldset.amenity-selector label span { overflow-wrap: anywhere; }
   .listing-admin-segment { display: contents; }
   .listing-admin-segment button, .listing-admin-tabs > button { min-width: 0; min-height: 38px; align-self: center; padding: 6px 4px; font-size: 10px; white-space: nowrap; }
   .admin-setting-card { align-items: flex-start; flex-direction: column; }
+  .admin-backup-card { align-items: stretch; flex-direction: column; gap: 16px; padding: 18px; }
+  .admin-backup-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); justify-content: stretch; }
+  .admin-backup-button { padding-inline: 10px; font-size: 10px; }
   .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .property-reviews { margin-top: 45px; padding: 18px; }
   .reviews-heading h2 { font-size: 26px; }
