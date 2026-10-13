@@ -271,30 +271,16 @@ export function AdminDashboard() {
     }
   }
 
-  async function downloadBackup() {
-    setBackupBusy(true);
+  function downloadBackup() {
     setError("");
     setMessage("");
-    try {
-      const response = await fetch("/api/admin/backup", { cache: "no-store" });
-      if (!response.ok) {
-        const result = await response.json() as { error?: string };
-        throw new Error(result.error ?? "The backup could not be downloaded.");
-      }
-      const objectUrl = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a");
-      link.href = objectUrl;
-      link.download = `terraland-backup-${new Date().toISOString().slice(0, 10)}.terraland-backup.gz`;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      setMessage("Backup downloaded with the database and listing photos/videos.");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The backup could not be downloaded.");
-    } finally {
-      setBackupBusy(false);
-    }
+    const link = document.createElement("a");
+    link.href = "/api/admin/backup";
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setMessage("Backup download started. Check your Downloads folder.");
   }
 
   async function uploadBackup(file: File | undefined) {
@@ -333,9 +319,9 @@ export function AdminDashboard() {
       </button>
     </div>
     <section className="admin-backup-card" aria-labelledby="admin-backup-title">
-      <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Download a portable copy of the database and listing photos/videos. Upload a backup to restore the site on this server.</p></div>
+      <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Download all site data and listing photos/videos. To restore, choose the downloaded .gz backup from your device.</p></div>
       <div className="admin-backup-actions">
-        <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".terraland-backup.gz,application/gzip" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
+        <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".gz,application/gzip" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
         <button className="admin-backup-button admin-backup-upload" type="button" disabled={backupBusy} onClick={() => backupInputRef.current?.click()}><Upload size={16} aria-hidden="true" />{backupBusy ? "Working…" : "Upload backup"}</button>
         <button className="admin-backup-button admin-backup-download" type="button" disabled={backupBusy} onClick={() => void downloadBackup()}><Download size={16} aria-hidden="true" />Download backup</button>
       </div>
