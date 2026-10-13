@@ -1,5 +1,5 @@
 import "server-only";
-import { access, copyFile, mkdir, readdir, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { newId } from "@/lib/session";
 import { getPropertyUploadDirectory } from "@/lib/storage-path";
@@ -66,6 +66,17 @@ export async function storePropertyVideos(files: File[]) {
     videos.push(`/uploads/${filename}`);
   }
   return videos;
+}
+
+export async function deleteStoredPropertyFiles(sources: string[]) {
+  const storedPaths = [...new Set(sources)].filter((source) => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(source));
+  if (!storedPaths.length) return;
+  const uploadDirectory = await ensurePropertyUploadDirectory();
+  for (const source of storedPaths) {
+    await unlink(path.join(uploadDirectory, path.basename(source))).catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+  }
 }
 
 export async function validateStoredPropertyPhotos(value: unknown): Promise<string[] | null> {

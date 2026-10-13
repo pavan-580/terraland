@@ -5,7 +5,7 @@ import type { Property } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import Link from "next/link";
-import { Download, Upload } from "lucide-react";
+import { ArrowUpRight, Download, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type AdminUser = { id: string; name: string; email: string; phone: string; createdAt: string; listingCount: number };
@@ -93,6 +93,62 @@ type DashboardData = {
 function formatAdminDate(value: string) {
   const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
   return new Date(normalized).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" });
+}
+
+function readMediaArray(value: FormDataEntryValue | null): string[] {
+  try {
+    const parsed: unknown = JSON.parse(String(value ?? "[]"));
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function AdminListingMediaManager({ title, initialImages, initialVideos, disabled }: {
+  title: string;
+  initialImages: string[];
+  initialVideos: string[];
+  disabled: boolean;
+}) {
+  const [images, setImages] = useState(initialImages);
+  const [videos, setVideos] = useState(initialVideos);
+  const [preview, setPreview] = useState<{ type: "photo" | "video"; src: string; index: number } | null>(null);
+
+  function removeMedia(type: "photo" | "video", index: number) {
+    if (type === "photo") setImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    else setVideos((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setPreview(null);
+  }
+
+  return <section className="admin-media-manager admin-wide" aria-label={`Photos and videos for ${title}`}>
+    <input type="hidden" name="images" value={JSON.stringify(images)} />
+    <input type="hidden" name="videos" value={JSON.stringify(videos)} />
+    <div className="admin-media-heading"><div><strong>Listing photos &amp; videos</strong><span>{images.length} photos · {videos.length} videos</span><small>Scroll sideways to browse. Tap media to preview; remove it, then save the listing.</small></div></div>
+    {images.length + videos.length ? <div className="admin-media-strip">
+      {images.map((src, index) => <article className="admin-media-tile" key={`photo-${src}-${index}`}>
+        <button type="button" className="admin-media-preview" onClick={() => setPreview({ type: "photo", src, index })} aria-label={`Preview photo ${index + 1}`}>
+          <img src={src} alt={`Listing photo ${index + 1}`} loading="lazy" />
+        </button>
+        <span>Photo {index + 1}</span>
+        <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia("photo", index)}>Remove photo</button>
+      </article>)}
+      {videos.map((src, index) => <article className="admin-media-tile" key={`video-${src}-${index}`}>
+        <button type="button" className="admin-media-preview" onClick={() => setPreview({ type: "video", src, index })} aria-label={`Play video ${index + 1}`}>
+          <video src={src} muted playsInline preload="metadata" />
+          <span className="admin-media-play" aria-hidden="true">▶</span>
+        </button>
+        <span>Video {index + 1}</span>
+        <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia("video", index)}>Remove video</button>
+      </article>)}
+    </div> : <p className="admin-media-empty">This listing has no photos or videos.</p>}
+    {preview && <div className="admin-media-lightbox" role="dialog" aria-modal="true" aria-label={`${preview.type === "photo" ? "Photo" : "Video"} preview`} onClick={() => setPreview(null)}>
+      <div className="admin-media-lightbox-content" onClick={(event) => event.stopPropagation()}>
+        <div className="admin-media-lightbox-heading"><strong>{title} · {preview.type} {preview.index + 1}</strong><button type="button" aria-label="Close preview" onClick={() => setPreview(null)}>×</button></div>
+        {preview.type === "photo" ? <img className="admin-media-large-image" src={preview.src} alt={`${title} photo ${preview.index + 1}`} /> : <video className="admin-media-large-video" src={preview.src} controls playsInline autoPlay />}
+        <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia(preview.type, preview.index)}>Remove this {preview.type}</button>
+      </div>
+    </div>}
+  </section>;
 }
 
 
@@ -435,6 +491,7 @@ export function AdminDashboard() {
         <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? Boolean(property.deleteRequestedAt) : property.status !== "hidden" && (property.listingCategory ?? "sale") === listingTab).map((property) =>
         <details className="admin-listing-details" key={property.id} open={Boolean(property.deleteRequestedAt && listingTab === "pending")}>
         <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : listingTab === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span><span className="admin-listing-meta">Listed {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span></span><span className="admin-listing-open">Open details</span></summary>
+        <Link className="admin-listing-page-arrow" href={`/properties/${encodeURIComponent(property.id)}`} target="_blank" rel="noreferrer" aria-label={`Open ${property.title} listing page`} title="Open listing page"><ArrowUpRight size={18} aria-hidden="true" /></Link>
         <form className="admin-record" onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
@@ -445,7 +502,7 @@ export function AdminDashboard() {
             listingCategory: form.get("listingCategory"), pricePeriod: form.get("pricePeriod"),
             availability: form.get("availability"), guestCapacity: form.get("guestCapacity"),
             verified: form.get("verified") === "on", status: property.status ?? "published",
-            images: String(form.get("images") ?? "").split(/\r?\n/).map((image) => image.trim()).filter(Boolean),
+            images: readMediaArray(form.get("images")), videos: readMediaArray(form.get("videos")),
             facing: form.get("facing"), approvals: form.get("approvals"),
             loanAvailable: form.get("loanAvailable"), registrationAvailable: form.get("registrationAvailable"),
             renovation: form.get("renovation"), cornerPlot: form.get("cornerPlot"), roadWidth: form.get("roadWidth"),
@@ -489,7 +546,7 @@ export function AdminDashboard() {
             <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status === "hidden")}>{property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
             <button type="button" className="admin-visibility-button" aria-pressed={property.showPhone !== false} disabled={busyId === property.id} onClick={() => void toggleListingPhoneVisibility(property.id, property.showPhone === false)}>{property.showPhone === false ? "Show phone on this listing" : "Hide phone on this listing"}</button>
             <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
-            <label className="admin-wide">Photo URLs (one per line)<textarea name="images" rows={3} defaultValue={(property.images ?? [property.image]).join("\n")} /></label>
+            <AdminListingMediaManager title={property.title} initialImages={property.images?.length ? property.images : property.image ? [property.image] : []} initialVideos={property.videos ?? []} disabled={busyId === property.id} />
             <label className="admin-wide">Description<textarea name="description" rows={3} required defaultValue={property.description} /></label>
           </div>
           <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>

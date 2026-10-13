@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, propertyFromRow, setSiteSetting } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser } from "@/lib/session";
+import { deleteStoredPropertyFiles } from "@/lib/property-images";
 
 async function requireAdmin() {
   const user = await currentUser();
@@ -185,6 +186,9 @@ export async function PATCH(request: NextRequest) {
     const images = Array.isArray(input.images)
       ? input.images.filter((image): image is string => typeof image === "string").map((image) => image.trim()).filter(Boolean)
       : [];
+    const videos = Array.isArray(input.videos)
+      ? input.videos.filter((video): video is string => typeof video === "string").map((video) => video.trim()).filter(Boolean)
+      : [];
     const status = input.status === "hidden" ? "hidden" : input.status === "published" ? "published" : "";
     const type = String(input.type ?? "").trim();
     const listingCategory = String(input.listingCategory ?? "");
@@ -219,30 +223,50 @@ export async function PATCH(request: NextRequest) {
       !allowedPricePeriods[listingCategory]?.includes(pricePeriod) ||
       availability.length > 240 ||
       (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000)) ||
-      !status || !type || type.length > 60 || !images.length ||
+      !status || !type || type.length > 60 ||
       !unit || unit.length > 20 || !badge || badge.length > 60 || verified < 0 ||
       detailText("facing").length > 40 || detailText("approvals").length > 120 || detailText("renovation").length > 120 ||
       detailText("roadWidth").length > 40 || detailText("surveyNumber").length > 80 || detailText("soilType").length > 80 ||
       detailText("address").length > 240 || detailText("landmark").length > 120 || choiceIsInvalid ||
       detailAmenities.some((amenity) => amenity.length > 60) ||
-      images.some((image) => !/^https?:\/\//i.test(image) && !/^\/uploads\/[a-zA-Z0-9._-]+$/.test(image))) {
+      [...images, ...videos].some((media) => !/^https?:\/\//i.test(media) && !/^\/uploads\/[a-zA-Z0-9._-]+$/.test(media))) {
       return NextResponse.json({ error: "Check the listing details, status, and photo URLs." }, { status: 400 });
     }
+    const priorMedia = db.prepare("SELECT image, images, videos FROM properties WHERE id = ?").get(id) as
+      { image: string; images: string; videos: string } | undefined;
+    const parseMedia = (value: string | undefined) => {
+      try {
+        const parsed: unknown = JSON.parse(value ?? "[]");
+        return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+      } catch {
+        return [];
+      }
+    };
+    const retainedMedia = new Set([...images, ...videos]);
+    const removedMedia = [...new Set([
+      ...parseMedia(priorMedia?.images), ...(priorMedia?.image ? [priorMedia.image] : []), ...parseMedia(priorMedia?.videos),
+    ].filter((media) => !retainedMedia.has(media)))];
     const result = db.prepare(`
       UPDATE properties SET title = ?, city = ?, locality = ?, owner = ?, phone = ?,
-        description = ?, price = ?, area = ?, images = ?, image = ?, status = ?,
+        description = ?, price = ?, area = ?, images = ?, image = ?, videos = ?, status = ?,
         type = ?, listingCategory = ?, pricePeriod = ?, availability = ?, guestCapacity = ?, unit = ?, badge = ?, verified = ?, facing = ?, approvals = ?,
         loanAvailable = ?, registrationAvailable = ?, renovation = ?, cornerPlot = ?,
         roadWidth = ?, surveyNumber = ?, soilType = ?, clearTitle = ?, amenities = ?, address = ?, landmark = ?, mapUrl = ?
       WHERE id = ?
     `).run(title, city, locality, owner, phone, description, Math.round(price), area,
-      JSON.stringify(images), images[0] ?? "", status, type, listingCategory, pricePeriod,
+      JSON.stringify(images), images[0] ?? "", JSON.stringify(videos), status, type, listingCategory, pricePeriod,
       listingCategory === "rent" ? availability : "", listingCategory === "rent" ? guestCapacity : null, unit, badge, verified,
       detailText("facing"), detailText("approvals"), detailText("loanAvailable"), detailText("registrationAvailable"),
       detailText("renovation"), detailText("cornerPlot"), detailText("roadWidth"), detailText("surveyNumber"),
       detailText("soilType"), detailText("clearTitle"), JSON.stringify(detailAmenities), detailText("address"),
       detailText("landmark"), detailText("mapUrl"), id);
     if (!result.changes) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
+    const referencedRows = db.prepare("SELECT image, images, videos FROM properties WHERE id != ?").all(id) as
+      { image: string; images: string; videos: string }[];
+    const stillReferenced = new Set(referencedRows.flatMap((row) => [
+      row.image, ...parseMedia(row.images), ...parseMedia(row.videos),
+    ]));
+    await deleteStoredPropertyFiles(removedMedia.filter((media) => !stillReferenced.has(media)));
     return NextResponse.json({ message: "Listing updated." });
   }
 
