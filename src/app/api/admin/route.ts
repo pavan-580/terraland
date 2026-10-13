@@ -41,9 +41,14 @@ export async function GET() {
     ORDER BY property_reviews.createdAt DESC
   `).all();
   const phoneClicks = db.prepare(`
-    SELECT id, propertyId, propertyTitle, sellerName, userId, userName, userPhone, visitorId, createdAt
+    SELECT seller_phone_clicks.id, seller_phone_clicks.propertyId, seller_phone_clicks.propertyTitle,
+      seller_phone_clicks.sellerName, seller_phone_clicks.userId, seller_phone_clicks.userName,
+      seller_phone_clicks.userPhone, seller_phone_clicks.visitorId, seller_phone_clicks.createdAt,
+      visitor.id AS visitorProfileId, properties.ownerId AS sellerId
     FROM seller_phone_clicks
-    ORDER BY createdAt DESC, rowid DESC
+    LEFT JOIN properties ON properties.id = seller_phone_clicks.propertyId
+    LEFT JOIN users AS visitor ON visitor.id = seller_phone_clicks.userId
+    ORDER BY seller_phone_clicks.createdAt DESC, seller_phone_clicks.rowid DESC
     LIMIT 1000
   `).all();
   const registrationNotifications = db.prepare(`

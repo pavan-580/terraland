@@ -43,6 +43,8 @@ type SellerPhoneClick = {
   userPhone: string;
   visitorId: string;
   createdAt: string;
+  visitorProfileId: string | null;
+  sellerId: string | null;
 };
 type RegistrationNotification = {
   id: string;
@@ -75,6 +77,7 @@ export function AdminDashboard() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], registrationNotifications: [], settings: { showSellerPhones: true } });
   const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews" | "phoneClicks">("properties");
+  const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +124,16 @@ export function AdminDashboard() {
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (section !== "users" || !profileFocusId) return;
+    document.querySelector(`[data-admin-user-id="${CSS.escape(profileFocusId)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [section, profileFocusId, data.users]);
+
+  function openUserProfile(userId: string) {
+    setProfileFocusId(userId);
+    setSection("users");
+  }
 
   async function update(type: "user" | "property", id: string, fields: Record<string, unknown>) {
     setBusyId(id);
@@ -456,13 +469,13 @@ export function AdminDashboard() {
         </details>
       )}{!data.properties.some((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? Boolean(property.deleteRequestedAt) : property.status !== "hidden" && (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listing deletion requests are waiting for approval." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
       </>}
-      {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com").map((user) =>
-        <form className="admin-record admin-user-record" key={user.id} onSubmit={(event) => {
+      {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com" || user.id === profileFocusId).map((user) =>
+        <form className={`admin-record admin-user-record${user.id === profileFocusId ? " is-profile-focus" : ""}`} data-admin-user-id={user.id} key={user.id} onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
           void update("user", user.id, { name: form.get("name"), email: form.get("email") });
         }}>
-          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · ACCOUNT CREATED {formatAdminDate(user.createdAt)}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
+          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · ACCOUNT CREATED {formatAdminDate(user.createdAt)}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div>{user.email !== "pavansai580@gmail.com" && <button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button>}</div>
           <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label></div>
           <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
         </form>
@@ -483,7 +496,7 @@ export function AdminDashboard() {
       {section === "phoneClicks" && <div className="admin-record-list">{data.phoneClicks.length ? data.phoneClicks.map((click) =>
         <article className="admin-record admin-phone-click" key={click.id}>
           <div className="admin-record-top"><div><span className="eyebrow">{formatAdminDate(click.createdAt)} · {click.userId ? "SIGNED-IN USER" : "GUEST VISITOR"}</span><strong>{click.propertyTitle}</strong></div><Link className="text-link" href={`/properties/${encodeURIComponent(click.propertyId)}`} target="_blank">View listing</Link></div>
-          <div className="admin-inquiry-contact"><span>Visitor: <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong></span>{click.userPhone && <span>Phone: {click.userPhone}</span>}<span>Seller: {click.sellerName}</span></div>
+          <div className="admin-inquiry-contact"><span>Visitor: {click.visitorProfileId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.visitorProfileId!)}>{click.userName || "View visitor profile"}</button> : <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong>}</span>{click.userPhone && <span>Phone: {click.userPhone}</span>}<span>Seller: {click.sellerId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.sellerId!)}>{click.sellerName}</button> : <strong>{click.sellerName}</strong>}</span></div>
         </article>
       ) : <p className="admin-empty">No seller phone clicks have been recorded yet.</p>}</div>}
       {section === "users" && <section className="admin-record-list admin-notifications">

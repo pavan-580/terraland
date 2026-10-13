@@ -861,7 +861,10 @@ fieldset.amenity-selector label span { overflow-wrap: anywhere; }
   .emi-fields { grid-template-columns: 1fr; gap: 9px; }
 }
 @media (max-width: 700px) {
-  .hero-image { background-position: 58% center; }
+  .hero-image { background-position: center center; }
+  .hero-image-one { background-image: url("/images/hero-agricultural-land-mobile.webp"); }
+  .hero-image-two { background-image: url("/images/hero-farmhouse-mobile.webp"); background-size: auto 115%; background-position: center top; }
+  .hero-image-three { background-image: url("/images/hero-resort-mobile.webp"); background-size: auto 110%; background-position: center top; }
   .hero h1 { font-size: clamp(39px, 11vw, 52px); }
   .hero-kicker { font-size: 8px; letter-spacing: .8px; }
   .hero-search { max-width: 100%; }
@@ -1168,6 +1171,9 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .admin-delete { border-color: rgba(227,151,126,.35); color: #f0b19b; }
 .admin-delete:hover { background: rgba(227,151,126,.12); }
 .admin-inquiry-contact > span, .admin-inquiry-contact { color: #c0cbc1; }
+.admin-profile-link { padding: 0; border: 0; background: transparent; color: #c6dcba; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.admin-profile-link:hover { color: #d8e9a4; }
+.admin-user-record.is-profile-focus { border-color: #c6dc81; box-shadow: 0 0 0 2px rgba(198,220,129,.12); }
 .detail-price-share > strong { color: #d7e6ec; }
 .listing-share button { background: rgba(255,255,255,.07); border-color: var(--line); color: #d5e4eb; }
 .listing-share button:hover { background: rgba(255,255,255,.14); }
