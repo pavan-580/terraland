@@ -44,7 +44,17 @@ export async function GET() {
     SELECT seller_phone_clicks.id, seller_phone_clicks.propertyId, seller_phone_clicks.propertyTitle,
       seller_phone_clicks.sellerName, seller_phone_clicks.userId, seller_phone_clicks.userName,
       seller_phone_clicks.userPhone, seller_phone_clicks.visitorId, seller_phone_clicks.createdAt,
-      visitor.id AS visitorProfileId, properties.ownerId AS sellerId
+      visitor.id AS visitorProfileId,
+      COALESCE(properties.ownerId, (
+        SELECT matchedSeller.id FROM users AS matchedSeller
+        WHERE matchedSeller.name = seller_phone_clicks.sellerName COLLATE NOCASE
+          AND (matchedSeller.phone = properties.phone OR (
+            SELECT COUNT(*) FROM users AS sameNameSeller
+            WHERE sameNameSeller.name = matchedSeller.name COLLATE NOCASE
+          ) = 1)
+        ORDER BY CASE WHEN matchedSeller.phone = properties.phone THEN 0 ELSE 1 END
+        LIMIT 1
+      )) AS sellerId
     FROM seller_phone_clicks
     LEFT JOIN properties ON properties.id = seller_phone_clicks.propertyId
     LEFT JOIN users AS visitor ON visitor.id = seller_phone_clicks.userId
