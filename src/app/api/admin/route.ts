@@ -40,6 +40,12 @@ export async function GET() {
     FROM property_reviews JOIN properties ON properties.id = property_reviews.propertyId
     ORDER BY property_reviews.createdAt DESC
   `).all();
+  const phoneClicks = db.prepare(`
+    SELECT id, propertyId, propertyTitle, sellerName, userId, userName, userPhone, visitorId, createdAt
+    FROM seller_phone_clicks
+    ORDER BY createdAt DESC, rowid DESC
+    LIMIT 1000
+  `).all();
   const registrationNotifications = db.prepare(`
     SELECT id, name, email, status, attempts, lastError, createdAt, sentAt
     FROM registration_notifications ORDER BY createdAt DESC LIMIT 100
@@ -56,7 +62,7 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
+  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
 }
 
 export async function POST(request: NextRequest) {

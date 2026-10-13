@@ -126,6 +126,17 @@ function createDatabase() {
       updatedAt TEXT,
       UNIQUE(propertyId, userId)
     );
+    CREATE TABLE IF NOT EXISTS seller_phone_clicks (
+      id TEXT PRIMARY KEY,
+      propertyId TEXT NOT NULL,
+      propertyTitle TEXT NOT NULL,
+      sellerName TEXT NOT NULL,
+      userId TEXT NOT NULL DEFAULT '',
+      userName TEXT NOT NULL DEFAULT '',
+      userPhone TEXT NOT NULL DEFAULT '',
+      visitorId TEXT NOT NULL DEFAULT '',
+      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS registration_notifications (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -147,6 +158,7 @@ function createDatabase() {
     );
     CREATE INDEX IF NOT EXISTS properties_city_idx ON properties(city);
     CREATE INDEX IF NOT EXISTS properties_type_idx ON properties(type);
+    CREATE INDEX IF NOT EXISTS seller_phone_clicks_created_idx ON seller_phone_clicks(createdAt);
   `);
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
@@ -209,6 +221,23 @@ function createDatabase() {
 
 export const db = globalForDb.landDb ?? createDatabase();
 globalForDb.landDb = db;
+
+// Run lightweight schema setup on the active connection as well as during a
+// fresh database creation, so Next.js hot reloads can safely add new tables.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS seller_phone_clicks (
+    id TEXT PRIMARY KEY,
+    propertyId TEXT NOT NULL,
+    propertyTitle TEXT NOT NULL,
+    sellerName TEXT NOT NULL,
+    userId TEXT NOT NULL DEFAULT '',
+    userName TEXT NOT NULL DEFAULT '',
+    userPhone TEXT NOT NULL DEFAULT '',
+    visitorId TEXT NOT NULL DEFAULT '',
+    createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS seller_phone_clicks_created_idx ON seller_phone_clicks(createdAt);
+`);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS visitor_daily_counts (

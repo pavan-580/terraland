@@ -78,11 +78,11 @@ button:disabled { opacity: .55; cursor: wait; }
 
 .hero { min-height: 100vh; min-height: 100svh; position: relative; overflow: hidden; background: #647766; color: white; }
 .hero-image { position: absolute; inset: 0; background-size: cover; background-position: center 48%; transform: scale(1.01); opacity: 0; animation: heroCrossfade 21s infinite; }
-.hero-image-one { background-image: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2200&q=90"); animation-delay: 0s; }
-.hero-image-two { background-image: url("https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=2200&q=90"); animation-delay: -7s; }
-.hero-image-three { background-image: url("https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=2200&q=90"); animation-delay: -14s; }
+.hero-image-one { background-image: url("/images/hero-agricultural-land.webp"); animation-delay: 0s; }
+.hero-image-two { background-image: url("/images/hero-farmhouse.webp"); animation-delay: -7s; }
+.hero-image-three { background-image: url("/images/hero-resort.webp"); animation-delay: -14s; }
 @keyframes heroCrossfade { 0%, 27% { opacity: 1; } 34%, 94% { opacity: 0; } 100% { opacity: 1; } }
-.hero-scrim { position: absolute; inset: 78px 0 0; background: linear-gradient(90deg, rgba(22,36,28,.84) 0%, rgba(26,39,30,.63) 43%, rgba(26,39,30,.15) 100%), linear-gradient(0deg, rgba(18,27,21,.25), transparent 50%); }
+.hero-scrim { position: absolute; inset: 78px 0 0; background: linear-gradient(90deg, rgba(15,30,23,.88) 0%, rgba(20,34,26,.72) 39%, rgba(20,34,26,.28) 76%, rgba(20,34,26,.12) 100%), linear-gradient(0deg, rgba(18,27,21,.3), rgba(18,27,21,.04) 58%); }
 .hero-content { position: relative; z-index: 1; max-width: 1320px; padding: 145px 40px 0; margin: auto; }
 .hero-kicker, .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 1.55px; }
 .hero-kicker { display: flex; align-items: center; gap: 9px; color: #dbe2d0; }
@@ -672,19 +672,19 @@ button:disabled { opacity: .55; cursor: wait; }
 .admin-setting-toggle.is-on { border-color: #3a7651; background: #e8f2eb; color: #27613d; }
 .admin-setting-toggle.is-on > span { background: #30834a; }
 .admin-setting-toggle:disabled { opacity: .6; }
-.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.admin-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .admin-stats button { min-height: 82px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 7px; padding: 14px 18px; background: var(--white); border: 1px solid var(--line); color: var(--ink); text-align: left; }
 .admin-stats button.is-active { border-color: var(--forest); box-shadow: inset 0 -3px var(--forest); }
 .admin-stats button span { color: var(--muted); font-size: 9px; letter-spacing: .8px; }
 .admin-stats button strong { font: 400 22px var(--serif); }
 .admin-record-list { display: grid; gap: 14px; }
-.listing-admin-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 8px; margin: 0 0 14px; }
+.listing-admin-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; gap: 8px; margin: 0 0 14px; }
 .listing-admin-segment { display: contents; }
 .listing-admin-segment button { width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); cursor: pointer; white-space: nowrap; transition: color .2s, background .2s; }
 .listing-admin-segment button.is-active { background: var(--lime); color: var(--paper); font-weight: 700; }
 .listing-admin-tabs button span { margin-left: 5px; opacity: .75; }
 .listing-admin-tabs > button { width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); cursor: pointer; white-space: nowrap; }
-.listing-admin-tabs > button.pending-is-active { border-color: var(--lime); background: var(--lime); color: var(--paper); font-weight: 700; }
+.listing-admin-tabs > button.pending-is-active, .listing-admin-tabs > button.hidden-is-active { border-color: var(--lime); background: var(--lime); color: var(--paper); font-weight: 700; }
 .admin-listing-details { border: 1px solid var(--line); background: var(--white); min-width: 0; }
 .admin-listing-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; cursor: pointer; list-style: none; }
 .admin-listing-summary::-webkit-details-marker { display: none; }
@@ -883,7 +883,7 @@ fieldset.amenity-selector label span { overflow-wrap: anywhere; }
   .detail-gallery { min-height: 300px; grid-template-columns: minmax(0, 1.4fr) minmax(80px, .7fr); grid-template-rows: repeat(2, minmax(95px, 1fr)); gap: 5px; }
   .detail-gallery:has(.detail-photo:only-child), .detail-gallery:has(.detail-photo:only-child) .detail-photo { height: 300px; min-height: 300px; }
   .admin-page { padding: 0 16px 55px; }
-  .listing-admin-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .listing-admin-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
   .listing-admin-segment { display: contents; }
   .listing-admin-segment button, .listing-admin-tabs > button { min-width: 0; min-height: 38px; align-self: center; padding: 6px 4px; font-size: 10px; white-space: nowrap; }
   .admin-setting-card { align-items: flex-start; flex-direction: column; }
@@ -1434,3 +1434,18 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .header-actions { gap: 8px; }
   .header-listing-cta { width: 142px; min-width: 142px; padding-inline: 9px; gap: 5px; font-size: 9px; }
 }
+
+/* Telugu navigation needs room for longer labels on desktop. */
+@media (min-width: 1081px) {
+  html[lang="te"] .site-header { height: auto; min-height: 78px; }
+  html[lang="te"] .header-inner { height: auto; min-height: 78px; padding-block: 8px; gap: clamp(8px, .8vw, 12px); }
+  html[lang="te"] .brand { min-width: clamp(96px, 8vw, 120px); }
+  html[lang="te"] .main-nav { flex: 1 1 560px; flex-wrap: wrap; justify-content: center; row-gap: 0; border-radius: 16px; }
+  html[lang="te"] .main-nav > a { padding: 7px clamp(4px, .45vw, 8px); font-size: clamp(10px, .65vw, 11px); }
+  html[lang="te"] .farmstay-nav-window { width: 116px; flex-basis: 116px; }
+  html[lang="te"] .main-nav > .language-picker .language-picker-trigger { min-width: 94px; }
+  html[lang="te"] .header-actions { gap: clamp(8px, .75vw, 12px); }
+  html[lang="te"] .header-listing-cta { width: clamp(180px, 14vw, 210px); min-width: 180px; padding-inline: 10px; gap: 7px; }
+  html[lang="te"] .header-listing-cta span { white-space: normal; text-align: center; line-height: 1.25; }
+}
+

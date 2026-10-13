@@ -33,6 +33,17 @@ type AdminReview = {
   updatedAt: string | null;
   propertyTitle: string;
 };
+type SellerPhoneClick = {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  sellerName: string;
+  userId: string;
+  userName: string;
+  userPhone: string;
+  visitorId: string;
+  createdAt: string;
+};
 type RegistrationNotification = {
   id: string;
   name: string;
@@ -49,6 +60,7 @@ type DashboardData = {
   inquiries: AdminInquiry[];
   inquiryNotifications: InquiryEmailNotification[];
   reviews: AdminReview[];
+  phoneClicks: SellerPhoneClick[];
   registrationNotifications: RegistrationNotification[];
   settings: { showSellerPhones: boolean };
 };
@@ -61,9 +73,9 @@ function formatAdminDate(value: string) {
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], registrationNotifications: [], settings: { showSellerPhones: true } });
-  const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews">("properties");
-  const [listingTab, setListingTab] = useState<"sale" | "rent" | "pending">("sale");
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], registrationNotifications: [], settings: { showSellerPhones: true } });
+  const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews" | "phoneClicks">("properties");
+  const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
   const backupInputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState("");
@@ -88,8 +100,15 @@ export function AdminDashboard() {
     setError("");
     try {
       const response = await fetch("/api/admin", { cache: "no-store" });
-      const result = await response.json() as DashboardData & { error?: string };
+      const responseText = await response.text();
+      let result: (DashboardData & { error?: string }) | { error?: string };
+      try {
+        result = JSON.parse(responseText) as DashboardData & { error?: string };
+      } catch {
+        throw new Error(response.ok ? "The dashboard returned an unreadable response. Refresh and try again." : `The dashboard request failed (${response.status}). Refresh and try again.`);
+      }
       if (!response.ok) throw new Error(result.error ?? "The dashboard could not be loaded.");
+      if (!("properties" in result) || !("phoneClicks" in result)) throw new Error(result.error ?? "The dashboard data is incomplete. Refresh and try again.");
       setData(result);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
@@ -356,6 +375,7 @@ export function AdminDashboard() {
       <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>
       <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
       <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
+      <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}><span>PHONE CLICKS</span><strong>{data.phoneClicks.length}</strong></button>
     </div>
     {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
@@ -364,13 +384,14 @@ export function AdminDashboard() {
         <div className="listing-admin-tabs">
           <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
             {([["sale", "For sale"], ["rent", "For rent"]] as const).map(([tab, label]) => {
-              const count = data.properties.filter((property) => (property.listingCategory ?? "sale") === tab).length;
+              const count = data.properties.filter((property) => property.status !== "hidden" && (property.listingCategory ?? "sale") === tab).length;
               return <button key={tab} type="button" role="tab" aria-selected={listingTab === tab} className={listingTab === tab ? "is-active" : ""} onClick={() => setListingTab(tab)}>{label} <span>{count}</span></button>;
             })}
           </div>
+          <button type="button" className={listingTab === "hidden" ? "hidden-is-active" : ""} aria-pressed={listingTab === "hidden"} onClick={() => setListingTab("hidden")}>Hidden listings <span>{data.properties.filter((property) => property.status === "hidden").length}</span></button>
           <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending approval <span>{data.properties.filter((property) => property.deleteRequestedAt).length}</span></button>
         </div>
-        <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "pending" ? Boolean(property.deleteRequestedAt) : (property.listingCategory ?? "sale") === listingTab).map((property) =>
+        <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? Boolean(property.deleteRequestedAt) : property.status !== "hidden" && (property.listingCategory ?? "sale") === listingTab).map((property) =>
         <details className="admin-listing-details" key={property.id} open={Boolean(property.deleteRequestedAt && listingTab === "pending")}>
         <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : listingTab === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span><span className="admin-listing-meta">Listed {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span></span><span className="admin-listing-open">Open details</span></summary>
         <form className="admin-record" onSubmit={(event) => {
@@ -433,7 +454,7 @@ export function AdminDashboard() {
           <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>
         </form>
         </details>
-      )}{!data.properties.some((property) => listingTab === "pending" ? Boolean(property.deleteRequestedAt) : (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "pending" ? "No listing deletion requests are waiting for approval." : `No ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
+      )}{!data.properties.some((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? Boolean(property.deleteRequestedAt) : property.status !== "hidden" && (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listing deletion requests are waiting for approval." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
       </>}
       {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com").map((user) =>
         <form className="admin-record admin-user-record" key={user.id} onSubmit={(event) => {
@@ -459,6 +480,12 @@ export function AdminDashboard() {
           <p>{review.comment}</p>
         </article>
       ) : <p className="admin-empty">No reviews have been posted yet.</p>}</div>}
+      {section === "phoneClicks" && <div className="admin-record-list">{data.phoneClicks.length ? data.phoneClicks.map((click) =>
+        <article className="admin-record admin-phone-click" key={click.id}>
+          <div className="admin-record-top"><div><span className="eyebrow">{formatAdminDate(click.createdAt)} · {click.userId ? "SIGNED-IN USER" : "GUEST VISITOR"}</span><strong>{click.propertyTitle}</strong></div><Link className="text-link" href={`/properties/${encodeURIComponent(click.propertyId)}`} target="_blank">View listing</Link></div>
+          <div className="admin-inquiry-contact"><span>Visitor: <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong></span>{click.userPhone && <span>Phone: {click.userPhone}</span>}<span>Seller: {click.sellerName}</span></div>
+        </article>
+      ) : <p className="admin-empty">No seller phone clicks have been recorded yet.</p>}</div>}
       {section === "users" && <section className="admin-record-list admin-notifications">
         <h2>Registration email delivery</h2>
         {data.registrationNotifications.length ? data.registrationNotifications.map((notice) => <article className="admin-record" key={notice.id}>
