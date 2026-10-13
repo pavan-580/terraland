@@ -148,6 +148,17 @@ function createDatabase() {
       propertyTitle TEXT,
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS site_activity_log (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      actorName TEXT NOT NULL DEFAULT '',
+      visitorId TEXT NOT NULL DEFAULT '',
+      action TEXT NOT NULL,
+      details TEXT NOT NULL DEFAULT '',
+      propertyId TEXT,
+      propertyTitle TEXT,
+      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS registration_notifications (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -171,6 +182,7 @@ function createDatabase() {
     CREATE INDEX IF NOT EXISTS properties_type_idx ON properties(type);
     CREATE INDEX IF NOT EXISTS seller_phone_clicks_created_idx ON seller_phone_clicks(createdAt);
     CREATE INDEX IF NOT EXISTS member_activity_user_created_idx ON member_activity_log(userId, createdAt);
+    CREATE INDEX IF NOT EXISTS site_activity_created_idx ON site_activity_log(createdAt);
   `);
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
@@ -241,10 +253,29 @@ export function logMemberActivity(
   details = "",
   property?: { id: string; title: string } | null,
 ) {
+  const id = randomUUID();
+  const actor = db.prepare("SELECT name FROM users WHERE id = ?").get(userId) as { name: string } | undefined;
   db.prepare(`
     INSERT INTO member_activity_log (id, userId, action, details, propertyId, propertyTitle)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(randomUUID(), userId, action.slice(0, 100), details.slice(0, 1000), property?.id ?? null, property?.title ?? null);
+  `).run(id, userId, action.slice(0, 100), details.slice(0, 1000), property?.id ?? null, property?.title ?? null);
+  db.prepare(`
+    INSERT INTO site_activity_log (id, userId, actorName, action, details, propertyId, propertyTitle)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(id, userId, actor?.name ?? "Member", action.slice(0, 100), details.slice(0, 1000), property?.id ?? null, property?.title ?? null);
+}
+
+export function logGuestActivity(
+  actorName: string,
+  visitorId: string,
+  action: string,
+  details = "",
+  property?: { id: string; title: string } | null,
+) {
+  db.prepare(`
+    INSERT INTO site_activity_log (id, actorName, visitorId, action, details, propertyId, propertyTitle)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(randomUUID(), actorName.slice(0, 120), visitorId.slice(0, 100), action.slice(0, 100), details.slice(0, 1000), property?.id ?? null, property?.title ?? null);
 }
 
 // Run lightweight schema setup on the active connection as well as during a
@@ -260,6 +291,22 @@ db.exec(`
     createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX IF NOT EXISTS member_activity_user_created_idx ON member_activity_log(userId, createdAt);
+  CREATE TABLE IF NOT EXISTS site_activity_log (
+    id TEXT PRIMARY KEY,
+    userId TEXT,
+    actorName TEXT NOT NULL DEFAULT '',
+    visitorId TEXT NOT NULL DEFAULT '',
+    action TEXT NOT NULL,
+    details TEXT NOT NULL DEFAULT '',
+    propertyId TEXT,
+    propertyTitle TEXT,
+    createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS site_activity_created_idx ON site_activity_log(createdAt);
+  INSERT OR IGNORE INTO site_activity_log (id, userId, actorName, action, details, propertyId, propertyTitle, createdAt)
+    SELECT member_activity_log.id, member_activity_log.userId, COALESCE(users.name, 'Member'), member_activity_log.action,
+      member_activity_log.details, member_activity_log.propertyId, member_activity_log.propertyTitle, member_activity_log.createdAt
+    FROM member_activity_log LEFT JOIN users ON users.id = member_activity_log.userId;
 `);
 
 db.exec(`
@@ -275,6 +322,24 @@ db.exec(`
     createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE INDEX IF NOT EXISTS seller_phone_clicks_created_idx ON seller_phone_clicks(createdAt);
+`);
+
+db.exec(`
+  INSERT OR IGNORE INTO site_activity_log
+    (id, actorName, visitorId, action, details, propertyId, propertyTitle, createdAt)
+  SELECT 'legacy-phone:' || id,
+    CASE WHEN visitorId = '' THEN 'Guest visitor' ELSE 'Guest ' || substr(visitorId, 1, 8) END,
+    visitorId,
+    CASE WHEN contactMethod = 'whatsapp' THEN 'Opened WhatsApp contact' ELSE 'Opened seller phone' END,
+    CASE WHEN contactMethod = 'whatsapp' THEN 'Prepared a WhatsApp message to NILAY customer care.' ELSE 'Selected the seller phone number.' END,
+    propertyId, propertyTitle, createdAt
+  FROM seller_phone_clicks WHERE userId = '';
+  INSERT OR IGNORE INTO site_activity_log
+    (id, actorName, action, details, propertyId, propertyTitle, createdAt)
+  SELECT 'legacy-inquiry:' || inquiries.id, inquiries.name, 'Enquiry sent',
+    'Requested more information.', inquiries.propertyId, properties.title, inquiries.createdAt
+  FROM inquiries JOIN properties ON properties.id = inquiries.propertyId
+  WHERE inquiries.userId IS NULL;
 `);
 
 db.exec(`

@@ -64,6 +64,14 @@ export async function GET() {
     FROM member_activity_log JOIN users ON users.id = member_activity_log.userId
     ORDER BY member_activity_log.createdAt DESC, member_activity_log.rowid DESC
   `).all();
+  const siteActivity = db.prepare(`
+    SELECT site_activity_log.id, CASE WHEN users.id IS NULL THEN NULL ELSE site_activity_log.userId END AS userId,
+      COALESCE(NULLIF(site_activity_log.actorName, ''), users.name, 'Guest visitor') AS actorName,
+      site_activity_log.visitorId, site_activity_log.action, site_activity_log.details,
+      site_activity_log.propertyId, site_activity_log.propertyTitle, site_activity_log.createdAt
+    FROM site_activity_log LEFT JOIN users ON users.id = site_activity_log.userId
+    ORDER BY site_activity_log.createdAt DESC, site_activity_log.rowid DESC
+  `).all();
   const registrationNotifications = db.prepare(`
     SELECT id, name, email, status, attempts, lastError, createdAt, sentAt
     FROM registration_notifications ORDER BY createdAt DESC LIMIT 100
@@ -80,7 +88,7 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
+  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
 }
 
 export async function POST(request: NextRequest) {

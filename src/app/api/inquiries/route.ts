@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, logMemberActivity } from "@/lib/db";
+import { db, getSiteSetting, logGuestActivity, logMemberActivity } from "@/lib/db";
 import { currentUser, newId } from "@/lib/session";
 import { deliverPendingInquiryNotices } from "@/lib/notifications";
 
@@ -41,6 +42,8 @@ export async function POST(request: NextRequest) {
 
   const inquiryId = newId();
   const notificationId = newId();
+  const priorVisitorId = request.cookies.get("nilay_visitor")?.value ?? "";
+  const guestVisitorId = /^[0-9a-f-]{36}$/i.test(priorVisitorId) ? priorVisitorId : randomUUID();
   const inquiryMessage = message || "I am interested in this property. Please share more details.";
   const saveInquiry = db.transaction(() => {
     db.prepare(`
@@ -50,14 +53,28 @@ export async function POST(request: NextRequest) {
     db.prepare("INSERT INTO inquiry_notifications (id, inquiryId) VALUES (?, ?)").run(notificationId, inquiryId);
   });
   saveInquiry();
-  if (user) logMemberActivity(user.id, "Enquiry sent", "Requested more information.", { id: property.id, title: property.title });
+  if (user) {
+    logMemberActivity(user.id, "Enquiry sent", "Requested more information.", { id: property.id, title: property.title });
+  } else {
+    logGuestActivity(name, guestVisitorId, "Enquiry sent", "Requested more information.", { id: property.id, title: property.title });
+  }
 
   const delivery = await deliverPendingInquiryNotices(inquiryId);
-  return NextResponse.json({
+  const response = NextResponse.json({
     message: delivery.pending
       ? "Your enquiry was received. Its email notification is queued for delivery; our team will follow up using your contact details."
       : "Your enquiry was sent. Our team will reach you shortly using your contact details.",
     notificationPending: delivery.pending > 0,
     property: { title: property.title, type: property.type, listingCategory: property.listingCategory, pricePeriod: property.pricePeriod, city: property.city, locality: property.locality, area: property.area, unit: property.unit, price: property.price },
   }, { status: 201 });
+  if (!user && guestVisitorId !== priorVisitorId) {
+    response.cookies.set("nilay_visitor", guestVisitorId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+  return response;
 }

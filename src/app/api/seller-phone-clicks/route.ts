@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, logMemberActivity } from "@/lib/db";
+import { db, getSiteSetting, logGuestActivity, logMemberActivity } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
@@ -29,6 +29,8 @@ export async function POST(request: NextRequest) {
   `).run(randomUUID(), property.id, property.title, property.owner, user?.id ?? "", user?.name ?? "", user?.phone ?? "", visitorId, contactMethod);
   if (user) {
     logMemberActivity(user.id, contactMethod === "whatsapp" ? "Opened WhatsApp contact" : "Opened seller phone", contactMethod === "whatsapp" ? "Prepared a WhatsApp message to NILAY customer care." : "Selected the seller phone number.", { id: property.id, title: property.title });
+  } else {
+    logGuestActivity(`Guest ${visitorId.slice(0, 8)}`, visitorId, contactMethod === "whatsapp" ? "Opened WhatsApp contact" : "Opened seller phone", contactMethod === "whatsapp" ? "Prepared a WhatsApp message to NILAY customer care." : "Selected the seller phone number.", { id: property.id, title: property.title });
   }
 
   const response = new NextResponse(null, { status: 204 });

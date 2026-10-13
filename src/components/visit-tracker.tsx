@@ -13,7 +13,7 @@ export function VisitTracker() {
     void fetch("/api/visits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: "{}",
+      body: JSON.stringify({ pathname }),
       keepalive: true,
     }).catch(() => undefined);
   }, [pathname]);

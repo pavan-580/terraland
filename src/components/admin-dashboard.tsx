@@ -56,6 +56,17 @@ type MemberActivity = {
   propertyTitle: string | null;
   createdAt: string;
 };
+type SiteActivity = {
+  id: string;
+  userId: string | null;
+  actorName: string;
+  visitorId: string;
+  action: string;
+  details: string;
+  propertyId: string | null;
+  propertyTitle: string | null;
+  createdAt: string;
+};
 type RegistrationNotification = {
   id: string;
   name: string;
@@ -74,6 +85,7 @@ type DashboardData = {
   reviews: AdminReview[];
   phoneClicks: SellerPhoneClick[];
   memberActivity: MemberActivity[];
+  siteActivity: SiteActivity[];
   registrationNotifications: RegistrationNotification[];
   settings: { showSellerPhones: boolean };
 };
@@ -86,8 +98,8 @@ function formatAdminDate(value: string) {
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], registrationNotifications: [], settings: { showSellerPhones: true } });
-  const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews" | "phoneClicks">("properties");
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true } });
+  const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity">("properties");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
@@ -122,7 +134,7 @@ export function AdminDashboard() {
         throw new Error(response.ok ? "The dashboard returned an unreadable response. Refresh and try again." : `The dashboard request failed (${response.status}). Refresh and try again.`);
       }
       if (!response.ok) throw new Error(result.error ?? "The dashboard could not be loaded.");
-      if (!("properties" in result) || !("phoneClicks" in result)) throw new Error(result.error ?? "The dashboard data is incomplete. Refresh and try again.");
+      if (!("properties" in result) || !("phoneClicks" in result) || !("siteActivity" in result)) throw new Error(result.error ?? "The dashboard data is incomplete. Refresh and try again.");
       setData(result);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
@@ -404,6 +416,7 @@ export function AdminDashboard() {
       <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
       <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
       <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}><span>PHONE & WHATSAPP</span><strong>{data.phoneClicks.length}</strong></button>
+      <button className={section === "activity" ? "is-active" : ""} onClick={() => setSection("activity")}><span>ALL ACTIVITY</span><strong>{data.siteActivity.length}</strong></button>
     </div>
     {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
@@ -522,6 +535,16 @@ export function AdminDashboard() {
           <div className="admin-inquiry-contact"><span>Visitor: {click.visitorProfileId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.visitorProfileId!)}>{click.userName || "View visitor profile"}</button> : <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong>}</span>{click.userPhone && <span>Phone: {click.userPhone}</span>}<span>Seller: {click.sellerId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.sellerId!)}>{click.sellerName}</button> : <strong>{click.sellerName}</strong>}</span></div>
         </article>
       ) : <p className="admin-empty">No seller phone clicks have been recorded yet.</p>}</div>}
+      {section === "activity" && <>
+        <div className="admin-site-activity-heading"><div><span className="eyebrow">USER JOURNEY</span><h2>All site activity · newest first</h2><p>Page views and actions from members and guest visitors.</p></div><button type="button" className="button button-outline" onClick={() => void load()}>Refresh log</button></div>
+        <div className="admin-record-list admin-site-activity-list">{data.siteActivity.length ? data.siteActivity.map((activity) =>
+        <article className="admin-record admin-site-activity" key={activity.id}>
+          <time dateTime={activity.createdAt}>{formatAdminDate(activity.createdAt)}</time>
+          <div className="admin-site-activity-actor">{activity.userId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(activity.userId!)}>{activity.actorName || "Member profile"}</button> : <strong>{activity.actorName || `Guest ${activity.visitorId.slice(0, 8)}`}</strong>}{!activity.userId && activity.visitorId && <small>Visitor ID {activity.visitorId.slice(0, 8)}</small>}</div>
+          <div className="admin-site-activity-content"><strong>{activity.action}</strong>{activity.details && <span>{activity.details}</span>}{activity.propertyTitle && activity.propertyId && <Link href={`/properties/${encodeURIComponent(activity.propertyId)}`} target="_blank">{activity.propertyTitle}</Link>}</div>
+        </article>
+      ) : <p className="admin-empty">No activity recorded yet.</p>}</div>
+      </>}
       {section === "users" && <section className="admin-record-list admin-notifications">
         <h2>Registration email delivery</h2>
         {data.registrationNotifications.length ? data.registrationNotifications.map((notice) => <article className="admin-record" key={notice.id}>
