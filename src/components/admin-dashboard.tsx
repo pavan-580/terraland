@@ -168,6 +168,40 @@ export function AdminDashboard() {
     }
   }
 
+  async function toggleListingVisibility(id: string, visible: boolean) {
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "property", action: "toggle-visibility", id, visible }) });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Listing visibility could not be updated.");
+      setMessage(result.message ?? "Listing visibility updated.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Listing visibility could not be updated.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function toggleListingPhoneVisibility(id: string, visible: boolean) {
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "property", action: "toggle-phone-visibility", id, visible }) });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Listing phone visibility could not be updated.");
+      setMessage(result.message ?? "Listing phone visibility updated.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Listing phone visibility could not be updated.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
   async function toggleSellerPhones() {
     const value = !data.settings.showSellerPhones;
     setSavingPhoneSetting(true);
@@ -235,7 +269,7 @@ export function AdminDashboard() {
   return <section className="admin-content">
     {pendingDelete && <ConfirmDialog title="Delete this record?" description="This action cannot be undone. The selected record will be permanently deleted." confirmLabel="Delete permanently" error={error} busy={busyId === pendingDelete.id} onCancel={() => setPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
     <div className="admin-setting-card">
-      <div><strong>Seller contact details</strong><p>When on, buyers can contact sellers directly using available phone or email. When off, seller details are hidden and enquiries are sent to NILAY so our team can connect both sides.</p></div>
+      <div><strong>Site-wide seller contact visibility</strong><p>This overall switch overrides every listing. When it is on, each listing&apos;s phone visibility switch controls whether its number appears. When it is off, seller contact details are hidden across the website and enquiries go to NILAY.</p></div>
       <button type="button" className={`admin-setting-toggle${data.settings.showSellerPhones ? " is-on" : ""}`} aria-pressed={data.settings.showSellerPhones} disabled={savingPhoneSetting} onClick={() => void toggleSellerPhones()}>
         <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
       </button>
@@ -274,7 +308,7 @@ export function AdminDashboard() {
         </div>
         <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "pending" ? Boolean(property.deleteRequestedAt) : (property.listingCategory ?? "sale") === listingTab).map((property) =>
         <details className="admin-listing-details" key={property.id} open={Boolean(property.deleteRequestedAt && listingTab === "pending")}>
-        <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : listingTab === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span></span><span className="admin-listing-open">Open details</span></summary>
+        <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : listingTab === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span><span className="admin-listing-meta">Listed {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span></span><span className="admin-listing-open">Open details</span></summary>
         <form className="admin-record" onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
@@ -284,7 +318,7 @@ export function AdminDashboard() {
             unit: form.get("unit"), badge: form.get("badge"), description: form.get("description"),
             listingCategory: form.get("listingCategory"), pricePeriod: form.get("pricePeriod"),
             availability: form.get("availability"), guestCapacity: form.get("guestCapacity"),
-            verified: form.get("verified") === "on", status: form.get("status"),
+            verified: form.get("verified") === "on", status: property.status ?? "published",
             images: String(form.get("images") ?? "").split(/\r?\n/).map((image) => image.trim()).filter(Boolean),
             facing: form.get("facing"), approvals: form.get("approvals"),
             loanAvailable: form.get("loanAvailable"), registrationAvailable: form.get("registrationAvailable"),
@@ -326,7 +360,8 @@ export function AdminDashboard() {
             <label className="admin-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
             <label className="admin-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
             <label>Badge<input name="badge" required defaultValue={property.badge} /></label>
-            <label>Visibility<select name="status" defaultValue={property.status ?? "published"}><option value="published">Published</option><option value="hidden">Hidden</option></select></label>
+            <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status === "hidden")}>{property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
+            <button type="button" className="admin-visibility-button" aria-pressed={property.showPhone !== false} disabled={busyId === property.id} onClick={() => void toggleListingPhoneVisibility(property.id, property.showPhone === false)}>{property.showPhone === false ? "Show phone on this listing" : "Hide phone on this listing"}</button>
             <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
             <label className="admin-wide">Photo URLs (one per line)<textarea name="images" rows={3} defaultValue={(property.images ?? [property.image]).join("\n")} /></label>
             <label className="admin-wide">Description<textarea name="description" rows={3} required defaultValue={property.description} /></label>
@@ -342,7 +377,7 @@ export function AdminDashboard() {
           const form = new FormData(event.currentTarget);
           void update("user", user.id, { name: form.get("name"), email: form.get("email") });
         }}>
-          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · JOINED {new Date(user.createdAt).toLocaleDateString()}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
+          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · ACCOUNT CREATED {formatAdminDate(user.createdAt)}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div><button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button></div>
           <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label></div>
           <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
         </form>

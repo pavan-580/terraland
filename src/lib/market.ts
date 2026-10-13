@@ -18,6 +18,7 @@ export type Property = {
   description: string;
   owner: string;
   phone: string;
+  showPhone?: boolean;
   sellerEmail?: string;
   facing?: string;
   approvals?: string;

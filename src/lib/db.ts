@@ -75,6 +75,7 @@ function createDatabase() {
       description TEXT NOT NULL,
       owner TEXT NOT NULL,
       phone TEXT NOT NULL,
+      showPhone INTEGER NOT NULL DEFAULT 1,
       facing TEXT NOT NULL DEFAULT '',
       approvals TEXT NOT NULL DEFAULT '',
       loanAvailable TEXT NOT NULL DEFAULT '',
@@ -159,6 +160,7 @@ function createDatabase() {
   addColumnIfMissing(db, "properties", "guestCapacity", "ALTER TABLE properties ADD COLUMN guestCapacity INTEGER");
   db.prepare("UPDATE properties SET listingCategory = 'rent', pricePeriod = CASE WHEN pricePeriod = 'total' THEN 'per-night' ELSE pricePeriod END WHERE listingCategory = 'stay'").run();
   addColumnIfMissing(db, "properties", "ownerId", "ALTER TABLE properties ADD COLUMN ownerId TEXT REFERENCES users(id) ON DELETE SET NULL");
+  addColumnIfMissing(db, "properties", "showPhone", "ALTER TABLE properties ADD COLUMN showPhone INTEGER NOT NULL DEFAULT 1");
   addColumnIfMissing(db, "properties", "facing", "ALTER TABLE properties ADD COLUMN facing TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "properties", "approvals", "ALTER TABLE properties ADD COLUMN approvals TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "properties", "loanAvailable", "ALTER TABLE properties ADD COLUMN loanAvailable TEXT NOT NULL DEFAULT ''");
@@ -284,17 +286,18 @@ export function propertyFromRow(row: Record<string, unknown>): Property {
     videos,
     amenities,
     verified: Boolean(row.verified),
+    ...(row.showPhone !== undefined ? { showPhone: Boolean(row.showPhone) } : {}),
   } as Property;
 }
 
 export function publicPropertyFromRow(row: Record<string, unknown>, showSellerContacts: boolean): Property {
   const property = propertyFromRow(row) as Property & { ownerId?: string; sellerEmail?: string };
-  const { sellerEmail, ...publicProperty } = property;
+  const { sellerEmail, showPhone, ...publicProperty } = property;
   delete publicProperty.ownerId;
   const safeEmail = typeof sellerEmail === "string" && !sellerEmail.endsWith("@phone.nilay.invalid") ? sellerEmail : "";
   return {
     ...publicProperty,
-    phone: showSellerContacts ? publicProperty.phone : "",
+    phone: showSellerContacts && showPhone !== false ? publicProperty.phone : "",
     ...(showSellerContacts && safeEmail ? { sellerEmail: safeEmail } : {}),
   };
 }

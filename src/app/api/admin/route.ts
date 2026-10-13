@@ -96,6 +96,24 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: "Deletion request declined. The listing remains active." });
   }
 
+  if (input.resource === "property" && input.action === "toggle-visibility") {
+    const id = String(input.id ?? "");
+    const visible = input.visible;
+    if (!id || typeof visible !== "boolean") return NextResponse.json({ error: "Choose whether this listing should be visible." }, { status: 400 });
+    const result = db.prepare("UPDATE properties SET status = ? WHERE id = ?").run(visible ? "published" : "hidden", id);
+    if (!result.changes) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
+    return NextResponse.json({ message: `Listing is now ${visible ? "visible on the website" : "hidden from the website"}.` });
+  }
+
+  if (input.resource === "property" && input.action === "toggle-phone-visibility") {
+    const id = String(input.id ?? "");
+    const visible = input.visible;
+    if (!id || typeof visible !== "boolean") return NextResponse.json({ error: "Choose whether this listing's phone number should be visible." }, { status: 400 });
+    const result = db.prepare("UPDATE properties SET showPhone = ? WHERE id = ?").run(Number(visible), id);
+    if (!result.changes) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
+    return NextResponse.json({ message: `This listing's phone number is now ${visible ? "visible" : "hidden"}.` });
+  }
+
   if (input.resource === "user") {
     const id = String(input.id ?? "");
     const name = String(input.name ?? "").trim();

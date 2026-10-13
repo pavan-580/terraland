@@ -3,7 +3,10 @@ import { SearchResults } from "@/components/search-results";
 import { rentalTypes } from "@/lib/market";
 import { db } from "@/lib/db";
 
-export const metadata: Metadata = { title: "Explore land & plots" };
+export const metadata: Metadata = {
+  title: "Explore land and plots for sale or rent",
+  description: "Search land, residential plots, farm land, farm stays, and rentals across India. Filter listings by location, property type, and price on NILAY.",
+};
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;

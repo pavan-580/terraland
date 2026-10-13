@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in";
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
 export const dynamic = "force-dynamic";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: siteUrl, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/search`, changeFrequency: "daily", priority: 0.9 },
+    ...["/about", "/contact", "/faq", "/guides", "/privacy", "/terms", "/lender-interest"].map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "monthly" as const, priority: path === "/about" || path === "/guides" ? 0.7 : 0.4 })),
     ...["/services", "/services/dharani-title-check", "/services/legal-verification", "/services/ec-verification", "/services/stamp-duty-calculator", "/services/plot-loan-emi-calculator"].map((path) => ({ url: `${siteUrl}${path}`, changeFrequency: "monthly" as const, priority: path === "/services" ? 0.8 : 0.6 })),
     ...properties.map((property) => ({
       url: `${siteUrl}/properties/${encodeURIComponent(property.id)}`,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Check, MoveUpRight } from "lucide-react";
 import { PropertyCard } from "@/components/property-card";
+import { PropertyTypePicker } from "@/components/property-type-picker";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { allPropertyTypes } from "@/lib/market";
@@ -43,7 +44,7 @@ export default async function Home() {
             <p>Explore land and plots for sale, plus farmhouses, resorts, and other places to rent.</p>
             <form action="/search" className="hero-search">
               <label className="search-field"><span>LOCATION</span><input name="q" placeholder="City, state, neighbourhood or project" /></label>
-              <label className="search-field type-field"><span>WHAT ARE YOU LOOKING FOR?</span><select name="type" defaultValue=""><option value="">Any property type</option>{searchablePropertyTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label className="search-field type-field"><span>WHAT ARE YOU LOOKING FOR?</span><PropertyTypePicker options={searchablePropertyTypes} /></label>
               <button className="button button-dark search-submit" type="submit">Find a place <ArrowUpRight size={17} /></button>
             </form>
             <div className="hero-under"><span><Check size={14} /> Clear, detailed listings</span><Link href="/search?category=sale">Browse land for sale <ArrowUpRight size={14} /></Link></div>
@@ -74,7 +75,7 @@ export default async function Home() {
         </section>
 
         <section className="seller-band">
-          <div className="seller-copy"><span className="eyebrow">FOR PROPERTY OWNERS</span><h2>List your place.<br /><em>Find your people.</em></h2><p>Reach buyers, renters, and guests across India. Listing is free.</p><div className="seller-actions"><Link className="button button-cream" href="/sell">List for free <ArrowUpRight size={16} /></Link></div></div>
+          <div className="seller-copy"><span className="eyebrow">FOR PROPERTY OWNERS</span><h2>List your place.<br /><em>Find your people.</em></h2><p>Reach buyers, renters, and guests across India. Listing is free.</p><div className="seller-actions"><Link className="button button-cream" href="/sell">List for free <ArrowUpRight size={16} /></Link><a className="seller-whatsapp" href="https://wa.me/918074399963?text=I%27d%20like%20to%20list%20my%20land%20for%20free%20on%20NILAY." target="_blank" rel="noreferrer">Post via WhatsApp <ArrowUpRight size={16} /></a></div></div>
           <div className="seller-art"><div className="seller-art-image" /><div className="seller-stamp"><span>LAND<br />WELL<br />FOUND</span><ArrowDownRight size={20} /></div><div className="seller-side-note">YOUR NEXT MOVE<br />STARTS RIGHT HERE</div></div>
         </section>
 

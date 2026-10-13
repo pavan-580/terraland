@@ -102,7 +102,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
           <Link href="/my-listings">My listings</Link>
           <Link href="/about">How it works</Link>
           <Link href="/lender-interest">Become a lender</Link>
-          <Link className="mobile-menu-favorites" href="/saved"><Heart size={17} /> Favorites</Link>
+          <Link className="mobile-menu-favorites" href="/saved">Favorites <Heart size={17} /></Link>
           <details className="services-nav">
             <summary className="services-nav-trigger">Services</summary>
             <div className="services-nav-menu">
@@ -119,6 +119,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
             {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/profile"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
             {user && <button className="logout-button" type="button" onClick={() => void logout()}>Sign out</button>}
             <Link className="button button-dark button-small" href="/sell">List your land for free <ArrowUpRight size={15} /></Link>
+            <a className="mobile-menu-whatsapp" href="https://wa.me/918074399963?text=I%27d%20like%20to%20list%20my%20land%20for%20free%20on%20NILAY." target="_blank" rel="noreferrer">Post via WhatsApp <ArrowUpRight size={15} /></a>
           </div>
         </nav>
         <div className="header-actions">

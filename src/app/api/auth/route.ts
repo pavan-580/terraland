@@ -16,7 +16,8 @@ export async function PATCH(request: NextRequest) {
   const body: unknown = await request.json().catch(() => null);
   const input = body && typeof body === "object" && !Array.isArray(body) ? body as Record<string, unknown> : {};
   const name = String(input.name ?? "").trim();
-  const phone = String(input.phone ?? "").trim().replace(/[\s()-]/g, "");
+  const rawPhone = String(input.phone ?? "").trim().replace(/[\s()-]/g, "");
+  const phone = /^\d{10}$/.test(rawPhone) ? `+91${rawPhone}` : rawPhone;
   const email = String(input.email ?? "").trim().toLowerCase();
   if (name.length < 2 || name.length > 80) return NextResponse.json({ error: "Enter your name (2–80 characters)." }, { status: 400 });
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) return NextResponse.json({ error: "Enter a valid mobile number with country code, such as +91 98765 43210." }, { status: 400 });
@@ -49,11 +50,12 @@ export async function POST(request: NextRequest) {
   const email = String(input.email ?? "").trim().toLowerCase();
   const identifier = String(input.identifier ?? input.email ?? "").trim();
   const password = String(input.password ?? "");
-  const phone = String(input.phone ?? "").trim().replace(/[\s()-]/g, "");
+  const rawPhone = String(input.phone ?? "").trim().replace(/[\s()-]/g, "");
+  const phone = /^\d{10}$/.test(rawPhone) ? `+91${rawPhone}` : rawPhone;
   if (!password.trim() || password.length < 8 || password.length > 72) {
     return NextResponse.json({ error: "Enter a password of at least 8 characters." }, { status: 400 });
   }
-  if (action === "signup" && (!/^\+[1-9]\d{7,14}$/.test(phone) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))) {
+  if (action === "signup" && (!/^(?:\+91)?[6-9]\d{9}$/.test(phone) || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))) {
     return NextResponse.json({ error: "Enter a valid mobile number and, if you want password recovery, a valid email address." }, { status: 400 });
   }
   if (action === "signin" && !identifier) return NextResponse.json({ error: "Enter your registered phone number or email address." }, { status: 400 });
@@ -111,10 +113,11 @@ export async function POST(request: NextRequest) {
     const isEmail = identifier.includes("@");
     if (isEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) return NextResponse.json({ error: "Enter a valid phone number or email address." }, { status: 400 });
     const normalizedPhone = identifier.replace(/[\s()-]/g, "");
-    if (!isEmail && !/^\+[1-9]\d{7,14}$/.test(normalizedPhone)) return NextResponse.json({ error: "Enter your phone number with country code, or your email address." }, { status: 400 });
+    const canonicalPhone = /^\d{10}$/.test(normalizedPhone) ? `+91${normalizedPhone}` : normalizedPhone;
+    if (!isEmail && !/^(?:\+91)?[6-9]\d{9}$/.test(canonicalPhone)) return NextResponse.json({ error: "Enter your 10-digit mobile number, with or without +91, or your email address." }, { status: 400 });
     const rows = (isEmail
       ? db.prepare("SELECT id, name, email, phone, passwordHash, role FROM users WHERE email = ?").all(identifier.toLowerCase())
-      : db.prepare("SELECT id, name, email, phone, passwordHash, role FROM users WHERE phone = ?").all(normalizedPhone)) as
+      : db.prepare("SELECT id, name, email, phone, passwordHash, role FROM users WHERE phone = ?").all(canonicalPhone)) as
       { id: string; name: string; email: string; phone: string; passwordHash: string; role: "user" | "admin" }[];
     if (!isEmail && rows.length > 1) return NextResponse.json({ error: "This phone number is linked to multiple accounts. Sign in using email." }, { status: 409 });
     const row = rows[0];

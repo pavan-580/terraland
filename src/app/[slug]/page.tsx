@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
@@ -21,7 +20,7 @@ const pages: Record<string, { kicker: string; title: string; emphasis: string; i
     kicker: "WE'RE HERE TO HELP",
     title: "A real person,",
     emphasis: "one hello away.",
-    intro: "Questions about a listing, a property you want to share, or how NILAY works? We would love to hear from you.",
+    intro: "Questions about a listing, a property you want to share, or how NILAY works? Message our team on WhatsApp and we will be glad to help.",
     sections: [
       { title: "For listing help.", text: "If you are an owner, you can start a listing in just a few minutes. Sign in first so you can manage your property details." },
       { title: "Good to know.", text: "For legal, title, or survey advice, please consult an independent qualified professional in your area." },
@@ -82,12 +81,20 @@ const pages: Record<string, { kicker: string; title: string; emphasis: string; i
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const page = pages[slug];
-  return { title: page ? `${page.title} ${page.emphasis}` : "Explore land" };
+  if (!page) return { title: "Explore land" };
+  const title = `${page.title} ${page.emphasis}`;
+  const description = page.intro.replace(/\s+/g, " ").trim().slice(0, 160);
+  return {
+    title,
+    description,
+    alternates: { canonical: `/${encodeURIComponent(slug)}` },
+    openGraph: { title, description, siteName: "NILAY", locale: "en_IN", type: "website" },
+  };
 }
 
 export default async function ContentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const page = pages[slug];
   if (!page) notFound();
-  return <><SiteHeader /><main className="content-page"><div className="content-hero"><span className="eyebrow">{page.kicker}</span><h1>{page.title}<br /><em>{page.emphasis}</em></h1><p>{page.intro}</p></div><div className="content-sections">{page.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><div><h2>{section.title}</h2><p>{section.text}</p></div><Check size={18} /></article>)}</div><div className="content-cta"><div><span className="eyebrow">{slug === "contact" ? "WE'RE ONE MESSAGE AWAY" : "READY WHEN YOU ARE"}</span><h2>{slug === "contact" ? "Need a hand?" : "Let's find your place."}</h2></div><Link className="button button-dark" href="/contact">Contact our team <ArrowUpRight size={16} /></Link></div></main><SiteFooter /></>;
+  return <><SiteHeader /><main className="content-page"><div className="content-hero"><span className="eyebrow">{page.kicker}</span><h1>{page.title}<br /><em>{page.emphasis}</em></h1><p>{page.intro}</p></div><div className="content-sections">{page.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><div><h2>{section.title}</h2><p>{section.text}</p></div><Check size={18} /></article>)}</div><div className="content-cta"><div><span className="eyebrow">{slug === "contact" ? "WE'RE ONE MESSAGE AWAY" : "READY WHEN YOU ARE"}</span><h2>{slug === "contact" ? "Need a hand?" : "Let's find your place."}</h2></div><a className="button button-dark" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20contact%20your%20team." target="_blank" rel="noreferrer">Contact our team <ArrowUpRight size={16} /></a></div></main><SiteFooter /></>;
 }

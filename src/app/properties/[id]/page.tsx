@@ -15,6 +15,7 @@ import { formatListingPrice, formatPrice } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
 const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
 
 function yesNo(value?: string) {
   if (value === "yes") return "Yes";
@@ -39,16 +40,20 @@ function mapSearchLocation(mapUrl: string | undefined, fallback: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const row = db.prepare("SELECT title, description, image FROM properties WHERE id = ? AND status = 'published'").get(id) as
-    { title: string; description: string; image: string } | undefined;
+  const row = db.prepare("SELECT title, description, image, type, listingCategory, city, locality, price, area, unit FROM properties WHERE id = ? AND status = 'published'").get(id) as
+    { title: string; description: string; image: string; type: string; listingCategory: string; city: string; locality: string; price: number; area: number; unit: string } | undefined;
   if (!row) return { title: "Land listing" };
+  const listingMode = row.listingCategory === "rent" ? "for rent" : "for sale";
+  const title = `${row.type} ${listingMode} in ${row.locality}, ${row.city}: ${row.title}`;
+  const description = `${row.title}: ${row.type} ${listingMode} in ${row.locality}, ${row.city}. ${row.area} ${row.unit}, ${currency.format(row.price)}. ${row.description}`
+    .replace(/\s+/g, " ").trim().slice(0, 160);
+  const canonical = `${siteUrl}/properties/${encodeURIComponent(id)}`;
   return {
-    title: row.title,
-    description: row.description,
-    openGraph: { title: row.title, description: row.description, images: row.image ? [row.image] : [] },
-    ...(process.env.NEXT_PUBLIC_SITE_URL ? {
-      alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/properties/${encodeURIComponent(id)}` },
-    } : {}),
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical, siteName: "NILAY", locale: "en_IN", type: "website", images: row.image ? [row.image] : [] },
+    twitter: { card: "summary_large_image", title, description, images: row.image ? [row.image] : [] },
   };
 }
 
@@ -68,6 +73,32 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const mapQuery = [property.address, property.landmark, property.locality, property.city].filter(Boolean).join(", ");
   const embeddedMapQuery = mapSearchLocation(property.mapUrl, mapQuery);
   const address = [property.address, property.landmark, property.locality, property.city].filter(Boolean).join(", ");
+  const canonical = `${siteUrl}/properties/${encodeURIComponent(property.id)}`;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${property.title} | ${property.type} for ${listingCategory === "rent" ? "rent" : "sale"} in ${property.locality}, ${property.city}`,
+    description: property.description,
+    url: canonical,
+    mainEntity: {
+      "@type": "Place",
+      name: property.title,
+      description: property.description,
+      image: photos,
+      address: {
+        "@type": "PostalAddress",
+        ...(property.address ? { streetAddress: property.address } : {}),
+        addressLocality: property.locality,
+        addressRegion: property.city,
+        addressCountry: "IN",
+      },
+      additionalProperty: [
+        { "@type": "PropertyValue", name: "Property type", value: property.type },
+        { "@type": "PropertyValue", name: "Listing type", value: listingCategory === "rent" ? "For rent" : "For sale" },
+        { "@type": "PropertyValue", name: "Area", value: `${property.area} ${property.unit}` },
+      ],
+    },
+  };
   const facts = [
     ["Listing", listingCategory === "rent" ? "For rent" : "For sale"],
     ["Property type", property.type],
@@ -93,7 +124,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     ["Clear title", yesNo(property.clearTitle)],
     ] : []),
   ];
-  return <><SiteHeader /><main className="detail-page">
+  return <><SiteHeader /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} /><main className="detail-page">
     <div className="detail-breadcrumb"><span>{listingLabel} / {property.city.toUpperCase()}</span></div>
     <section className="detail-heading">
       <div className="detail-heading-copy">
