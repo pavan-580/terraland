@@ -135,6 +135,7 @@ function createDatabase() {
       userName TEXT NOT NULL DEFAULT '',
       userPhone TEXT NOT NULL DEFAULT '',
       visitorId TEXT NOT NULL DEFAULT '',
+      contactMethod TEXT NOT NULL DEFAULT 'phone',
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS registration_notifications (
@@ -162,6 +163,7 @@ function createDatabase() {
   `);
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
+  addColumnIfMissing(db, "seller_phone_clicks", "contactMethod", "ALTER TABLE seller_phone_clicks ADD COLUMN contactMethod TEXT NOT NULL DEFAULT 'phone'");
   addColumnIfMissing(db, "properties", "images", "ALTER TABLE properties ADD COLUMN images TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, "properties", "videos", "ALTER TABLE properties ADD COLUMN videos TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, "properties", "deleteRequestedAt", "ALTER TABLE properties ADD COLUMN deleteRequestedAt TEXT");

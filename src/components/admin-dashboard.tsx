@@ -43,6 +43,7 @@ type SellerPhoneClick = {
   userPhone: string;
   visitorId: string;
   createdAt: string;
+  contactMethod: "phone" | "whatsapp";
   visitorProfileId: string | null;
   sellerId: string | null;
 };
@@ -388,7 +389,7 @@ export function AdminDashboard() {
       <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>
       <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
       <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
-      <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}><span>PHONE CLICKS</span><strong>{data.phoneClicks.length}</strong></button>
+      <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}><span>PHONE & WHATSAPP</span><strong>{data.phoneClicks.length}</strong></button>
     </div>
     {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
@@ -495,7 +496,7 @@ export function AdminDashboard() {
       ) : <p className="admin-empty">No reviews have been posted yet.</p>}</div>}
       {section === "phoneClicks" && <div className="admin-record-list">{data.phoneClicks.length ? data.phoneClicks.map((click) =>
         <article className="admin-record admin-phone-click" key={click.id}>
-          <div className="admin-record-top"><div><span className="eyebrow">{formatAdminDate(click.createdAt)} · {click.userId ? "SIGNED-IN USER" : "GUEST VISITOR"}</span><strong>{click.propertyTitle}</strong></div><Link className="text-link" href={`/properties/${encodeURIComponent(click.propertyId)}`} target="_blank">View listing</Link></div>
+          <div className="admin-record-top"><div><span className="eyebrow">{formatAdminDate(click.createdAt)} · {click.contactMethod === "whatsapp" ? "WHATSAPP TO 8074399963" : "PHONE NUMBER CLICK"} · {click.userId ? "SIGNED-IN USER" : "GUEST VISITOR"}</span><strong>{click.propertyTitle}</strong></div><Link className="text-link" href={`/properties/${encodeURIComponent(click.propertyId)}`} target="_blank">View listing</Link></div>
           <div className="admin-inquiry-contact"><span>Visitor: {click.visitorProfileId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.visitorProfileId!)}>{click.userName || "View visitor profile"}</button> : <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong>}</span>{click.userPhone && <span>Phone: {click.userPhone}</span>}<span>Seller: {click.sellerId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.sellerId!)}>{click.sellerName}</button> : <strong>{click.sellerName}</strong>}</span></div>
         </article>
       ) : <p className="admin-empty">No seller phone clicks have been recorded yet.</p>}</div>}

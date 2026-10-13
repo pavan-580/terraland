@@ -9,6 +9,7 @@ import { PropertyCard } from "@/components/property-card";
 import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyReviews } from "@/components/property-reviews";
 import { SellerPhoneLink } from "@/components/seller-phone-link";
+import { WhatsAppListingLink } from "@/components/whatsapp-listing-link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
@@ -178,8 +179,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           <div><strong>{property.owner}</strong><span>Contact the seller directly</span></div>
           {property.phone && <SellerPhoneLink className="seller-public-phone" propertyId={property.id} phone={property.phone} owner={property.owner}>{property.phone}</SellerPhoneLink>}
           {property.sellerEmail && <a className="seller-public-email" href={`mailto:${property.sellerEmail}`}>{property.sellerEmail}</a>}
+          <WhatsAppListingLink className="seller-public-whatsapp" property={property} />
         </div> : <>
-          <div className="seller-profile"><span className="seller-avatar">{property.owner.slice(0, 1)}</span><div><strong>{property.owner}</strong><span>Send us an enquiry and our team will contact you shortly.</span></div></div>
+          <div className="seller-profile"><span className="seller-avatar">{property.owner.slice(0, 1)}</span><div><strong>{property.owner}</strong><span>Send us an enquiry and our team will contact you shortly.</span></div><WhatsAppListingLink className="seller-public-whatsapp" property={property} /></div>
           <InquiryForm propertyId={property.id} title={property.title} type={property.type} listingCategory={listingCategory} pricePeriod={property.pricePeriod}
             city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name, email: user.email, phone: user.phone } : null} />
         </>}

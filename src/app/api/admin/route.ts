@@ -43,7 +43,8 @@ export async function GET() {
   const phoneClicks = db.prepare(`
     SELECT seller_phone_clicks.id, seller_phone_clicks.propertyId, seller_phone_clicks.propertyTitle,
       seller_phone_clicks.sellerName, seller_phone_clicks.userId, seller_phone_clicks.userName,
-      seller_phone_clicks.userPhone, seller_phone_clicks.visitorId, seller_phone_clicks.createdAt,
+      seller_phone_clicks.userPhone, seller_phone_clicks.visitorId, seller_phone_clicks.contactMethod,
+      seller_phone_clicks.createdAt,
       visitor.id AS visitorProfileId,
       COALESCE(properties.ownerId, (
         SELECT matchedSeller.id FROM users AS matchedSeller

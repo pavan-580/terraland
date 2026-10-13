@@ -4,26 +4,29 @@ import { db, getSiteSetting } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null) as { propertyId?: unknown } | null;
+  const body = await request.json().catch(() => null) as { propertyId?: unknown; contactMethod?: unknown } | null;
   const propertyId = typeof body?.propertyId === "string" ? body.propertyId.trim().slice(0, 100) : "";
-  if (!propertyId || getSiteSetting("showSellerPhones") === "false") {
+  const contactMethod = body?.contactMethod === "whatsapp" ? "whatsapp" : "phone";
+  if (!propertyId || (contactMethod === "phone" && getSiteSetting("showSellerPhones") === "false")) {
     return NextResponse.json({ error: "Seller contact is not available." }, { status: 404 });
   }
 
   const property = db.prepare(`
-    SELECT id, title, owner, phone FROM properties
-    WHERE id = ? AND status = 'published' AND showPhone = 1 AND TRIM(phone) != ''
-  `).get(propertyId) as { id: string; title: string; owner: string; phone: string } | undefined;
-  if (!property) return NextResponse.json({ error: "Seller contact is not available." }, { status: 404 });
+    SELECT id, title, owner, phone, showPhone FROM properties
+    WHERE id = ? AND status = 'published'
+  `).get(propertyId) as { id: string; title: string; owner: string; phone: string; showPhone: number } | undefined;
+  if (!property || (contactMethod === "phone" && (!property.showPhone || !property.phone.trim()))) {
+    return NextResponse.json({ error: "Seller contact is not available." }, { status: 404 });
+  }
 
   const user = await currentUser();
   const priorVisitorId = request.cookies.get("nilay_visitor")?.value ?? "";
   const visitorId = /^[0-9a-f-]{36}$/i.test(priorVisitorId) ? priorVisitorId : randomUUID();
   db.prepare(`
     INSERT INTO seller_phone_clicks
-      (id, propertyId, propertyTitle, sellerName, userId, userName, userPhone, visitorId)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(randomUUID(), property.id, property.title, property.owner, user?.id ?? "", user?.name ?? "", user?.phone ?? "", visitorId);
+      (id, propertyId, propertyTitle, sellerName, userId, userName, userPhone, visitorId, contactMethod)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(randomUUID(), property.id, property.title, property.owner, user?.id ?? "", user?.name ?? "", user?.phone ?? "", visitorId, contactMethod);
 
   const response = new NextResponse(null, { status: 204 });
   if (visitorId !== priorVisitorId) {

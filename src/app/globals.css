@@ -134,6 +134,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .card-seller-contact { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px; margin-top: 12px; color: #627167; font-size: 9px; }
 .card-seller-contact > div { display: grid; gap: 3px; min-width: 0; }
 .card-seller-links { justify-items: end; gap: 4px !important; max-width: 55%; }
+.card-seller-links a.whatsapp-listing-link { width: 27px; height: 27px; justify-content: center; max-width: none; overflow: visible; color: #25d366; text-decoration: none; }
 .card-seller-contact strong { color: #23445d; font-size: 10px; overflow-wrap: anywhere; }
 .card-seller-contact > a { color: #23445d; font-size: 10px; font-weight: 700; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; }
 .card-seller-links a { max-width: 100%; overflow: hidden; color: #23445d; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; }
@@ -821,6 +822,9 @@ fieldset.amenity-selector label span { overflow-wrap: anywhere; }
 .seller-profile > div span { color: rgba(255,255,255,.72); font-size: 9px; }
 .seller-public-phone { flex: 1 1 100%; margin-left: 42px; color: #fff; font-size: 11px; font-weight: 700; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
 .seller-public-email { flex: 1 1 100%; min-width: 0; margin-left: 42px; color: #fff; font-size: 10px; overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 3px; }
+.seller-profile .seller-public-whatsapp { flex: 0 0 31px; width: 31px; height: 31px; margin-left: 42px; }
+.whatsapp-listing-link { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 29px; width: 29px; height: 29px; border: 1px solid rgba(37,211,102,.38); border-radius: 50%; color: #25d366; background: rgba(37,211,102,.1); transition: background .2s, transform .2s; }
+.whatsapp-listing-link:hover { color: #42e17d; background: rgba(37,211,102,.2); transform: translateY(-1px); text-decoration: none; }
 .seller-contact-actions { display: grid; gap: 9px; padding: 15px 17px 3px; }
 .seller-phone-link { display: grid; gap: 4px; color: #557084; font-size: 9px; }
 .seller-phone-link span { color: #173b55; font-size: 10px; font-weight: 600; }
