@@ -1252,6 +1252,22 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .site-header { transition-duration: .01ms; }
 }
 
+/* Keep the mobile drawer fixed to the device viewport in iOS Safari. */
+@media (max-width: 1080px) {
+  .site-header, .site-header.site-header-hero.is-scrolled {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .main-nav {
+    height: 100vh;
+    height: 100dvh;
+    padding-top: calc(88px + env(safe-area-inset-top));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
+
 /* NILAY services */
 .services-nav { position: relative; display: flex; align-items: center; }
 .services-nav-trigger { display: inline-flex; align-items: center; padding: 10px 12px; border-radius: 6px; color: inherit; cursor: pointer; font-size: 11px; font-weight: 600; list-style: none; }

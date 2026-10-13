@@ -5,10 +5,14 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { NextRequest, NextResponse } from "next/server";
 import { getAppDataDirectory } from "@/lib/storage-path";
+import { currentUser } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  if ((await currentUser())?.role !== "admin") {
+    return NextResponse.json({ error: "Administrator sign-in is required to download backups." }, { status: 403 });
+  }
   const secret = process.env.CRON_SECRET;
   const filename = request.nextUrl.searchParams.get("file") ?? "";
   const expiresValue = request.nextUrl.searchParams.get("expires") ?? "";

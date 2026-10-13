@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowUpRight, Heart } from "lucide-react";
+import { ArrowUpRight, Heart, Menu, X } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
 import { BackButton } from "@/components/back-button";
@@ -31,6 +31,14 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
   useEffect(() => {
     let active = true;
     void fetch("/api/auth")
@@ -77,11 +85,13 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
         <Link className="brand" href="/" aria-label="NILAY Real Estate home">
           <BrandLogo />
         </Link>
-        <button className="mobile-menu-toggle" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen}>
-          <span className={`mobile-menu-icon${mobileMenuOpen ? " is-open" : ""}`} aria-hidden="true"><span /><span /><span /></span>
+        <button className="mobile-menu-toggle" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen} aria-controls="site-mobile-navigation">
+          {mobileMenuOpen ? <X size={25} strokeWidth={2} aria-hidden="true" /> : <Menu size={25} strokeWidth={2} aria-hidden="true" />}
         </button>
         {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)} />}
-        <nav className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation">
+        <nav id="site-mobile-navigation" className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation" onClick={(event) => {
+          if ((event.target as HTMLElement).closest("a")) setMobileMenuOpen(false);
+        }}>
           <Link href="/search?category=sale">Explore land</Link>
           <div className="farmstay-nav-window" onPointerEnter={() => setFarmstayPaused(true)}
             onPointerLeave={() => setFarmstayPaused(false)} onFocusCapture={() => setFarmstayPaused(true)}
