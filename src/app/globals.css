@@ -661,10 +661,10 @@ button:disabled { opacity: .55; cursor: wait; }
 .admin-backup-button:hover:not(:disabled) { transform: translateY(-1px); }
 .admin-backup-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .admin-backup-button:disabled { cursor: wait; opacity: .65; }
-.admin-backup-upload { background: var(--forest); color: var(--white); }
-.admin-backup-upload:hover:not(:disabled) { background: var(--lime); border-color: var(--lime); }
-.admin-backup-download { background: transparent; color: var(--forest); }
-.admin-backup-download:hover:not(:disabled) { background: var(--forest); color: var(--white); }
+.admin-backup-upload { border-color: var(--lime); background: var(--lime); color: #172219; }
+.admin-backup-upload:hover:not(:disabled) { border-color: #d6e99e; background: #d6e99e; }
+.admin-backup-download { border-color: rgba(198,220,129,.62); background: rgba(198,220,129,.08); color: #e1edc1; }
+.admin-backup-download:hover:not(:disabled) { border-color: var(--lime); background: var(--lime); color: #172219; }
 .admin-setting-toggle { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-width: 112px; padding: 9px 12px; border: 1px solid #b8c0b6; border-radius: 999px; background: #eef0ed; color: #59635a; font-size: 10px; font-weight: 700; }
 .admin-setting-toggle > span { width: 9px; height: 9px; border-radius: 50%; background: #8a918a; }
 .admin-setting-toggle.is-on { border-color: #3a7651; background: #e8f2eb; color: #27613d; }
