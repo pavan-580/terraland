@@ -134,7 +134,8 @@ button:disabled { opacity: .55; cursor: wait; }
 .card-seller-contact { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px; margin-top: 12px; color: #627167; font-size: 9px; }
 .card-seller-contact > div { display: grid; gap: 3px; min-width: 0; }
 .card-seller-links { justify-items: end; gap: 4px !important; max-width: 55%; }
-.card-seller-links a.whatsapp-listing-link { width: 27px; height: 27px; justify-content: center; max-width: none; overflow: visible; color: #25d366; text-decoration: none; }
+.card-bottom > div.card-actions { align-items: center; gap: 8px; }
+.card-actions .whatsapp-listing-link { width: 31px; height: 31px; flex-basis: 31px; }
 .card-seller-contact strong { color: #23445d; font-size: 10px; overflow-wrap: anywhere; }
 .card-seller-contact > a { color: #23445d; font-size: 10px; font-weight: 700; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; }
 .card-seller-links a { max-width: 100%; overflow: hidden; color: #23445d; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; text-decoration: underline; text-underline-offset: 2px; }
