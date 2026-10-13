@@ -1374,3 +1374,25 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .my-listing-media-item > button { align-self: flex-start; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--lime); font-size: 10px; }
 ::placeholder { color: var(--muted); opacity: 1; }
 @media (max-width: 700px) { .analytics-toolbar { align-items: flex-start; flex-direction: column; } .analytics-actions { width: 100%; justify-content: flex-start; } .analytics-panel { padding: 14px; } .analytics-chart { grid-auto-columns: 28px; } .analytics-bar-column { height: 190px; } .mobile-menu-account .language-picker { grid-column: 1 / -1; } .mobile-menu-account .language-picker-trigger { width: 100%; min-height: 42px; } }
+
+/* Keep the desktop header controls from colliding at common laptop widths. */
+@media (min-width: 1081px) {
+  .mobile-menu-favorites { display: none; }
+  .header-inner { gap: clamp(12px, 1.1vw, 20px); padding-inline: clamp(20px, 2vw, 36px); }
+  .brand { min-width: clamp(118px, 10vw, 150px); }
+  .main-nav { flex: 1 1 auto; min-width: 0; margin-inline: 0; justify-content: center; gap: 0; padding: 3px; }
+  .main-nav > a { padding-inline: clamp(6px, .65vw, 11px); font-size: clamp(9px, .68vw, 11px); }
+  .main-nav > .language-picker { flex: 0 0 auto; margin-inline: 2px; }
+  .main-nav > .language-picker .language-picker-trigger { min-width: 98px; }
+  .header-actions { flex: 0 0 auto; gap: clamp(9px, .9vw, 16px); white-space: nowrap; }
+  .header-actions .saved-link, .header-actions .sign-in-link { flex: 0 0 auto; white-space: nowrap; }
+  .header-listing-cta { width: clamp(160px, 13vw, 198px); min-width: 160px; flex: 0 0 auto; white-space: nowrap; }
+  .header-listing-cta span { white-space: nowrap; }
+}
+@media (min-width: 1081px) and (max-width: 1250px) {
+  .header-inner { gap: 10px; padding-inline: 14px; }
+  .brand { min-width: 110px; }
+  .main-nav > a { padding-inline: 5px; font-size: 9px; }
+  .header-actions { gap: 8px; }
+  .header-listing-cta { width: 142px; min-width: 142px; padding-inline: 9px; gap: 5px; font-size: 9px; }
+}
