@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, logMemberActivity, publicPropertyFromRow } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser, newId } from "@/lib/session";
 import { storePropertyPhotos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
@@ -175,6 +175,7 @@ export async function POST(request: NextRequest) {
        @facing, @approvals, @loanAvailable, @registrationAvailable, @renovation, @cornerPlot, @roadWidth, @surveyNumber,
        @soilType, @clearTitle, @amenities, @address, @landmark, @mapUrl, @verified)
   `).run(property);
+  logMemberActivity(user.id, "Listing published", `${property.listingCategory === "rent" ? "For rent" : "For sale"} · ${property.type} · ${property.area} ${property.unit}`, { id: property.id, title: property.title });
   db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(property.phone, user.id);
   return NextResponse.json({ ...property, images, videos, amenities, verified: false }, { status: 201 });
 }

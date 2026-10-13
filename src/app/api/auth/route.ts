@@ -1,6 +1,6 @@
 import { compare, hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, logMemberActivity } from "@/lib/db";
 import { currentUser, newId, startSession } from "@/lib/session";
 import { deliverPendingRegistrationNotices } from "@/lib/notifications";
 
@@ -36,6 +36,8 @@ export async function PATCH(request: NextRequest) {
     if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) return NextResponse.json({ error: "That email or phone number is already in use." }, { status: 409 });
     throw error;
   }
+  const changedFields = [name !== user.name && "name", phone !== user.phone && "phone", email !== user.email && "email"].filter(Boolean);
+  if (changedFields.length) logMemberActivity(user.id, "Profile updated", `Changed: ${changedFields.join(", ")}`);
   return NextResponse.json({ message: "Profile saved.", user: { ...user, name, email, phone } });
 }
 
@@ -80,6 +82,7 @@ export async function POST(request: NextRequest) {
       const createAccount = db.transaction(() => {
         db.prepare("INSERT INTO users (id, name, email, phone, passwordHash, role) VALUES (?, ?, ?, ?, ?, 'user')")
           .run(id, name, email || storedEmail, phone, passwordHash);
+        logMemberActivity(id, "Account created", "Joined NILAY.");
         if (email) db.prepare("INSERT INTO registration_notifications (id, name, email) VALUES (?, ?, ?)")
           .run(notificationId, name, email);
       });

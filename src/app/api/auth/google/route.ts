@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, logMemberActivity } from "@/lib/db";
 import { deliverPendingRegistrationNotices } from "@/lib/notifications";
 import { newId, startSession } from "@/lib/session";
 
@@ -128,6 +128,7 @@ export async function GET(request: NextRequest) {
     const createAccount = db.transaction(() => {
       db.prepare("INSERT INTO users (id, name, email, passwordHash, role) VALUES (?, ?, ?, ?, 'user')")
         .run(id, userName, email, passwordHash);
+      logMemberActivity(id, "Account created", "Joined NILAY with Google.");
       db.prepare("INSERT INTO registration_notifications (id, name, email) VALUES (?, ?, ?)")
         .run(notificationId, userName, email);
     });

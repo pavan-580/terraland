@@ -1,7 +1,7 @@
 import { compare, hash } from "bcryptjs";
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, logMemberActivity } from "@/lib/db";
 import { sendPasswordResetCode } from "@/lib/notifications";
 
 export const runtime = "nodejs";
@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: "We couldn't reset that account. Request a new code and try again." }, { status: 400 });
     }
+    const resetUser = db.prepare("SELECT id FROM users WHERE email = ? AND role = 'user'").get(email) as { id: string } | undefined;
+    if (resetUser) logMemberActivity(resetUser.id, "Password changed", "Password reset using email verification.");
     return NextResponse.json({ message: "Your password has been changed. Sign in with your new password." });
   }
 

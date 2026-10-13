@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting } from "@/lib/db";
+import { db, getSiteSetting, logMemberActivity } from "@/lib/db";
 import { currentUser, newId } from "@/lib/session";
 import { deliverPendingInquiryNotices } from "@/lib/notifications";
 
@@ -25,7 +25,10 @@ export async function POST(request: NextRequest) {
     !/^\+[1-9]\d{7,14}$/.test(phone)) {
     return NextResponse.json({ error: "Please check the enquiry and try again." }, { status: 400 });
   }
-  if (user && phone !== user.phone) db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(phone, user.id);
+  if (user && phone !== user.phone) {
+    db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(phone, user.id);
+    logMemberActivity(user.id, "Profile updated", "Added or updated phone number.");
+  }
 
   const property = db.prepare(`
     SELECT id, title, type, listingCategory, pricePeriod, city, locality, price, area, unit, address, mapUrl
@@ -47,6 +50,7 @@ export async function POST(request: NextRequest) {
     db.prepare("INSERT INTO inquiry_notifications (id, inquiryId) VALUES (?, ?)").run(notificationId, inquiryId);
   });
   saveInquiry();
+  if (user) logMemberActivity(user.id, "Enquiry sent", "Requested more information.", { id: property.id, title: property.title });
 
   const delivery = await deliverPendingInquiryNotices(inquiryId);
   return NextResponse.json({

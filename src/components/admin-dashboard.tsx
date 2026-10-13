@@ -47,6 +47,15 @@ type SellerPhoneClick = {
   visitorProfileId: string | null;
   sellerId: string | null;
 };
+type MemberActivity = {
+  id: string;
+  userId: string;
+  action: string;
+  details: string;
+  propertyId: string | null;
+  propertyTitle: string | null;
+  createdAt: string;
+};
 type RegistrationNotification = {
   id: string;
   name: string;
@@ -64,19 +73,20 @@ type DashboardData = {
   inquiryNotifications: InquiryEmailNotification[];
   reviews: AdminReview[];
   phoneClicks: SellerPhoneClick[];
+  memberActivity: MemberActivity[];
   registrationNotifications: RegistrationNotification[];
   settings: { showSellerPhones: boolean };
 };
 
 function formatAdminDate(value: string) {
   const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
-  return new Date(normalized).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(normalized).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" });
 }
 
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], registrationNotifications: [], settings: { showSellerPhones: true } });
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], registrationNotifications: [], settings: { showSellerPhones: true } });
   const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews" | "phoneClicks">("properties");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
@@ -134,6 +144,10 @@ export function AdminDashboard() {
   function openUserProfile(userId: string) {
     setProfileFocusId(userId);
     setSection("users");
+  }
+
+  function activityForUser(userId: string) {
+    return data.memberActivity.filter((activity) => activity.userId === userId);
   }
 
   async function update(type: "user" | "property", id: string, fields: Record<string, unknown>) {
@@ -479,6 +493,14 @@ export function AdminDashboard() {
           <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · ACCOUNT CREATED {formatAdminDate(user.createdAt)}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div>{user.email !== "pavansai580@gmail.com" && <button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button>}</div>
           <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label></div>
           <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
+          <details className="member-activity" open={user.id === profileFocusId}>
+            <summary>Full activity log · {activityForUser(user.id).length} events</summary>
+            {activityForUser(user.id).length ? <ol>{activityForUser(user.id).map((activity) => <li key={activity.id}>
+              <time dateTime={activity.createdAt}>{formatAdminDate(activity.createdAt)}</time>
+              <strong>{activity.action}</strong>
+              {(activity.propertyTitle || activity.details) && <span>{[activity.propertyTitle, activity.details].filter(Boolean).join(" · ")}</span>}
+            </li>)}</ol> : <p>No activity recorded for this member yet.</p>}
+          </details>
         </form>
       )}</div>}
       {section === "inquiries" && <div className="admin-record-list">{data.inquiries.map((inquiry) =>

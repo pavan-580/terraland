@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, logMemberActivity } from "@/lib/db";
 import { currentUser, newId } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
   if (!propertyId || !Number.isInteger(rating) || rating < 1 || rating > 5 || comment.length < 5 || comment.length > 1000) {
     return NextResponse.json({ error: "Choose 1–5 stars and write a review between 5 and 1,000 characters." }, { status: 400 });
   }
-  const propertyExists = db.prepare("SELECT 1 FROM properties WHERE id = ? AND status = 'published'").get(propertyId);
-  if (!propertyExists) return NextResponse.json({ error: "This listing is no longer available." }, { status: 404 });
+  const property = db.prepare("SELECT id, title FROM properties WHERE id = ? AND status = 'published'").get(propertyId) as { id: string; title: string } | undefined;
+  if (!property) return NextResponse.json({ error: "This listing is no longer available." }, { status: 404 });
   const priorReview = db.prepare("SELECT id FROM property_reviews WHERE propertyId = ? AND userId = ?").get(propertyId, user.id) as { id: string } | undefined;
   const id = priorReview?.id ?? newId();
   db.prepare(`
@@ -40,5 +40,6 @@ export async function POST(request: NextRequest) {
       reviewerName = excluded.reviewerName, rating = excluded.rating,
       comment = excluded.comment, updatedAt = CURRENT_TIMESTAMP
   `).run(id, propertyId, user.id, user.name, rating, comment);
+  logMemberActivity(user.id, priorReview ? "Review updated" : "Review posted", `${rating}/5 rating.`, property);
   return NextResponse.json({ message: priorReview ? "Your review has been updated." : "Your review has been posted." }, { status: priorReview ? 200 : 201 });
 }

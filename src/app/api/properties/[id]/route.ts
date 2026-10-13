@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
+import { db, getSiteSetting, logMemberActivity, publicPropertyFromRow } from "@/lib/db";
 import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 import { storePropertyPhotos, storePropertyVideos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
@@ -149,6 +149,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     choice("clearTitle"), JSON.stringify(amenities), value("address").slice(0, 240), value("landmark").slice(0, 120),
     value("mapUrl").slice(0, 500), id, user.id,
   );
+  const changedFields = [
+    title !== row.title && "title",
+    type !== row.type || listingCategory !== row.listingCategory ? "property type" : "",
+    city !== row.city || locality !== row.locality ? "location" : "",
+    Math.round(price) !== Number(row.price) ? "price" : "",
+    area !== Number(row.area) || unit !== row.unit ? "area" : "",
+    description !== row.description ? "description" : "",
+    phone !== row.phone ? "contact details" : "",
+    JSON.stringify(images) !== JSON.stringify(existingImages) ? "photos" : "",
+    JSON.stringify(videos) !== JSON.stringify(existingVideos) ? "videos" : "",
+    ["facing", "approvals", "loanAvailable", "registrationAvailable", "renovation", "cornerPlot", "roadWidth", "surveyNumber", "soilType", "clearTitle", "amenities", "address", "landmark", "mapUrl", "availability", "guestCapacity"]
+      .some((key) => String(row[key] ?? "") !== (key === "amenities" ? JSON.stringify(amenities) : key === "guestCapacity" ? String(listingCategory === "rent" ? guestCapacity ?? "" : "") : choice(key)))
+      ? "property details" : "",
+  ].filter(Boolean);
+  if (changedFields.length) {
+    logMemberActivity(user.id, "Listing updated", `Changed: ${changedFields.join(", ")}`, { id, title });
+  }
   return NextResponse.json({ message: "Your listing has been updated." });
 }
 
@@ -156,10 +173,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sign in to delete your listing." }, { status: 401 });
   const { id } = await params;
+  const property = db.prepare("SELECT id, title FROM properties WHERE id = ? AND ownerId = ?").get(id, user.id) as { id: string; title: string } | undefined;
   const result = db.prepare(`
     UPDATE properties SET deleteRequestedAt = CURRENT_TIMESTAMP
     WHERE id = ? AND ownerId = ? AND deleteRequestedAt IS NULL
   `).run(id, user.id);
+  if (result.changes && property) logMemberActivity(user.id, "Listing deletion requested", "Waiting for admin approval.", property);
   if (!result.changes) {
     const existing = db.prepare("SELECT deleteRequestedAt FROM properties WHERE id = ? AND ownerId = ?").get(id, user.id) as { deleteRequestedAt: string | null } | undefined;
     if (!existing) return NextResponse.json({ error: "Listing not found or you do not own it." }, { status: 404 });

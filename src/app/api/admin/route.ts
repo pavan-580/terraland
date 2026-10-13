@@ -57,6 +57,13 @@ export async function GET() {
     ORDER BY seller_phone_clicks.createdAt DESC, seller_phone_clicks.rowid DESC
     LIMIT 1000
   `).all();
+  const memberActivity = db.prepare(`
+    SELECT member_activity_log.id, member_activity_log.userId, member_activity_log.action,
+      member_activity_log.details, member_activity_log.propertyId, member_activity_log.propertyTitle,
+      member_activity_log.createdAt
+    FROM member_activity_log JOIN users ON users.id = member_activity_log.userId
+    ORDER BY member_activity_log.createdAt DESC, member_activity_log.rowid DESC
+  `).all();
   const registrationNotifications = db.prepare(`
     SELECT id, name, email, status, attempts, lastError, createdAt, sentAt
     FROM registration_notifications ORDER BY createdAt DESC LIMIT 100
@@ -73,7 +80,7 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
+  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
 }
 
 export async function POST(request: NextRequest) {

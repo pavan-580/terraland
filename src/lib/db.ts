@@ -1,5 +1,6 @@
 import "server-only";
 import Database from "better-sqlite3";
+import { randomUUID } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { seedProperties, type Property } from "@/lib/market";
@@ -138,6 +139,15 @@ function createDatabase() {
       contactMethod TEXT NOT NULL DEFAULT 'phone',
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS member_activity_log (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      action TEXT NOT NULL,
+      details TEXT NOT NULL DEFAULT '',
+      propertyId TEXT,
+      propertyTitle TEXT,
+      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS registration_notifications (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -160,6 +170,7 @@ function createDatabase() {
     CREATE INDEX IF NOT EXISTS properties_city_idx ON properties(city);
     CREATE INDEX IF NOT EXISTS properties_type_idx ON properties(type);
     CREATE INDEX IF NOT EXISTS seller_phone_clicks_created_idx ON seller_phone_clicks(createdAt);
+    CREATE INDEX IF NOT EXISTS member_activity_user_created_idx ON member_activity_log(userId, createdAt);
   `);
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
@@ -224,8 +235,33 @@ function createDatabase() {
 export const db = globalForDb.landDb ?? createDatabase();
 globalForDb.landDb = db;
 
+export function logMemberActivity(
+  userId: string,
+  action: string,
+  details = "",
+  property?: { id: string; title: string } | null,
+) {
+  db.prepare(`
+    INSERT INTO member_activity_log (id, userId, action, details, propertyId, propertyTitle)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(randomUUID(), userId, action.slice(0, 100), details.slice(0, 1000), property?.id ?? null, property?.title ?? null);
+}
+
 // Run lightweight schema setup on the active connection as well as during a
 // fresh database creation, so Next.js hot reloads can safely add new tables.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS member_activity_log (
+    id TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    action TEXT NOT NULL,
+    details TEXT NOT NULL DEFAULT '',
+    propertyId TEXT,
+    propertyTitle TEXT,
+    createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS member_activity_user_created_idx ON member_activity_log(userId, createdAt);
+`);
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS seller_phone_clicks (
     id TEXT PRIMARY KEY,

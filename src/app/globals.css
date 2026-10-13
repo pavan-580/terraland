@@ -1460,3 +1460,13 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   html[lang="te"] .header-listing-cta span { white-space: normal; text-align: center; line-height: 1.25; }
 }
 
+.member-activity { grid-column: 1 / -1; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.member-activity > summary { cursor: pointer; color: var(--ink); font-size: 11px; font-weight: 700; }
+.member-activity > ol { display: grid; gap: 0; margin: 12px 0 0; padding: 0; list-style: none; }
+.member-activity > ol > li { display: grid; grid-template-columns: minmax(150px, auto) minmax(140px, 1fr); gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 10px; }
+.member-activity time { color: var(--muted); font-size: 9px; font-variant-numeric: tabular-nums; }
+.member-activity li strong { color: var(--ink); }
+.member-activity li span { grid-column: 2; color: var(--muted); line-height: 1.45; }
+.member-activity > p { margin: 12px 0 0; color: var(--muted); font-size: 10px; }
+@media (max-width: 600px) { .member-activity > ol > li { grid-template-columns: 1fr; gap: 4px; } .member-activity li span { grid-column: 1; } }
+
