@@ -1,0 +1,13 @@
+services:
+  - type: cron
+    name: terraland-daily-backup
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: node scripts/daily-backup-cron.mjs
+    schedule: "29 18 * * *"
+    envVars:
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://terraland.onrender.com
+      - key: CRON_SECRET
+        sync: false

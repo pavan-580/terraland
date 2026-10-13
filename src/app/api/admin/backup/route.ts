@@ -102,8 +102,10 @@ async function isAdmin() {
   return (await currentUser())?.role === "admin";
 }
 
-export async function GET() {
-  if (!await isAdmin()) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
+export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET;
+  const cronAuthorized = Boolean(cronSecret) && request.headers.get("authorization") === `Bearer ${cronSecret}`;
+  if (!cronAuthorized && !await isAdmin()) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
 
   const tempDirectory = await mkdtemp(path.join(os.tmpdir(), "terraland-backup-"));
   const databaseCopyPath = path.join(tempDirectory, "landmark.db");
