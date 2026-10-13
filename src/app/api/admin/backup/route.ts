@@ -101,9 +101,9 @@ export async function GET() {
     }
     return new NextResponse(archive, {
       headers: {
-        "Content-Type": "application/gzip",
+        "Content-Type": "application/octet-stream",
         "Content-Disposition": `attachment; filename="terraland-backup-${new Date().toISOString().slice(0, 10)}.terraland-backup.gz"`,
-        "Cache-Control": "private, no-store",
+        "Cache-Control": "private, no-store, no-transform",
         "X-Content-Type-Options": "nosniff",
       },
     });
@@ -181,14 +181,17 @@ export async function POST(request: NextRequest) {
     }
     let manifest: BackupManifest;
     try {
-      const json = gunzipSync(compressed, { maxOutputLength: MAX_BACKUP_BYTES }).toString("utf8");
+      const isGzip = compressed[0] === 0x1f && compressed[1] === 0x8b;
+      const json = (isGzip
+        ? gunzipSync(compressed, { maxOutputLength: MAX_BACKUP_BYTES })
+        : compressed).toString("utf8");
       manifest = validateManifest(JSON.parse(json) as unknown);
     } catch (reason) {
       const message = reason instanceof Error && reason.message.includes("larger than")
         ? "The uncompressed backup exceeds the 1 GB safety limit."
         : reason instanceof Error && reason.message.startsWith("The backup")
           ? reason.message
-          : "The file is damaged or is not a valid Terraland backup.";
+          : "This file is not a readable Terraland backup. Use the original downloaded .gz file or its uncompressed .json copy. No site data was changed.";
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
@@ -203,10 +206,10 @@ export async function POST(request: NextRequest) {
       }
       const tableCount = incomingDb.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").get() as { count: number };
       const requiredTables = new Set((incomingDb.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map(({ name }) => name));
-      if (tableCount.count === 0 || !["users", "properties", "site_settings"].every((table) => requiredTables.has(table))) {
-        return NextResponse.json({ error: "The backup database is missing required Terraland data tables." }, { status: 400 });
+      if (tableCount.count === 0 || !["users", "properties", "site_settings", "property_reviews"].every((table) => requiredTables.has(table))) {
+        return NextResponse.json({ error: "The backup database is missing required Terraland data tables, including listing reviews. No data was restored." }, { status: 400 });
       }
-      const requiredColumns: Record<string, string[]> = { users: ["id", "role"], properties: ["id", "image", "images", "videos"], site_settings: ["key", "value"] };
+      const requiredColumns: Record<string, string[]> = { users: ["id", "role"], properties: ["id", "image", "images", "videos"], site_settings: ["key", "value"], property_reviews: ["id", "propertyId", "userId", "reviewerName", "rating", "comment", "createdAt"] };
       for (const [table, required] of Object.entries(requiredColumns)) {
         const columns = new Set((incomingDb.prepare(`PRAGMA table_info("${table}")`).all() as { name: string }[]).map(({ name }) => name));
         if (!required.every((column) => columns.has(column))) {
@@ -248,7 +251,8 @@ export async function POST(request: NextRequest) {
       uploadsInstalled = false;
       throw reason;
     }
-    return NextResponse.json({ message: `Backup restored: database and ${manifest.uploads.length} listing media file(s).` });
+    const restoredReviews = db.prepare("SELECT COUNT(*) AS count FROM property_reviews").get() as { count: number };
+    return NextResponse.json({ message: `Backup restored: database, ${manifest.uploads.length} listing media file(s), and ${restoredReviews.count} review(s).` });
   } catch (reason) {
     console.error("Admin backup restore failed", reason);
     return NextResponse.json({ error: "The backup could not be restored. Existing site data was kept." }, { status: 500 });

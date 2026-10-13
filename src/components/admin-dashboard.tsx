@@ -74,6 +74,8 @@ export function AdminDashboard() {
   const [retryingInquiryEmail, setRetryingInquiryEmail] = useState(false);
   const [savingPhoneSetting, setSavingPhoneSetting] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [backupError, setBackupError] = useState("");
+  const [backupMessage, setBackupMessage] = useState("");
   const [pendingDelete, setPendingDelete] = useState<{ type: "user" | "property" | "inquiry" | "review"; id: string } | null>(null);
 
   function reviewPendingListings() {
@@ -271,16 +273,42 @@ export function AdminDashboard() {
     }
   }
 
-  function downloadBackup() {
-    setError("");
-    setMessage("");
-    const link = document.createElement("a");
-    link.href = "/api/admin/backup";
-    link.hidden = true;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setMessage("Backup download started. Check your Downloads folder.");
+  async function downloadBackup() {
+    setBackupBusy(true);
+    setBackupError("");
+    setBackupMessage("");
+    try {
+      const response = await fetch("/api/admin/backup", { cache: "no-store" });
+      if (!response.ok) {
+        const result = await response.json() as { error?: string };
+        throw new Error(result.error ?? "The backup could not be downloaded.");
+      }
+      const blob = await response.blob();
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const isGzip = bytes[0] === 0x1f && bytes[1] === 0x8b;
+      let filename = `terraland-backup-${new Date().toISOString().slice(0, 10)}.terraland-backup.gz`;
+      if (!isGzip) {
+        const text = new TextDecoder().decode(bytes).replace(/^\uFEFF/, "").trim();
+        const backup = JSON.parse(text) as { format?: string; version?: number };
+        if (backup.format !== "terraland-backup" || backup.version !== 1) {
+          throw new Error("The server did not return a valid backup file. No file was downloaded.");
+        }
+        filename = filename.replace(/\.gz$/, ".json");
+      }
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      setBackupMessage("Backup downloaded. You can upload this file here to restore it.");
+    } catch (reason) {
+      setBackupError(reason instanceof Error ? reason.message : "The backup could not be downloaded.");
+    } finally {
+      setBackupBusy(false);
+    }
   }
 
   async function uploadBackup(file: File | undefined) {
@@ -290,20 +318,20 @@ export function AdminDashboard() {
       return;
     }
     setBackupBusy(true);
-    setError("");
-    setMessage("");
+    setBackupError("");
+    setBackupMessage("");
     try {
       const response = await fetch("/api/admin/backup", {
         method: "POST",
-        headers: { "Content-Type": "application/gzip" },
+        headers: { "Content-Type": "application/octet-stream" },
         body: file,
       });
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "The backup could not be restored.");
-      setMessage(`${result.message ?? "Backup restored."} Refreshing the dashboard…`);
+      setBackupMessage(`${result.message ?? "Backup restored."} Refreshing the dashboard…`);
       window.setTimeout(() => router.replace("/sign-in?next=%2Fadmin"), 1200);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The backup could not be restored.");
+      setBackupError(reason instanceof Error ? reason.message : "The backup could not be restored.");
     } finally {
       setBackupBusy(false);
       if (backupInputRef.current) backupInputRef.current.value = "";
@@ -319,9 +347,11 @@ export function AdminDashboard() {
       </button>
     </div>
     <section className="admin-backup-card" aria-labelledby="admin-backup-title">
+      {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
+      {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}
       <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Download all site data and listing photos/videos. To restore, choose the downloaded .gz backup from your device.</p></div>
       <div className="admin-backup-actions">
-        <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".gz,application/gzip" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
+        <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".gz,.json,.terraland-backup,application/gzip,application/json" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
         <button className="admin-backup-button admin-backup-upload" type="button" disabled={backupBusy} onClick={() => backupInputRef.current?.click()}><Upload size={16} aria-hidden="true" />{backupBusy ? "Working…" : "Upload backup"}</button>
         <button className="admin-backup-button admin-backup-download" type="button" disabled={backupBusy} onClick={() => void downloadBackup()}><Download size={16} aria-hidden="true" />Download backup</button>
       </div>
