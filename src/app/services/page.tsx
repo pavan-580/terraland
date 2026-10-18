@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, FileCheck2, Landmark, MapPinned, ReceiptText, Scale } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { BackButton } from "@/components/back-button";
 
 export const metadata: Metadata = { title: "Land buyer services", description: "NILAY land-record, document due-diligence and property cost tools for buyers in Telangana and across India." };
 const services = [
@@ -14,7 +15,7 @@ const services = [
 ];
 export default function ServicesPage() {
   return <><SiteHeader /><main className="services-page">
-    <div className="services-intro"><span className="eyebrow">NILAY BUYER TOOLKIT</span><h1>Make your next move<br /><em>with more clarity.</em></h1><p>Useful starting points for checking land records, planning costs, and asking the right questions. These tools support your own due diligence; they are not legal, financial, or title certification.</p></div>
+    <div className="services-intro"><BackButton className="back-link" fallbackHref="/" label="Back to home" /><span className="eyebrow">NILAY BUYER TOOLKIT</span><h1>Make your next move<br /><em>with more clarity.</em></h1><p>Useful starting points for checking land records, planning costs, and asking the right questions. These tools support your own due diligence; they are not legal, financial, or title certification.</p></div>
     <div className="service-grid">{services.map(({ href, icon: Icon, name, text }) => <Link className="service-tile" href={href} key={href}><span className="service-icon"><Icon size={20} /></span><h2>{name}</h2><p>{text}</p><span className="service-cta">Open service <ArrowUpRight size={15} /></span></Link>)}</div>
     <p className="service-note">Property rules, records, and fees can change. Always confirm current details with the relevant government office and an independent local professional.</p>
   </main><SiteFooter /></>;

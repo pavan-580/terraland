@@ -4,6 +4,7 @@ import { MyListings } from "@/components/my-listings";
 import { ProfilePanel } from "@/components/profile-panel";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { BackButton } from "@/components/back-button";
 import { currentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Your NILAY profile", robots: { index: false, follow: false } };
@@ -12,6 +13,7 @@ export default async function ProfilePage() {
   const user = await currentUser();
   if (!user) redirect("/sign-in?next=%2Fprofile");
   return <><SiteHeader /><main className="saved-page my-listings-page profile-page">
+    <BackButton className="back-link" fallbackHref="/" label="Back to home" />
     <span className="eyebrow">YOUR NILAY ACCOUNT</span>
     <h1>Your NILAY account</h1>
     <p>Update your account details and manage the listings connected to your account.</p>

@@ -189,7 +189,7 @@ export async function PATCH(request: NextRequest) {
     const videos = Array.isArray(input.videos)
       ? input.videos.filter((video): video is string => typeof video === "string").map((video) => video.trim()).filter(Boolean)
       : [];
-    const status = input.status === "hidden" ? "hidden" : input.status === "published" ? "published" : "";
+    const status = ["pending", "hidden", "published"].includes(String(input.status)) ? String(input.status) : "";
     const type = String(input.type ?? "").trim();
     const listingCategory = String(input.listingCategory ?? "");
     const pricePeriod = String(input.pricePeriod ?? "").trim();

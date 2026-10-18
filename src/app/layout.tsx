@@ -8,15 +8,15 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").rep
 
 export const metadata: Metadata = {
   title: {
-    default: "NILAY | Land and plots for sale across India",
+    default: "NILAY | Residential Plots & Land in Miyapur, Hyderabad",
     template: "%s | NILAY",
   },
-  description: "Explore land for sale, residential plots, agricultural property, farm stays, and rental places across India with NILAY.",
-  keywords: ["land for sale India", "plots for sale India", "residential plots", "agricultural land", "farm land", "Telangana real estate", "Telugu land marketplace"],
+  description: "Verified residential plots and land marketplace in Miyapur, Hyderabad, Telangana. Direct buyer-seller connections, transparent documentation, and arranged site visits.",
+  keywords: ["plots for sale Miyapur", "residential plots Hyderabad", "land in Miyapur", "Telangana plots", "NILAY real estate", "HMDA approved plots", "Miyapur land marketplace"],
   metadataBase: new URL(siteUrl),
   openGraph: {
-    title: "NILAY | Land and plots for sale across India",
-    description: "Explore land for sale, residential plots, agricultural property, farm stays, and rental places across India with NILAY.",
+    title: "NILAY | Residential Plots & Land in Miyapur, Hyderabad",
+    description: "Verified residential plots and land marketplace in Miyapur, Hyderabad, Telangana. Direct buyer-seller connections, transparent documentation, and arranged site visits.",
     locale: "en_IN",
     type: "website",
     siteName: "NILAY",

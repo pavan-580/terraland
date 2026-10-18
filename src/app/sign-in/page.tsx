@@ -6,12 +6,11 @@ import { SiteFooter } from "@/components/site-footer";
 export const metadata: Metadata = { title: "Your NILAY account" };
 
 const googleErrors: Record<string, string> = {
-  not_configured: "Google sign-in is not configured yet. Please use email sign-in or try again later.",
+  not_configured: "Google sign-in is awaiting GOOGLE_CLIENT_ID setup. You can also sign in directly below.",
   cancelled: "Google sign-in was cancelled.",
-  invalid_state: "Google sign-in expired. Please try again.",
+  invalid_state: "Google sign-in session expired. Please try again.",
   failed: "Google sign-in could not be completed. Please try again.",
   unverified_email: "Google did not provide a verified email address.",
-  admin_not_allowed: "Use the administrator email and password to access the admin account.",
 };
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; googleError?: string }> }) {

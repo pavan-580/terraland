@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import { seedProperties, type Property } from "@/lib/market";
+import { calculatePricePerSqYd, seedProperties, type Property } from "@/lib/market";
 import { getDatabaseFilePath } from "@/lib/storage-path";
 
 const globalForDb = globalThis as typeof globalThis & { landDb?: Database.Database };
@@ -33,6 +33,7 @@ function createDatabase() {
   const db = new Database(filePath);
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
+  db.pragma("busy_timeout = 10000");
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -184,6 +185,11 @@ function createDatabase() {
     CREATE INDEX IF NOT EXISTS member_activity_user_created_idx ON member_activity_log(userId, createdAt);
     CREATE INDEX IF NOT EXISTS site_activity_created_idx ON site_activity_log(createdAt);
   `);
+  db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
+    version INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    appliedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`);
   addColumnIfMissing(db, "users", "role", "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   addColumnIfMissing(db, "users", "phone", "ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "seller_phone_clicks", "contactMethod", "ALTER TABLE seller_phone_clicks ADD COLUMN contactMethod TEXT NOT NULL DEFAULT 'phone'");
@@ -212,6 +218,156 @@ function createDatabase() {
   addColumnIfMissing(db, "properties", "address", "ALTER TABLE properties ADD COLUMN address TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "properties", "landmark", "ALTER TABLE properties ADD COLUMN landmark TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "properties", "mapUrl", "ALTER TABLE properties ADD COLUMN mapUrl TEXT NOT NULL DEFAULT ''");
+  const listingReviewMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE version = 1").get();
+  if (!listingReviewMigration) {
+    db.transaction(() => {
+      addColumnIfMissing(db, "properties", "sellerAuthority", "ALTER TABLE properties ADD COLUMN sellerAuthority TEXT NOT NULL DEFAULT ''");
+      addColumnIfMissing(db, "properties", "publicationConsentAt", "ALTER TABLE properties ADD COLUMN publicationConsentAt TEXT");
+      addColumnIfMissing(db, "properties", "contactConsentAt", "ALTER TABLE properties ADD COLUMN contactConsentAt TEXT");
+      db.prepare("INSERT INTO schema_migrations (version, name) VALUES (?, ?)").run(1, "seller-publication-review-consent");
+    })();
+  }
+  const crmMigration = db.prepare("SELECT 1 FROM schema_migrations WHERE version = 2").get();
+  if (!crmMigration) {
+    db.transaction(() => {
+      addColumnIfMissing(db, "properties", "updatedAt", "ALTER TABLE properties ADD COLUMN updatedAt TEXT NOT NULL DEFAULT ''");
+      db.prepare("UPDATE properties SET updatedAt = createdAt WHERE updatedAt = '' OR updatedAt IS NULL").run();
+      addColumnIfMissing(db, "properties", "isNegotiable", "ALTER TABLE properties ADD COLUMN isNegotiable TEXT NOT NULL DEFAULT ''");
+      addColumnIfMissing(db, "properties", "documentStatus", "ALTER TABLE properties ADD COLUMN documentStatus TEXT NOT NULL DEFAULT ''");
+      addColumnIfMissing(db, "properties", "legalDisclaimerAgreed", "ALTER TABLE properties ADD COLUMN legalDisclaimerAgreed INTEGER NOT NULL DEFAULT 1");
+      addColumnIfMissing(db, "inquiries", "contactMethod", "ALTER TABLE inquiries ADD COLUMN contactMethod TEXT NOT NULL DEFAULT 'phone'");
+      addColumnIfMissing(db, "inquiries", "preferredTimeline", "ALTER TABLE inquiries ADD COLUMN preferredTimeline TEXT NOT NULL DEFAULT ''");
+      addColumnIfMissing(db, "inquiries", "fundingReadiness", "ALTER TABLE inquiries ADD COLUMN fundingReadiness TEXT NOT NULL DEFAULT ''");
+      addColumnIfMissing(db, "inquiries", "contactConsent", "ALTER TABLE inquiries ADD COLUMN contactConsent INTEGER NOT NULL DEFAULT 1");
+      addColumnIfMissing(db, "inquiries", "source", "ALTER TABLE inquiries ADD COLUMN source TEXT NOT NULL DEFAULT 'website'");
+      addColumnIfMissing(db, "inquiries", "status", "ALTER TABLE inquiries ADD COLUMN status TEXT NOT NULL DEFAULT 'new'");
+      addColumnIfMissing(db, "inquiries", "notes", "ALTER TABLE inquiries ADD COLUMN notes TEXT NOT NULL DEFAULT ''");
+      addColumnIfMissing(db, "inquiries", "lastContactDate", "ALTER TABLE inquiries ADD COLUMN lastContactDate TEXT");
+      addColumnIfMissing(db, "inquiries", "nextFollowUpDate", "ALTER TABLE inquiries ADD COLUMN nextFollowUpDate TEXT");
+
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS buyer_requirements (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE SET NULL,
+          name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          email TEXT NOT NULL DEFAULT '',
+          preferredLocation TEXT NOT NULL,
+          minBudget INTEGER NOT NULL DEFAULT 0,
+          maxBudget INTEGER NOT NULL DEFAULT 0,
+          minPlotSize REAL NOT NULL DEFAULT 0,
+          maxPlotSize REAL NOT NULL DEFAULT 0,
+          intendedUse TEXT NOT NULL DEFAULT '',
+          timeline TEXT NOT NULL DEFAULT '',
+          fundingReadiness TEXT NOT NULL DEFAULT '',
+          preferredContactMethod TEXT NOT NULL DEFAULT 'phone',
+          contactConsent INTEGER NOT NULL DEFAULT 1,
+          source TEXT NOT NULL DEFAULT 'website',
+          status TEXT NOT NULL DEFAULT 'new',
+          assignedTo TEXT NOT NULL DEFAULT 'Founder',
+          notes TEXT NOT NULL DEFAULT '',
+          lastContactDate TEXT,
+          nextFollowUpDate TEXT,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS buyer_req_status_idx ON buyer_requirements(status);
+        CREATE INDEX IF NOT EXISTS buyer_req_created_idx ON buyer_requirements(createdAt);
+
+        CREATE TABLE IF NOT EXISTS leads (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL DEFAULT 'buyer',
+          referenceId TEXT,
+          name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          email TEXT NOT NULL DEFAULT '',
+          status TEXT NOT NULL DEFAULT 'new',
+          source TEXT NOT NULL DEFAULT 'website',
+          assignedPerson TEXT NOT NULL DEFAULT 'Founder',
+          lastContactDate TEXT,
+          nextFollowUpDate TEXT,
+          notes TEXT NOT NULL DEFAULT '',
+          statusHistory TEXT NOT NULL DEFAULT '[]',
+          relatedPropertyIds TEXT NOT NULL DEFAULT '[]',
+          consentStatus TEXT NOT NULL DEFAULT 'consented',
+          optedOut INTEGER NOT NULL DEFAULT 0,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS leads_status_idx ON leads(status);
+        CREATE INDEX IF NOT EXISTS leads_created_idx ON leads(createdAt);
+
+        CREATE TABLE IF NOT EXISTS site_visits (
+          id TEXT PRIMARY KEY,
+          leadId TEXT REFERENCES leads(id) ON DELETE SET NULL,
+          buyerId TEXT,
+          buyerName TEXT NOT NULL,
+          buyerPhone TEXT NOT NULL,
+          propertyId TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+          sellerId TEXT,
+          sellerName TEXT NOT NULL DEFAULT '',
+          sellerPhone TEXT NOT NULL DEFAULT '',
+          proposedDate TEXT NOT NULL,
+          proposedTime TEXT NOT NULL DEFAULT '',
+          confirmationStatus TEXT NOT NULL DEFAULT 'proposed',
+          visitOutcome TEXT NOT NULL DEFAULT '',
+          buyerFeedback TEXT NOT NULL DEFAULT '',
+          nextAction TEXT NOT NULL DEFAULT '',
+          nextActionDueDate TEXT,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS site_visits_prop_idx ON site_visits(propertyId);
+        CREATE INDEX IF NOT EXISTS site_visits_status_idx ON site_visits(confirmationStatus);
+
+        CREATE TABLE IF NOT EXISTS service_packages (
+          id TEXT PRIMARY KEY,
+          clientName TEXT NOT NULL,
+          clientPhone TEXT NOT NULL,
+          clientEmail TEXT NOT NULL DEFAULT '',
+          clientRole TEXT NOT NULL DEFAULT 'seller',
+          propertyId TEXT REFERENCES properties(id) ON DELETE SET NULL,
+          packageType TEXT NOT NULL DEFAULT 'free_listing',
+          agreedPrice INTEGER NOT NULL DEFAULT 0,
+          durationDays INTEGER NOT NULL DEFAULT 30,
+          invoiceStatus TEXT NOT NULL DEFAULT 'draft',
+          paymentStatus TEXT NOT NULL DEFAULT 'unpaid',
+          paymentConfirmedAt TEXT,
+          deliverables TEXT NOT NULL DEFAULT '',
+          notes TEXT NOT NULL DEFAULT '',
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS audit_logs (
+          id TEXT PRIMARY KEY,
+          userId TEXT,
+          userEmail TEXT NOT NULL,
+          action TEXT NOT NULL,
+          resource TEXT NOT NULL,
+          resourceId TEXT NOT NULL,
+          details TEXT NOT NULL DEFAULT '',
+          ipAddress TEXT NOT NULL DEFAULT '',
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS audit_logs_created_idx ON audit_logs(createdAt);
+
+        CREATE TABLE IF NOT EXISTS property_matches (
+          id TEXT PRIMARY KEY,
+          buyerRequirementId TEXT NOT NULL REFERENCES buyer_requirements(id) ON DELETE CASCADE,
+          propertyId TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+          score INTEGER NOT NULL DEFAULT 0,
+          explanation TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending_review',
+          reviewedAt TEXT,
+          reviewedBy TEXT,
+          createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS prop_matches_req_idx ON property_matches(buyerRequirementId);
+      `);
+      db.prepare("INSERT INTO schema_migrations (version, name) VALUES (?, ?)").run(2, "terraland-crm-leads-matching-visits");
+    })();
+  }
   addColumnIfMissing(db, "inquiries", "userId", "ALTER TABLE inquiries ADD COLUMN userId TEXT REFERENCES users(id) ON DELETE SET NULL");
   addColumnIfMissing(db, "inquiries", "email", "ALTER TABLE inquiries ADD COLUMN email TEXT NOT NULL DEFAULT ''");
   db.exec(`
@@ -239,7 +395,9 @@ function createDatabase() {
       verified: Number(property.verified),
     });
   });
-  insertSeeds(seedProperties);
+  if (process.env.SEED_DEMO_DATA === "true") {
+    insertSeeds(seedProperties);
+  }
   return db;
 }
 
@@ -413,23 +571,36 @@ export function propertyFromRow(row: Record<string, unknown>): Property {
   const image = typeof row.image === "string" ? row.image : "";
   return {
     ...row,
+    price: typeof row.price === "number" ? row.price : Number(row.price || 0),
+    area: typeof row.area === "number" ? row.area : Number(row.area || 0),
+    unit: typeof row.unit === "string" ? row.unit : "sq. yd.",
+    pricePerSqYd: calculatePricePerSqYd(Number(row.price || 0), Number(row.area || 0), String(row.unit || "sq. yd.")) ?? undefined,
+    isNegotiable: (row.isNegotiable as Property["isNegotiable"]) || "",
+    documentStatus: (row.documentStatus as Property["documentStatus"]) || "seller_declared",
+    legalDisclaimerAgreed: row.legalDisclaimerAgreed === undefined ? true : Boolean(row.legalDisclaimerAgreed),
+    updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : (typeof row.createdAt === "string" ? row.createdAt : undefined),
     image,
     images: images.length ? images : image ? [image] : [],
     videos,
     amenities,
     verified: Boolean(row.verified),
     ...(row.showPhone !== undefined ? { showPhone: Boolean(row.showPhone) } : {}),
-  } as Property;
+  } as unknown as Property;
 }
 
 export function publicPropertyFromRow(row: Record<string, unknown>, showSellerContacts: boolean): Property {
   const property = propertyFromRow(row) as Property & { ownerId?: string; sellerEmail?: string };
-  const { sellerEmail, showPhone, ...publicProperty } = property;
+  const publicProperty: Record<string, unknown> = { ...property };
+  const sellerEmail = property.sellerEmail;
+  const showPhone = property.showPhone;
+  delete publicProperty.sellerAuthority;
+  delete publicProperty.publicationConsentAt;
+  delete publicProperty.contactConsentAt;
   delete publicProperty.ownerId;
   const safeEmail = typeof sellerEmail === "string" && !sellerEmail.endsWith("@phone.nilay.invalid") ? sellerEmail : "";
   return {
-    ...publicProperty,
-    phone: showSellerContacts && showPhone !== false ? publicProperty.phone : "",
+    ...(publicProperty as Property),
+    phone: showSellerContacts && showPhone !== false ? property.phone : "",
     ...(showSellerContacts && safeEmail ? { sellerEmail: safeEmail } : {}),
   };
 }

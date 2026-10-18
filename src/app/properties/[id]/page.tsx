@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, BadgeCheck, Check, MapPin } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, BadgeCheck, Check, MapPin, ShieldAlert, Sparkles } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { EmiCalculator } from "@/components/emi-calculator";
 import { InquiryForm } from "@/components/inquiry-form";
 import { ListingShare } from "@/components/listing-share";
 import { PropertyCard } from "@/components/property-card";
 import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyReviews } from "@/components/property-reviews";
+import { PropertyActionButtons } from "@/components/property-action-buttons";
 import { SellerPhoneLink } from "@/components/seller-phone-link";
 import { WhatsAppListingLink } from "@/components/whatsapp-listing-link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
-import { formatListingPrice, formatPrice } from "@/lib/market";
+import { formatListingPrice, calculatePricePerSqYd, formatPricePerSqYd } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 
 const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -44,9 +46,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const row = db.prepare("SELECT title, description, image, type, listingCategory, city, locality, price, area, unit FROM properties WHERE id = ? AND status = 'published'").get(id) as
     { title: string; description: string; image: string; type: string; listingCategory: string; city: string; locality: string; price: number; area: number; unit: string } | undefined;
-  if (!row) return { title: "Land listing" };
+  if (!row) return { title: "Plot listing in Hyderabad | Terraland" };
   const listingMode = row.listingCategory === "rent" ? "for rent" : "for sale";
-  const title = `${row.type} ${listingMode} in ${row.locality}, ${row.city}: ${row.title}`;
+  const title = `${row.type} ${listingMode} in ${row.locality}, ${row.city}: ${row.title} | Terraland`;
   const description = `${row.title}: ${row.type} ${listingMode} in ${row.locality}, ${row.city}. ${row.area} ${row.unit}, ${currency.format(row.price)}. ${row.description}`
     .replace(/\s+/g, " ").trim().slice(0, 160);
   const canonical = `${siteUrl}/properties/${encodeURIComponent(id)}`;
@@ -54,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title,
     description,
     alternates: { canonical },
-    openGraph: { title, description, url: canonical, siteName: "NILAY", locale: "en_IN", type: "website", images: row.image ? [row.image] : [] },
+    openGraph: { title, description, url: canonical, siteName: "Terraland", locale: "en_IN", type: "website", images: row.image ? [row.image] : [] },
     twitter: { card: "summary_large_image", title, description, images: row.image ? [row.image] : [] },
   };
 }
@@ -76,6 +78,25 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const embeddedMapQuery = mapSearchLocation(property.mapUrl, mapQuery);
   const address = [property.address, property.landmark, property.locality, property.city].filter(Boolean).join(", ");
   const canonical = `${siteUrl}/properties/${encodeURIComponent(property.id)}`;
+
+  // Hyderabad standard price per sq yd
+  const pricePerSqYd = calculatePricePerSqYd(property.price, property.area, property.unit);
+  const pricePerSqYdFormatted = pricePerSqYd ? formatPricePerSqYd(pricePerSqYd) : null;
+
+  const negotiabilityLabel = property.isNegotiable === "negotiable"
+    ? "Price Negotiable"
+    : property.isNegotiable === "slightly_negotiable"
+    ? "Slightly Negotiable"
+    : property.isNegotiable === "fixed"
+    ? "Fixed Price"
+    : "Negotiable upon site visit";
+
+  const documentStatusLabel = property.documentStatus === "docs_collected"
+    ? "Link Documents Collected & Initial Review Done"
+    : property.documentStatus === "admin_reviewed"
+    ? "Admin Title-Verified Listing"
+    : "Seller-Declared Details (Title verification advised)";
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -98,97 +119,280 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
         { "@type": "PropertyValue", name: "Property type", value: property.type },
         { "@type": "PropertyValue", name: "Listing type", value: listingCategory === "rent" ? "For rent" : "For sale" },
         { "@type": "PropertyValue", name: "Area", value: `${property.area} ${property.unit}` },
+        ...(pricePerSqYdFormatted ? [{ "@type": "PropertyValue", name: "Price per sq yd", value: pricePerSqYdFormatted }] : []),
       ],
     },
   };
+
   const facts = [
     ["Listing", listingCategory === "rent" ? "For rent" : "For sale"],
     ["Property type", property.type],
-    ["Size", `${property.area} ${property.unit}`],
-    [listingCategory === "sale" ? "Unit price" : "Rate", listingCategory === "sale"
-      ? `${currency.format(property.price / property.area)} / ${property.unit}`
-      : formatListingPrice(property)],
+    ["Plot size", `${property.area} ${property.unit}`],
+    ...(listingCategory === "sale" && pricePerSqYdFormatted ? [["Price per Sq. Yd.", pricePerSqYdFormatted]] : []),
+    ["Negotiability", negotiabilityLabel],
+    ["Document status", documentStatusLabel],
     ...(listingCategory === "rent" ? [
-      ["Availability", property.availability || "Ask NILAY"],
+      ["Availability", property.availability || "Direct via Terraland"],
       ...(property.guestCapacity ? [["Guest capacity", `${property.guestCapacity} guests`] as [string, string]] : []),
-      ["Enquiries", "Send a request through NILAY"],
+      ["Enquiries", "Coordinated through Terraland"],
     ] as [string, string][] : []),
     ...(listingCategory === "sale" ? [
-    ["Approvals", property.approvals || "Not specified"],
-    ["Loan available", yesNo(property.loanAvailable)],
-    ["Registration", yesNo(property.registrationAvailable)],
-    ["Facing", property.facing || "Not specified"],
-    ["Renovation", property.renovation || "Not specified"],
-    ["Corner plot", yesNo(property.cornerPlot)],
-    ["Road width", property.roadWidth || "Not specified"],
-    ["Survey number", property.surveyNumber || "Not specified"],
-    ["Soil type", property.soilType || "Not specified"],
-    ["Clear title", yesNo(property.clearTitle)],
+      ["Facing", property.facing || "Not specified"],
+      ["Road access width", property.roadWidth || "Not specified"],
+      ["Approvals", property.approvals || "Gram Panchayat / Layout under review"],
+      ["Loan availability", yesNo(property.loanAvailable)],
+      ["Registration readiness", yesNo(property.registrationAvailable)],
+      ["Corner plot", yesNo(property.cornerPlot)],
+      ["Survey / Plot number", property.surveyNumber || "Available upon visit"],
+      ["Soil & Ground", property.soilType || "Not specified"],
+      ["Clear title assertion", yesNo(property.clearTitle)],
     ] : []),
   ];
-  return <><SiteHeader /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} /><main className="detail-page">
-    <div className="detail-breadcrumb"><span>{listingLabel} / {property.city.toUpperCase()}</span></div>
-    <section className="detail-heading">
-      <div className="detail-heading-copy">
-        <div className="detail-meta"><span className="property-badge detail-status">{listingLabel}</span><span>{property.type}</span>{property.verified && <span className="verified-pill"><BadgeCheck size={14} /> Seller details reviewed</span>}</div>
-        <h1 translate="no">{property.title}</h1>
-        <div className="detail-location"><MapPin size={15} /> {property.locality}, {property.city}</div>
-        <div className="detail-quick-facts"><span>Size: <strong>{property.area} {property.unit}</strong></span>{listingCategory === "sale" ? <span>Price / unit: <strong>{formatPrice(Math.round(property.price / property.area))} / {property.unit}</strong></span> : <span>Rate: <strong>{formatListingPrice(property)}</strong></span>}{property.facing && listingCategory === "sale" && <span>Facing: <strong>{property.facing}</strong></span>}</div>
-      </div>
-      <div className="detail-price-share"><strong>{formatListingPrice(property)}</strong><span>{listingCategory === "sale" ? "Asking price" : "Listed rate · enquire to arrange"}</span><ListingShare title={property.title} /></div>
-    </section>
 
-    <PropertyGallery images={photos} title={property.title} badge={property.badge} />
-    {property.videos?.length ? <section className="detail-video-gallery" aria-label="Property videos">
-      <div className="detail-card-heading"><span className="eyebrow">PROPERTY VIDEOS</span><h2>Take a closer look</h2></div>
-      <div className="detail-video-grid">{property.videos.map((video, index) => <video key={`${video}-${index}`} src={video} controls playsInline preload="metadata" aria-label={`${property.title} video ${index + 1}`} />)}</div>
-    </section> : null}
+  return (
+    <>
+      <SiteHeader />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
+      <main className="detail-page">
+        <div className="detail-breadcrumb">
+          <BackButton className="breadcrumb-back-link" fallbackHref="/search?category=sale" label="Back to plots" />
+          <span className="breadcrumb-sep">/</span>
+          <span>{property.city}</span>
+          <span className="breadcrumb-sep">/</span>
+          <span className="breadcrumb-current">{property.locality}</span>
+        </div>
 
-    <div className="detail-layout detail-layout-rich">
-      <div className="detail-main detail-cards">
-        <section className="detail-card">
-          <div className="detail-card-heading"><span className="eyebrow">PROPERTY DESCRIPTION</span><h2>About this place</h2></div>
-          <p className="detail-card-copy" translate="no">{property.description}</p>
+        <section className="detail-heading">
+          <div className="detail-heading-copy">
+            <div className="detail-meta">
+              <span className="property-badge detail-status">{listingLabel}</span>
+              <span>{property.type}</span>
+              {property.verified && (
+                <span className="verified-pill">
+                  <BadgeCheck size={14} /> Founder Verified Plot
+                </span>
+              )}
+              <span className="negotiable-pill">
+                <Sparkles size={13} /> {negotiabilityLabel}
+              </span>
+            </div>
+
+            <h1 translate="no">{property.title}</h1>
+            <div className="detail-location">
+              <MapPin size={15} /> {property.locality}, {property.city}
+            </div>
+
+            <div className="detail-quick-facts">
+              <span>Size: <strong>{property.area} {property.unit}</strong></span>
+              {listingCategory === "sale" && pricePerSqYdFormatted && (
+                <span>Rate: <strong>{pricePerSqYdFormatted}</strong></span>
+              )}
+              {property.facing && listingCategory === "sale" && (
+                <span>Facing: <strong>{property.facing}</strong></span>
+              )}
+              {property.roadWidth && (
+                <span>Road: <strong>{property.roadWidth}</strong></span>
+              )}
+            </div>
+          </div>
+
+          <div className="detail-price-share">
+            <strong>{formatListingPrice(property)}</strong>
+            <span>{listingCategory === "sale" ? "Total asking price" : "Listed rental rate"}</span>
+            <ListingShare title={property.title} />
+          </div>
         </section>
-        <section className="detail-card">
-          <div className="detail-card-heading"><span className="eyebrow">AT A GLANCE</span><h2>{listingCategory === "sale" ? "Property overview" : "Rental overview"}</h2></div>
-          <dl className="property-overview">{facts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-        </section>
-        <section className="detail-card">
-          <div className="detail-card-heading"><span className="eyebrow">EXTRA DETAILS</span><h2>Amenities</h2></div>
-          {property.amenities?.length ? <ul className="amenities-list">{property.amenities.map((amenity) => <li key={amenity}><Check size={14} />{amenity}</li>)}</ul> : <p className="detail-card-copy">The seller has not added amenities for this listing.</p>}
-        </section>
-        <section className="detail-card">
-          <div className="detail-card-heading"><span className="eyebrow">CONTACT & ADDRESS</span><h2>Find the property</h2></div>
-          <dl className="contact-address">
-            <div><dt>Seller</dt><dd>{property.owner}</dd></div>
-            {property.landmark && <div><dt>Landmark</dt><dd>{property.landmark}</dd></div>}
-            <div><dt>Address</dt><dd>{address}</dd></div>
-          </dl>
-        </section>
-        <section className="detail-card detail-map-card">
-          <div className="detail-card-heading"><span className="eyebrow">PROPERTY LOCATION</span><h2>{property.locality}, {property.city}</h2></div>
-          <iframe title={`Map showing ${property.title}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={`https://www.google.com/maps?q=${encodeURIComponent(embeddedMapQuery)}&output=embed`} />
-          <a className="text-link" href={property.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noreferrer">Open exact location in Google Maps <ArrowUpRight size={14} /></a>
-        </section>
-        <div className="land-check"><BadgeCheck size={20} /><div><strong>{listingCategory === "sale" ? "A note on due diligence" : "Plan with confidence"}</strong><p>{listingCategory === "sale" ? "Listing details are provided by the seller. Independently verify title, approvals, boundaries, and local requirements before purchase." : "Details are provided by the owner. Send an enquiry to NILAY to confirm availability, rental terms, and amenities."}</p></div></div>
-      </div>
-      <aside className="inquiry-aside detail-sidebar">
-        {showSellerContacts ? <div className="seller-profile">
-          <span className="seller-avatar">{property.owner.slice(0, 1)}</span>
-          <div><strong>{property.owner}</strong><span>Contact the seller directly</span></div>
-          {property.phone && <SellerPhoneLink className="seller-public-phone" propertyId={property.id} phone={property.phone} owner={property.owner}>{property.phone}</SellerPhoneLink>}
-          {property.sellerEmail && <a className="seller-public-email" href={`mailto:${property.sellerEmail}`}>{property.sellerEmail}</a>}
-          <WhatsAppListingLink className="seller-public-whatsapp" property={property} />
-        </div> : <>
-          <div className="seller-profile"><span className="seller-avatar">{property.owner.slice(0, 1)}</span><div><strong>{property.owner}</strong><span>Send us an enquiry and our team will contact you shortly.</span></div><WhatsAppListingLink className="seller-public-whatsapp" property={property} /></div>
-          <InquiryForm propertyId={property.id} title={property.title} type={property.type} listingCategory={listingCategory} pricePeriod={property.pricePeriod}
-            city={property.city} locality={property.locality} price={property.price} area={property.area} unit={property.unit} user={user ? { name: user.name, email: user.email, phone: user.phone } : null} />
-        </>}
-      </aside>
-    </div>
-    {listingCategory === "sale" && <EmiCalculator propertyPrice={property.price} />}
-    <PropertyReviews propertyId={property.id} />
-    {related.length > 0 && <section className="related-section"><div className="section-heading"><div><span className="eyebrow">KEEP EXPLORING</span><h2>More places to <em>consider.</em></h2></div><Link className="text-link" href="/search">See all listings <ArrowUpRight size={15} /></Link></div><div className="property-grid">{related.map((item) => <PropertyCard key={item.id} property={item} />)}</div></section>}
-  </main><SiteFooter /></>;
+
+        <PropertyGallery images={photos} title={property.title} badge={property.badge} />
+
+        {property.videos?.length ? (
+          <section className="detail-video-gallery" aria-label="Property videos">
+            <div className="detail-card-heading">
+              <span className="eyebrow">PROPERTY VIDEOS</span>
+              <h2>Actual Site Footage</h2>
+            </div>
+            <div className="detail-video-grid">
+              {property.videos.map((video, index) => (
+                <video
+                  key={`${video}-${index}`}
+                  src={video}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label={`${property.title} video ${index + 1}`}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <div className="detail-layout detail-layout-rich">
+          <div className="detail-main detail-cards">
+            {/* Primary Action Buttons for Mobile/Desktop */}
+            <PropertyActionButtons
+              property={{
+                id: property.id,
+                title: property.title,
+                locality: property.locality,
+                city: property.city,
+                price: property.price,
+                area: property.area,
+                unit: property.unit
+              }}
+            />
+
+            <section className="detail-card">
+              <div className="detail-card-heading">
+                <span className="eyebrow">PROPERTY DESCRIPTION</span>
+                <h2>About this plot</h2>
+              </div>
+              <p className="detail-card-copy" translate="no">{property.description}</p>
+            </section>
+
+            <section className="detail-card">
+              <div className="detail-card-heading">
+                <span className="eyebrow">AT A GLANCE</span>
+                <h2>{listingCategory === "sale" ? "Residential Plot Overview" : "Rental Overview"}</h2>
+              </div>
+              <dl className="property-overview">
+                {facts.map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
+            <section className="detail-card">
+              <div className="detail-card-heading">
+                <span className="eyebrow">INFRASTRUCTURE & HIGHLIGHTS</span>
+                <h2>Site features</h2>
+              </div>
+              {property.amenities?.length ? (
+                <ul className="amenities-list">
+                  {property.amenities.map((amenity) => (
+                    <li key={amenity}>
+                      <Check size={14} /> {amenity}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="detail-card-copy">Electricity, access road, and ground water features to be inspected during site visit.</p>
+              )}
+            </section>
+
+            <section className="detail-card">
+              <div className="detail-card-heading">
+                <span className="eyebrow">CONTACT & COORDINATION</span>
+                <h2>Seller &amp; Inspection Representative</h2>
+              </div>
+              <dl className="contact-address">
+                <div><dt>Seller / Contact</dt><dd>{property.owner}</dd></div>
+                {property.landmark && <div><dt>Landmark</dt><dd>{property.landmark}</dd></div>}
+                <div><dt>Address / Area</dt><dd>{address}</dd></div>
+              </dl>
+            </section>
+
+            <section className="detail-card detail-map-card">
+              <div className="detail-card-heading">
+                <span className="eyebrow">PROPERTY LOCATION</span>
+                <h2>{property.locality}, {property.city}</h2>
+              </div>
+              <iframe
+                title={`Map showing ${property.title}`}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(embeddedMapQuery)}&output=embed`}
+              />
+              <a
+                className="text-link"
+                href={property.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open exact location in Google Maps <ArrowUpRight size={14} />
+              </a>
+            </section>
+
+            {/* Clear Legal & Due Diligence Disclosure */}
+            <div className="land-check legal-disclosure-box">
+              <ShieldAlert size={22} className="alert-icon" />
+              <div>
+                <strong>Legal &amp; Title Diligence Advisory</strong>
+                <p>
+                  Listing details are based on seller declarations and initial verification. Terraland facilitates direct contact and physical site inspections. Buyers are strongly advised to independently verify original link documents, revenue survey numbers, and the Encumbrance Certificate (EC) with certified legal counsel before signing sale agreements or transferring funds.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <aside className="inquiry-aside detail-sidebar" id="enquiry-section">
+            <div className="sidebar-card">
+              <div className="seller-profile">
+                <span className="seller-avatar">{property.owner.slice(0, 1)}</span>
+                <div>
+                  <strong>{property.owner}</strong>
+                  <span>{property.verified ? "Verified Landowner / Seller" : "Listed Property Seller"}</span>
+                </div>
+                {showSellerContacts && property.phone && (
+                  <SellerPhoneLink className="seller-public-phone" propertyId={property.id} phone={property.phone} owner={property.owner}>
+                    {property.phone}
+                  </SellerPhoneLink>
+                )}
+                {showSellerContacts && property.sellerEmail && (
+                  <a className="seller-public-email" href={`mailto:${property.sellerEmail}`}>{property.sellerEmail}</a>
+                )}
+                <WhatsAppListingLink className="seller-public-whatsapp" property={property} />
+              </div>
+
+              <div className="sidebar-divider" />
+
+              <div className="inquiry-box-title">
+                <h3>Direct Plot Enquiry</h3>
+                <p>Request pricing clarification, title documentation, or schedule an in-person site visit with the founder.</p>
+              </div>
+
+              <InquiryForm
+                propertyId={property.id}
+                title={property.title}
+                type={property.type}
+                listingCategory={listingCategory}
+                pricePeriod={property.pricePeriod}
+                city={property.city}
+                locality={property.locality}
+                price={property.price}
+                area={property.area}
+                unit={property.unit}
+                user={user ? { name: user.name, email: user.email, phone: user.phone } : null}
+              />
+            </div>
+          </aside>
+        </div>
+
+        {listingCategory === "sale" && <EmiCalculator propertyPrice={property.price} />}
+        <PropertyReviews propertyId={property.id} />
+
+        {related.length > 0 && (
+          <section className="related-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">SAME CORRIDOR</span>
+                <h2>More verified plots to <em>consider.</em></h2>
+              </div>
+              <Link className="text-link" href="/search">
+                See all plots in Miyapur <ArrowUpRight size={15} />
+              </Link>
+            </div>
+            <div className="property-grid">
+              {related.map((item) => (
+                <PropertyCard key={item.id} property={item} />
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+      <SiteFooter />
+    </>
+  );
 }

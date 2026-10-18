@@ -40,7 +40,7 @@ export async function storePropertyPhotos(files: File[]) {
   const images: string[] = [];
   for (const photo of validatedFiles) {
     const filename = `${newId()}.${photo.extension}`;
-    await writeFile(path.join(uploadDirectory, filename), Buffer.from(await photo.file.arrayBuffer()), { flag: "wx" });
+    await writeFile(path.join(/*turbopackIgnore: true*/ uploadDirectory, filename), Buffer.from(await photo.file.arrayBuffer()), { flag: "wx" });
     images.push(`/uploads/${filename}`);
   }
   return images;
@@ -62,7 +62,7 @@ export async function storePropertyVideos(files: File[]) {
   const videos: string[] = [];
   for (const video of validatedFiles) {
     const filename = `${newId()}.${video.extension}`;
-    await writeFile(path.join(uploadDirectory, filename), Buffer.from(await video.file.arrayBuffer()), { flag: "wx" });
+    await writeFile(path.join(/*turbopackIgnore: true*/ uploadDirectory, filename), Buffer.from(await video.file.arrayBuffer()), { flag: "wx" });
     videos.push(`/uploads/${filename}`);
   }
   return videos;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ChevronDown } from "lucide-react";
 import { translatePhrase, type SiteLanguage } from "@/lib/translations";
 
@@ -15,12 +15,34 @@ const ignoredTextElements = "script, style, noscript, textarea, input, [translat
 const ignoredAttributeElements = "script, style, noscript, [translate='no'], .language-picker";
 const originalText = new WeakMap<Text, OriginalValue>();
 const originalAttributes = new WeakMap<Element, Map<string, OriginalValue>>();
-let activeLanguage: SiteLanguage = "en";
 
 type OriginalValue = { source: string; translated: string };
 
 function isSiteLanguage(language: string): language is SiteLanguage {
   return supportedCodes.has(language);
+}
+
+function subscribeLanguage(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("terraland:language-change", onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("terraland:language-change", onStoreChange);
+  };
+}
+
+function getLanguageSnapshot(): SiteLanguage {
+  try {
+    const saved = window.localStorage.getItem(preferenceKey);
+    if (saved && isSiteLanguage(saved)) return saved;
+  } catch {
+    // ignore
+  }
+  return "en";
+}
+
+function getServerSnapshot(): SiteLanguage {
+  return "en";
 }
 
 function translatePage(language: SiteLanguage) {
@@ -85,25 +107,10 @@ function translatePage(language: SiteLanguage) {
   return () => observer.disconnect();
 }
 
-export function LanguagePicker() {
-  const [language, setLanguage] = useState<SiteLanguage>(activeLanguage);
+export function LanguagePicker({ variant = "dropdown" }: { variant?: "dropdown" | "drawer" } = {}) {
+  const language = useSyncExternalStore(subscribeLanguage, getLanguageSnapshot, getServerSnapshot);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      try {
-        const saved = window.localStorage.getItem(preferenceKey);
-        if (saved && isSiteLanguage(saved)) {
-          activeLanguage = saved;
-          setLanguage(saved);
-        }
-      } catch {
-        setError("Could not read your saved language preference in this browser.");
-      }
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     document.documentElement.lang = language === "en" ? "en-IN" : language;
@@ -112,14 +119,31 @@ export function LanguagePicker() {
 
   function chooseLanguage(nextLanguage: string) {
     if (!isSiteLanguage(nextLanguage)) return;
-    activeLanguage = nextLanguage;
-    setLanguage(nextLanguage);
     setError("");
     try {
       window.localStorage.setItem(preferenceKey, nextLanguage);
+      window.dispatchEvent(new Event("terraland:language-change"));
     } catch {
       setError("Could not save your language preference in this browser.");
     }
+  }
+
+  if (variant === "drawer") {
+    return (
+      <div className="language-drawer-segmented" role="group" aria-label="Choose page language">
+        {languages.map((item) => (
+          <button
+            key={item.code}
+            type="button"
+            className={`language-drawer-btn ${item.code === language ? "is-selected" : ""}`}
+            aria-pressed={item.code === language}
+            onClick={() => chooseLanguage(item.code)}
+          >
+            {item.name}
+          </button>
+        ))}
+      </div>
+    );
   }
 
   return <>

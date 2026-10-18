@@ -35,9 +35,16 @@ export type Property = {
   landmark?: string;
   mapUrl?: string;
   verified: boolean;
-  status?: "published" | "hidden";
+  status?: "draft" | "pending" | "awaiting_info" | "approved" | "published" | "rejected" | "hidden" | "on_hold" | "sold" | "archived";
+  sellerAuthority?: "owner" | "authorized_representative" | "";
+  publicationConsentAt?: string | null;
+  contactConsentAt?: string | null;
   deleteRequestedAt?: string | null;
   createdAt?: string;
+  updatedAt?: string;
+  isNegotiable?: "negotiable" | "slightly_negotiable" | "fixed" | "";
+  documentStatus?: "seller_declared" | "docs_collected" | "admin_reviewed" | "";
+  legalDisclaimerAgreed?: boolean;
 };
 
 export function parseListingArea(value: unknown): number | null {
@@ -199,3 +206,26 @@ export function formatListingPrice(property: Pick<Property, "price" | "listingCa
   const period = property.pricePeriod && property.pricePeriod !== "total" ? periodLabels[property.pricePeriod] : "night";
   return `${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(property.price)} / ${period}`;
 }
+
+export function calculatePricePerSqYd(price: number, area: number, unit: string): number | null {
+  if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(area) || area <= 0) return null;
+  const normalizedUnit = unit.trim().toLowerCase();
+  if (normalizedUnit === "sq. yd." || normalizedUnit === "sq yd" || normalizedUnit === "sq.yd.") {
+    return Math.round(price / area);
+  }
+  if (normalizedUnit === "acre" || normalizedUnit === "acres") {
+    return Math.round(price / (area * 4840));
+  }
+  if (normalizedUnit === "gunta" || normalizedUnit === "guntas") {
+    return Math.round(price / (area * 121));
+  }
+  if (normalizedUnit === "sq. ft." || normalizedUnit === "sq ft" || normalizedUnit === "sq.ft.") {
+    return Math.round((price / area) * 9);
+  }
+  return Math.round(price / area);
+}
+
+export function formatPricePerSqYd(rate: number): string {
+  return `${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(rate)} / sq. yd.`;
+}
+

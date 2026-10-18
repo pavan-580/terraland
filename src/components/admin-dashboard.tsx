@@ -7,6 +7,12 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import Link from "next/link";
 import { ArrowUpRight, Download, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AdminDailySummary } from "@/components/admin/admin-daily-summary";
+import { AdminLeadsCrm } from "@/components/admin/admin-leads-crm";
+import { AdminRequirementsView } from "@/components/admin/admin-requirements-view";
+import { AdminSiteVisitsView } from "@/components/admin/admin-site-visits-view";
+import { AdminMatchesView } from "@/components/admin/admin-matches-view";
+import { AdminPackagesView } from "@/components/admin/admin-packages-view";
 
 type AdminUser = { id: string; name: string; email: string; phone: string; createdAt: string; listingCount: number };
 type AdminInquiry = {
@@ -155,7 +161,7 @@ function AdminListingMediaManager({ title, initialImages, initialVideos, disable
 export function AdminDashboard() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true } });
-  const [section, setSection] = useState<"properties" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity">("properties");
+  const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity">("leads");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
@@ -436,6 +442,7 @@ export function AdminDashboard() {
   }
 
   return <section className="admin-content">
+    <AdminDailySummary onSelectSection={(s) => setSection(s)} />
     {pendingDelete && <ConfirmDialog title="Delete this record?" description="This action cannot be undone. The selected record will be permanently deleted." confirmLabel="Delete permanently" error={error} busy={busyId === pendingDelete.id} onCancel={() => setPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
     <div className="admin-setting-card">
       <div><strong>Site-wide seller contact visibility</strong><p>This overall switch overrides every listing. When it is on, each listing&apos;s phone visibility switch controls whether its number appears. When it is off, seller contact details are hidden across the website and enquiries go to NILAY.</p></div>
@@ -467,6 +474,11 @@ export function AdminDashboard() {
     </div>}
     <Link className="admin-analytics-link" href="/admin/analytics"><span><span className="eyebrow">VISITOR ANALYTICS</span><strong>Daily and monthly visitor graphs</strong><small>View clear traffic summaries and manage recorded analytics.</small></span><span aria-hidden="true">↗</span></Link>
     <div className="admin-stats">
+      <button className={section === "leads" ? "is-active" : ""} onClick={() => setSection("leads")}><span>LEADS CRM</span><strong>CRM</strong></button>
+      <button className={section === "requirements" ? "is-active" : ""} onClick={() => setSection("requirements")}><span>BUYER REQS</span><strong>REQS</strong></button>
+      <button className={section === "visits" ? "is-active" : ""} onClick={() => setSection("visits")}><span>SITE VISITS</span><strong>VISITS</strong></button>
+      <button className={section === "matches" ? "is-active" : ""} onClick={() => setSection("matches")}><span>MATCHMAKER</span><strong>MATCH</strong></button>
+      <button className={section === "packages" ? "is-active" : ""} onClick={() => setSection("packages")}><span>PACKAGES</span><strong>FEES</strong></button>
       <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}><span>LISTINGS</span><strong>{data.properties.length}</strong></button>
       <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>
       <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
@@ -477,21 +489,26 @@ export function AdminDashboard() {
     {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
     {loading ? <p className="admin-empty">Loading site records…</p> : <>
+      {section === "leads" && <AdminLeadsCrm />}
+      {section === "requirements" && <AdminRequirementsView />}
+      {section === "visits" && <AdminSiteVisitsView />}
+      {section === "matches" && <AdminMatchesView />}
+      {section === "packages" && <AdminPackagesView />}
       {section === "properties" && <>
         <div className="listing-admin-tabs">
           <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
             {([["sale", "For sale"], ["rent", "For rent"]] as const).map(([tab, label]) => {
-              const count = data.properties.filter((property) => property.status !== "hidden" && (property.listingCategory ?? "sale") === tab).length;
+              const count = data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === tab).length;
               return <button key={tab} type="button" role="tab" aria-selected={listingTab === tab} className={listingTab === tab ? "is-active" : ""} onClick={() => setListingTab(tab)}>{label} <span>{count}</span></button>;
             })}
           </div>
           <button type="button" className={listingTab === "hidden" ? "hidden-is-active" : ""} aria-pressed={listingTab === "hidden"} onClick={() => setListingTab("hidden")}>Hidden listings <span>{data.properties.filter((property) => property.status === "hidden").length}</span></button>
-          <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending approval <span>{data.properties.filter((property) => property.deleteRequestedAt).length}</span></button>
+          <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending review <span>{data.properties.filter((property) => property.status === "pending" || property.deleteRequestedAt).length}</span></button>
         </div>
-        <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? Boolean(property.deleteRequestedAt) : property.status !== "hidden" && (property.listingCategory ?? "sale") === listingTab).map((property) =>
-        <details className="admin-listing-details" key={property.id} open={Boolean(property.deleteRequestedAt && listingTab === "pending")}>
-        <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : listingTab === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span><span className="admin-listing-meta">Listed {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span></span><span className="admin-listing-open">Open details</span></summary>
-        <Link className="admin-listing-page-arrow" href={`/properties/${encodeURIComponent(property.id)}`} target="_blank" rel="noreferrer" aria-label={`Open ${property.title} listing page`} title="Open listing page"><ArrowUpRight size={18} aria-hidden="true" /></Link>
+        <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? property.status === "pending" || Boolean(property.deleteRequestedAt) : property.status === "published" && (property.listingCategory ?? "sale") === listingTab).map((property) =>
+        <details className="admin-listing-details" key={property.id} open={Boolean((property.deleteRequestedAt || property.status === "pending") && listingTab === "pending")}>
+        <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : property.status === "pending" ? "NEW LISTING · PENDING REVIEW" : property.status === "hidden" ? "HIDDEN LISTING" : property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span><span className="admin-listing-meta">Submitted {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span></span><span className="admin-listing-open">Open details</span></summary>
+        {property.status === "published" && <Link className="admin-listing-page-arrow" href={`/properties/${encodeURIComponent(property.id)}`} target="_blank" rel="noreferrer" aria-label={`Open ${property.title} listing page`} title="Open listing page"><ArrowUpRight size={18} aria-hidden="true" /></Link>}
         <form className="admin-record" onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
@@ -512,6 +529,7 @@ export function AdminDashboard() {
           });
         }}>
           <div className="admin-record-top"><div><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST · AWAITING YOUR APPROVAL · " : "LISTING · "}{property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type} · {property.id.slice(0, 8)}</span><strong translate="no">{property.title}</strong></div><div className="admin-record-actions">{property.deleteRequestedAt && <button type="button" className="text-link" disabled={busyId === property.id} onClick={() => void keepListing(property.id)}>Keep listing</button>}<button type="button" className="admin-delete" disabled={busyId === property.id} onClick={() => void remove("property", property.id)}>{property.deleteRequestedAt ? "Approve & delete" : "Delete listing"}</button></div></div>
+          {property.sellerAuthority && <p className="admin-listing-meta">Seller: {property.sellerAuthority === "owner" ? "Owner" : "Authorised representative"} · Publish permission {property.publicationConsentAt ? `recorded ${formatAdminDate(property.publicationConsentAt)}` : "not recorded"} · Contact permission {property.contactConsentAt ? `recorded ${formatAdminDate(property.contactConsentAt)}` : "not recorded"}</p>}
           <div className="admin-form-grid">
             <label>Title<input name="title" required defaultValue={property.title} /></label>
             <ListingClassificationFields category={property.listingCategory ?? "sale"} type={property.type} pricePeriod={property.pricePeriod ?? "total"}
@@ -543,7 +561,7 @@ export function AdminDashboard() {
             <label className="admin-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
             <label className="admin-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
             <label>Badge<input name="badge" required defaultValue={property.badge} /></label>
-            <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status === "hidden")}>{property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
+            <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status !== "published")}>{property.status === "pending" ? "Approve and publish listing" : property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
             <button type="button" className="admin-visibility-button" aria-pressed={property.showPhone !== false} disabled={busyId === property.id} onClick={() => void toggleListingPhoneVisibility(property.id, property.showPhone === false)}>{property.showPhone === false ? "Show phone on this listing" : "Hide phone on this listing"}</button>
             <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
             <AdminListingMediaManager title={property.title} initialImages={property.images?.length ? property.images : property.image ? [property.image] : []} initialVideos={property.videos ?? []} disabled={busyId === property.id} />
@@ -552,7 +570,7 @@ export function AdminDashboard() {
           <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>
         </form>
         </details>
-      )}{!data.properties.some((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? Boolean(property.deleteRequestedAt) : property.status !== "hidden" && (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listing deletion requests are waiting for approval." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
+      )}{!data.properties.some((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? property.status === "pending" || Boolean(property.deleteRequestedAt) : property.status === "published" && (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listings or deletion requests are waiting for review." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
       </>}
       {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com" || user.id === profileFocusId).map((user) =>
         <form className={`admin-record admin-user-record${user.id === profileFocusId ? " is-profile-focus" : ""}`} data-admin-user-id={user.id} key={user.id} onSubmit={(event) => {

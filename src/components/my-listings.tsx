@@ -119,10 +119,10 @@ export function MyListings() {
           <div className="my-listing-top">
             <div className="my-listing-image" style={{ backgroundImage: `url("${property.images?.[0] ?? property.image}")` }} />
             <div className="my-listing-title">
-              <span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUESTED · AWAITING APPROVAL" : property.status === "hidden" ? "HIDDEN" : "PUBLISHED"} · {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.locality}, {property.city}</span>
+              <span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUESTED · AWAITING APPROVAL" : property.status === "pending" ? "PENDING ADMIN REVIEW" : property.status === "hidden" ? "HIDDEN" : "PUBLISHED"} · {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.locality}, {property.city}</span>
               <strong translate="no">{property.title}</strong>
               <span className="my-listing-price">{formatListingPrice(property)} · {property.area} {property.unit}</span>
-              <Link href={`/properties/${encodeURIComponent(property.id)}`}>View listing <ArrowUpRight size={14} /></Link>
+              {property.status === "published" ? <Link href={`/properties/${encodeURIComponent(property.id)}`}>View listing <ArrowUpRight size={14} /></Link> : <small>{property.status === "pending" ? "This listing stays private until NILAY approves it." : "This listing is not currently visible on the website."}</small>}
             </div>
           </div>
           <details className="my-listing-editor">

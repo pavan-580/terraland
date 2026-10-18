@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { BackButton } from "@/components/back-button";
 
 const pages: Record<string, { kicker: string; title: string; emphasis: string; intro: string; sections: { title: string; text: string }[] }> = {
   about: {
@@ -96,5 +97,5 @@ export default async function ContentPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const page = pages[slug];
   if (!page) notFound();
-  return <><SiteHeader /><main className="content-page"><div className="content-hero"><span className="eyebrow">{page.kicker}</span><h1>{page.title}<br /><em>{page.emphasis}</em></h1><p>{page.intro}</p></div><div className="content-sections">{page.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><div><h2>{section.title}</h2><p>{section.text}</p></div><Check size={18} /></article>)}</div><div className="content-cta"><div><span className="eyebrow">{slug === "contact" ? "WE'RE ONE MESSAGE AWAY" : "READY WHEN YOU ARE"}</span><h2>{slug === "contact" ? "Need a hand?" : "Let's find your place."}</h2></div><a className="button button-dark" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20contact%20your%20team." target="_blank" rel="noreferrer">Contact our team <ArrowUpRight size={16} /></a></div></main><SiteFooter /></>;
+  return <><SiteHeader /><main className="content-page"><div className="content-hero"><BackButton className="back-link" fallbackHref="/" label="Back to home" /><span className="eyebrow">{page.kicker}</span><h1>{page.title}<br /><em>{page.emphasis}</em></h1><p>{page.intro}</p></div><div className="content-sections">{page.sections.map((section, index) => <article key={section.title}><span>0{index + 1}</span><div><h2>{section.title}</h2><p>{section.text}</p></div><Check size={18} /></article>)}</div><div className="content-cta"><div><span className="eyebrow">{slug === "contact" ? "WE'RE ONE MESSAGE AWAY" : "READY WHEN YOU ARE"}</span><h2>{slug === "contact" ? "Need a hand?" : "Let's find your place."}</h2></div><a className="button button-dark" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20contact%20your%20team." target="_blank" rel="noreferrer">Contact our team <ArrowUpRight size={16} /></a></div></main><SiteFooter /></>;
 }

@@ -6,6 +6,7 @@ import { ArrowUpRight, Heart } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { PropertyCard } from "@/components/property-card";
+import { BackButton } from "@/components/back-button";
 import type { Property } from "@/lib/market";
 
 export function SavedListings() {
@@ -19,7 +20,7 @@ export function SavedListings() {
       setStatus("ready");
     }).catch(() => setStatus("error"));
   }, []);
-  return <><SiteHeader /><main className="saved-page"><span className="eyebrow">YOUR PERSONAL COLLECTION</span><h1>Places worth <em>keeping close.</em></h1><p>All the land you&apos;ve saved, in one thoughtful little list.</p>
+  return <><SiteHeader /><main className="saved-page"><BackButton className="back-link" fallbackHref="/" label="Back to home" /><span className="eyebrow">YOUR PERSONAL COLLECTION</span><h1>Places worth <em>keeping close.</em></h1><p>All the land you&apos;ve saved, in one thoughtful little list.</p>
     {status === "loading" && <div className="loading-state">Gathering your saved places…</div>}
     {status === "signed-out" && <div className="empty-state"><Heart size={24} /><h3>Your places are waiting.</h3><p>Sign in to keep a list of the properties you&apos;re considering.</p><Link className="button button-dark" href="/sign-in?next=%2Fsaved">Sign in <ArrowUpRight size={16} /></Link></div>}
     {status === "error" && <div className="form-error">Your saved places could not be loaded. Please refresh and try again.</div>}

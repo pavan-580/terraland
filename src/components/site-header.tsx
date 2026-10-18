@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { ArrowUpRight, Heart, Menu, X } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
-import { BackButton } from "@/components/back-button";
 
 type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
@@ -33,11 +32,15 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
   }, []);
   useEffect(() => {
     if (!mobileMenuOpen) return;
+    document.body.style.overflow = "hidden";
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setMobileMenuOpen(false);
     }
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [mobileMenuOpen]);
   useEffect(() => {
     let active = true;
@@ -81,7 +84,6 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
   return (
       <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
-        {pathname !== "/" && pathname !== "/sell" && <BackButton className="header-back-button" />}
         <Link className="brand" href="/" aria-label="NILAY Real Estate home">
           <BrandLogo />
         </Link>
@@ -92,7 +94,21 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
         <nav id="site-mobile-navigation" className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation" onClick={(event) => {
           if ((event.target as HTMLElement).closest("a")) setMobileMenuOpen(false);
         }}>
-          <Link href="/search?category=sale">Explore land</Link>
+          <div className="mobile-drawer-header">
+            <div className="mobile-drawer-brand">
+              <strong>NILAY</strong>
+            </div>
+            <button
+              type="button"
+              className="mobile-drawer-close"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X size={20} strokeWidth={2} />
+            </button>
+          </div>
+          <Link href="/search?category=sale">Explore plots</Link>
+          <Link href="/requirements">Buyer Requirements</Link>
           <div className="farmstay-nav-window" onPointerEnter={() => setFarmstayPaused(true)}
             onPointerLeave={() => setFarmstayPaused(false)} onFocusCapture={() => setFarmstayPaused(true)}
             onBlurCapture={(event) => {
@@ -110,13 +126,13 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
             </div>
           </div>
           <Link href="/my-listings">My listings</Link>
-          <Link href="/about">How it works</Link>
-          <Link href="/lender-interest">Become a lender</Link>
+          <Link href="/lender-interest" className="nav-item-secondary">Become a lender</Link>
           <Link className="mobile-menu-favorites" href="/saved">Favorites <Heart size={17} /></Link>
           <details className="services-nav">
             <summary className="services-nav-trigger">Services</summary>
             <div className="services-nav-menu">
               <Link href="/services">All services</Link>
+              <Link href="/lender-interest">Become a lender</Link>
               <Link href="/services/dharani-title-check">Dharani / Bhu Bharati check</Link>
               <Link href="/services/legal-verification">Legal verification guide</Link>
               <Link href="/services/ec-verification">Encumbrance certificate</Link>
@@ -124,15 +140,70 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
               <Link href="/services/plot-loan-emi-calculator">Plot loan EMI calculator</Link>
             </div>
           </details>
-          <LanguagePicker />
+
           <div className="mobile-menu-account">
-            {user ? <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/profile"}>{user.role === "admin" ? "Admin" : user.name}</Link> : <Link className="sign-in-link" href="/sign-in">Sign in</Link>}
-            {user && <button className="logout-button" type="button" onClick={() => void logout()}>Sign out</button>}
-            <Link className="button button-dark button-small" href="/sell">List your land for free <ArrowUpRight size={15} /></Link>
-            <a className="mobile-menu-whatsapp" href="https://wa.me/918074399963?text=I%27d%20like%20to%20list%20my%20land%20for%20free%20on%20NILAY." target="_blank" rel="noreferrer">Post via WhatsApp <ArrowUpRight size={15} /></a>
+            <div className="mobile-menu-section">
+              <span className="mobile-section-label">LANGUAGE / భాష / भाषा</span>
+              <LanguagePicker variant="drawer" />
+            </div>
+
+            <div className="mobile-menu-section">
+              <span className="mobile-section-label">ACCOUNT</span>
+              {user ? (
+                <div className="mobile-user-profile-card">
+                  <div className="mobile-user-profile-left">
+                    <div className="mobile-user-avatar">
+                      {user.name ? user.name.charAt(0).toUpperCase() : "A"}
+                    </div>
+                    <div className="mobile-user-profile-meta">
+                      <span className="mobile-user-role-badge">
+                        {user.role === "admin" ? "ADMINISTRATOR" : "MEMBER"}
+                      </span>
+                      <strong className="mobile-user-profile-name">{user.name}</strong>
+                    </div>
+                  </div>
+                  <div className="mobile-user-profile-actions">
+                    {user.role === "admin" && (
+                      <Link href="/admin" className="mobile-user-admin-pill">
+                        Admin CRM →
+                      </Link>
+                    )}
+                    <button className="mobile-user-logout-pill" type="button" onClick={() => void logout()}>
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link className="mobile-auth-card" href="/sign-in">
+                  <div className="mobile-auth-card-text">
+                    <strong>Sign in / Register</strong>
+                    <span>Save favorite plots & manage enquiries</span>
+                  </div>
+                  <ArrowUpRight size={16} />
+                </Link>
+              )}
+            </div>
+
+            <div className="mobile-menu-actions">
+              <Link className="mobile-menu-cta-primary" href="/sell" title="List your land">
+                <span>List your land</span>
+                <ArrowUpRight size={13} />
+              </Link>
+              <a
+                className="mobile-menu-cta-whatsapp"
+                href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%27d%20like%20to%20list%20or%20inquire%20about%20a%20plot."
+                target="_blank"
+                rel="noreferrer"
+                title="Post via WhatsApp"
+              >
+                <span>Post via WhatsApp</span>
+                <ArrowUpRight size={13} />
+              </a>
+            </div>
           </div>
         </nav>
         <div className="header-actions">
+          <LanguagePicker />
           <Link className="saved-link" href="/saved" aria-label="Saved listings"><Heart size={17} /></Link>
           {user ? <>
             <Link className="sign-in-link account-name" href={user.role === "admin" ? "/admin" : "/profile"}>{user.role === "admin" ? "Admin" : user.name}</Link>

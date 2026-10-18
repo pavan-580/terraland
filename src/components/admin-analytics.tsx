@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BackButton } from "@/components/back-button";
 
 type Point = { period: string; visitors: number; pageViews: number };
 type Payload = { daily: Point[]; monthly: Point[] };
@@ -20,11 +21,40 @@ export function AdminAnalytics() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   async function load() {
-    try { const response = await fetch("/api/admin/analytics", { cache: "no-store" }); const result = await response.json() as Payload & { error?: string }; if (!response.ok) throw new Error(result.error || "Analytics could not be loaded."); setData(result); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Analytics could not be loaded."); }
-    finally { setLoading(false); }
+    try {
+      const response = await fetch("/api/admin/analytics", { cache: "no-store" });
+      const result = await response.json() as Payload & { error?: string };
+      if (!response.ok) throw new Error(result.error || "Analytics could not be loaded.");
+      setData(result);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Analytics could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/analytics", { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Analytics could not be loaded.");
+        return res.json() as Promise<Payload>;
+      })
+      .then((result) => {
+        if (active) {
+          setData(result);
+          setLoading(false);
+        }
+      })
+      .catch((reason) => {
+        if (active) {
+          setError(reason instanceof Error ? reason.message : "Analytics could not be loaded.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   async function clear() {
     setBusy(true); setError(""); setMessage("");
     try { const response = await fetch("/api/admin/analytics", { method: "DELETE" }); const result = await response.json() as { message?: string; error?: string }; if (!response.ok) throw new Error(result.error || "Analytics could not be cleared."); setMessage(result.message || "Analytics cleared."); setConfirmClear(false); await load(); }
@@ -35,7 +65,7 @@ export function AdminAnalytics() {
   const max = Math.max(1, ...points.map((point) => Number(point.visitors)));
   const total = points.reduce((sum, point) => sum + Number(point.visitors), 0);
   return <><section className="admin-intro"><span className="eyebrow">SITE CONTROL</span><h1>Visitor analytics</h1><p>Anonymous daily visitors and page views. Signed-in administrator visits are excluded.</p></section>
-    <div className="analytics-toolbar"><Link href="/admin" className="button button-outline-light">← Dashboard</Link><div className="analytics-actions"><button type="button" className={period === "daily" ? "is-active" : ""} onClick={() => setPeriod("daily")}>Daily</button><button type="button" className={period === "monthly" ? "is-active" : ""} onClick={() => setPeriod("monthly")}>Monthly</button><button type="button" className="admin-delete" onClick={() => { setConfirmClear(true); setMessage(""); }}>Clear analytics</button></div></div>
+    <div className="analytics-toolbar"><BackButton fallbackHref="/admin" label="Back to dashboard" /><div className="analytics-actions"><button type="button" className={period === "daily" ? "is-active" : ""} onClick={() => setPeriod("daily")}>Daily</button><button type="button" className={period === "monthly" ? "is-active" : ""} onClick={() => setPeriod("monthly")}>Monthly</button><button type="button" className="admin-delete" onClick={() => { setConfirmClear(true); setMessage(""); }}>Clear analytics</button></div></div>
     {message && <p className="admin-success" role="status">{message}</p>}{error && <p className="form-error" role="alert">{error}</p>}
     {confirmClear && <div className="analytics-confirm" role="group" aria-label="Confirm clearing analytics"><span>This permanently deletes all recorded visitor analytics.</span><button className="admin-delete" type="button" disabled={busy} onClick={() => void clear()}>{busy ? "Clearing…" : "Confirm clear"}</button><button type="button" onClick={() => setConfirmClear(false)}>Cancel</button></div>}
     <section className="analytics-panel"><div className="analytics-summary"><div><span>{period === "daily" ? "VISITORS · LAST 30 DAYS" : "VISITORS · LAST 12 MONTHS"}</span><strong>{total.toLocaleString("en-IN")}</strong></div><div><span>PAGE VIEWS</span><strong>{points.reduce((sum, point) => sum + Number(point.pageViews), 0).toLocaleString("en-IN")}</strong></div></div>

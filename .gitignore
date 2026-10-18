@@ -42,3 +42,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /public/uploads/
+*.zip
+terraland-hostinger/
+terraland-linux-x64-source/

@@ -5,6 +5,7 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PlotLoanCalculator } from "@/components/plot-loan-calculator";
+import { BackButton } from "@/components/back-button";
 
 const officialLandSearch = "https://www.bhubharati.telangana.gov.in/knowLandStatus";
 const officialEC = "https://bhubharati.telangana.gov.in/homePage?lang=en";
@@ -86,7 +87,7 @@ export async function generateMetadata({ params }: { params: Promise<{ service: 
 export default async function ServicePage({ params }: { params: Promise<{ service: string }> }) {
   const { service } = await params, item = info[service];
   if (!item) notFound();
-  return <><SiteHeader /><main className="services-page service-detail-page"><div className="service-breadcrumb"><Link href="/services">Services</Link><span>/</span>{item.title}</div><div className="services-intro"><span className="eyebrow">{item.kicker}</span><h1>{item.title}</h1><p>{item.intro}</p></div>
+  return <><SiteHeader /><main className="services-page service-detail-page"><div className="service-breadcrumb"><BackButton className="breadcrumb-back-link" fallbackHref="/services" label="Back to services" /><span className="breadcrumb-sep">/</span><span>{item.title}</span></div><div className="services-intro"><span className="eyebrow">{item.kicker}</span><h1>{item.title}</h1><p>{item.intro}</p></div>
     {service === "dharani-title-check" && <article className="land-record-article">
       <p className="land-record-lead">Buying agricultural land or a plot near Hyderabad—such as Shankarpally, Shadnagar, Sangareddy, or Narayankhed—can be a major decision. Before an advance or agreement, check that the parcel, seller, and ownership documents all tell the same story.</p>
       <p>Dharani is the familiar name many buyers use for Telangana’s online land records. The current official system is <strong>Bhu Bharati</strong>, Telangana’s Integrated Land Records Management System. Its online record is an important starting point, but it is not by itself a complete legal title opinion.</p>

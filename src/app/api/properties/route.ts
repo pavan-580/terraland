@@ -3,6 +3,7 @@ import { db, getSiteSetting, logMemberActivity, publicPropertyFromRow } from "@/
 import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser, newId } from "@/lib/session";
 import { storePropertyPhotos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const user = await currentUser();
@@ -11,18 +12,28 @@ export async function GET(request: NextRequest) {
   const values: (string | number)[] = [];
   const search = params.get("q")?.trim();
   const city = params.get("city")?.trim();
+  const locality = params.get("locality")?.trim();
   const type = params.get("type")?.trim();
   const listingCategory = params.get("category")?.trim();
   const min = Number(params.get("min"));
   const max = Number(params.get("max"));
+  const minArea = Number(params.get("minArea"));
+  const maxArea = Number(params.get("maxArea"));
+  const availability = params.get("availability")?.trim();
+  const sort = params.get("sort")?.trim();
+
   if (search) {
-    clauses.push("(title LIKE ? OR locality LIKE ? OR city LIKE ? OR type LIKE ?)");
+    clauses.push("(title LIKE ? OR locality LIKE ? OR city LIKE ? OR type LIKE ? OR description LIKE ?)");
     const term = `%${search.slice(0, 80)}%`;
-    values.push(term, term, term, term);
+    values.push(term, term, term, term, term);
   }
   if (city) {
     clauses.push("(city LIKE ? OR locality LIKE ?)");
     values.push(`%${city.slice(0, 80)}%`, `%${city.slice(0, 80)}%`);
+  }
+  if (locality) {
+    clauses.push("locality LIKE ?");
+    values.push(`%${locality.slice(0, 80)}%`);
   }
   if (type) {
     clauses.push("REPLACE(LOWER(type), ' ', '') = REPLACE(LOWER(?), ' ', '')");
@@ -40,11 +51,37 @@ export async function GET(request: NextRequest) {
     clauses.push("price <= ?");
     values.push(max);
   }
+  if (Number.isFinite(minArea) && minArea > 0) {
+    clauses.push("area >= ?");
+    values.push(minArea);
+  }
+  if (Number.isFinite(maxArea) && maxArea > 0) {
+    clauses.push("area <= ?");
+    values.push(maxArea);
+  }
+  if (availability) {
+    clauses.push("availability LIKE ?");
+    values.push(`%${availability.slice(0, 80)}%`);
+  }
+
+  let orderBy = "properties.createdAt DESC, properties.rowid DESC";
+  if (sort === "price_asc") {
+    orderBy = "properties.price ASC, properties.createdAt DESC";
+  } else if (sort === "price_desc") {
+    orderBy = "properties.price DESC, properties.createdAt DESC";
+  } else if (sort === "recent") {
+    orderBy = "COALESCE(properties.updatedAt, properties.createdAt) DESC, properties.rowid DESC";
+  } else if (sort === "area_asc") {
+    orderBy = "properties.area ASC";
+  } else if (sort === "area_desc") {
+    orderBy = "properties.area DESC";
+  }
+
   const rows = db.prepare(`
     SELECT properties.*, users.email AS sellerEmail FROM properties
     LEFT JOIN users ON users.id = properties.ownerId
     WHERE ${clauses.join(" AND ")}
-    ORDER BY properties.createdAt DESC, properties.rowid DESC
+    ORDER BY ${orderBy}
   `).all(...values) as Record<string, unknown>[];
   const showSellerPhones = getSiteSetting("showSellerPhones") !== "false" && Boolean(user);
   return NextResponse.json(rows.map((row) => {
@@ -55,6 +92,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const rate = checkRateLimit(`property-submit:${ip}`, 5, 300);
+  if (!rate.allowed) {
+    return NextResponse.json({ error: `Too many submissions. Please wait ${rate.resetInSeconds} seconds before submitting again.` }, { status: 429 });
+  }
+
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sign in to publish a listing." }, { status: 401 });
   const form = await request.formData().catch(() => null);
@@ -75,6 +118,14 @@ export async function POST(request: NextRequest) {
   const availability = value("availability");
   const guestCapacityInput = value("guestCapacity");
   const guestCapacity = guestCapacityInput ? Number(guestCapacityInput) : null;
+  const sellerAuthority = value("sellerAuthority");
+  const publicationConsented = form.get("publicationConsent") === "on";
+  const contactConsented = form.get("contactConsent") === "on";
+  const isNegotiable = ["negotiable", "slightly_negotiable", "fixed"].includes(value("isNegotiable")) ? value("isNegotiable") : "";
+  const documentStatus = ["seller_declared", "docs_collected", "admin_reviewed"].includes(value("documentStatus")) ? value("documentStatus") : "seller_declared";
+  const legalDisclaimerAgreed = 1;
+  const updatedAt = new Date().toISOString();
+
   if (value("mapUrl").length > 500 || (value("mapUrl") !== "" && !isGoogleMapsUrl(value("mapUrl")))) {
     return NextResponse.json({ error: "Paste a valid HTTPS Google Maps link for this property." }, { status: 400 });
   }
@@ -100,6 +151,9 @@ export async function POST(request: NextRequest) {
     availability.length > 240 ||
     (guestCapacityInput && (!Number.isInteger(guestCapacity) || Number(guestCapacity) < 1 || Number(guestCapacity) > 1000))) {
     return NextResponse.json({ error: "Check the title, property type, location, description, and other required details." }, { status: 400 });
+  }
+  if (!["owner", "authorized_representative"].includes(sellerAuthority) || !publicationConsented || !contactConsented) {
+    return NextResponse.json({ error: "Confirm your authority to list the property and give permission to publish it after review and contact you." }, { status: 400 });
   }
   const files = form.getAll("photos").filter((file): file is File => file instanceof File && file.size > 0);
   let images: string[];
@@ -145,6 +199,10 @@ export async function POST(request: NextRequest) {
     images: JSON.stringify(images),
     videos: JSON.stringify(videos),
     ownerId: user.id,
+    status: "pending",
+    sellerAuthority,
+    publicationConsentAt: new Date().toISOString(),
+    contactConsentAt: new Date().toISOString(),
     badge: "New listing",
     description: value("description").slice(0, 1500),
     owner: user.name,
@@ -164,18 +222,42 @@ export async function POST(request: NextRequest) {
     landmark: value("landmark").slice(0, 120),
     mapUrl: value("mapUrl").slice(0, 500),
     verified: 0,
+    isNegotiable,
+    documentStatus,
+    legalDisclaimerAgreed,
+    updatedAt,
   };
   db.prepare(`
     INSERT INTO properties
-      (id, title, type, listingCategory, pricePeriod, availability, guestCapacity, city, locality, price, area, unit, image, images, videos, ownerId, badge, description, owner, phone,
+      (id, title, type, listingCategory, pricePeriod, availability, guestCapacity, city, locality, price, area, unit, image, images, videos, ownerId, status, sellerAuthority, publicationConsentAt, contactConsentAt, badge, description, owner, phone,
        facing, approvals, loanAvailable, registrationAvailable, renovation, cornerPlot, roadWidth, surveyNumber,
-       soilType, clearTitle, amenities, address, landmark, mapUrl, verified)
+       soilType, clearTitle, amenities, address, landmark, mapUrl, verified, isNegotiable, documentStatus, legalDisclaimerAgreed, updatedAt)
     VALUES
-      (@id, @title, @type, @listingCategory, @pricePeriod, @availability, @guestCapacity, @city, @locality, @price, @area, @unit, @image, @images, @videos, @ownerId, @badge, @description, @owner, @phone,
+      (@id, @title, @type, @listingCategory, @pricePeriod, @availability, @guestCapacity, @city, @locality, @price, @area, @unit, @image, @images, @videos, @ownerId, @status, @sellerAuthority, @publicationConsentAt, @contactConsentAt, @badge, @description, @owner, @phone,
        @facing, @approvals, @loanAvailable, @registrationAvailable, @renovation, @cornerPlot, @roadWidth, @surveyNumber,
-       @soilType, @clearTitle, @amenities, @address, @landmark, @mapUrl, @verified)
+       @soilType, @clearTitle, @amenities, @address, @landmark, @mapUrl, @verified, @isNegotiable, @documentStatus, @legalDisclaimerAgreed, @updatedAt)
   `).run(property);
-  logMemberActivity(user.id, "Listing published", `${property.listingCategory === "rent" ? "For rent" : "For sale"} · ${property.type} · ${property.area} ${property.unit}`, { id: property.id, title: property.title });
+
+  const leadId = newId();
+  try {
+    db.prepare(`
+      INSERT INTO leads (id, type, referenceId, name, phone, email, status, source, notes, statusHistory, relatedPropertyIds)
+      VALUES (?, 'seller', ?, ?, ?, ?, 'new', 'seller_submission', ?, ?, ?)
+    `).run(
+      leadId,
+      property.id,
+      user.name,
+      property.phone,
+      user.email,
+      `Submitted plot for review: ${property.title} in ${property.locality}, ${property.city} (${property.area} ${property.unit}).`,
+      JSON.stringify([{ status: "new", changedAt: new Date().toISOString(), note: "Seller submitted listing for review." }]),
+      JSON.stringify([property.id])
+    );
+  } catch {
+    // leads table fallback
+  }
+
+  logMemberActivity(user.id, "Listing submitted for review", `${property.listingCategory === "rent" ? "For rent" : "For sale"} · ${property.type} · ${property.area} ${property.unit}`, { id: property.id, title: property.title });
   db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(property.phone, user.id);
   return NextResponse.json({ ...property, images, videos, amenities, verified: false }, { status: 201 });
 }
