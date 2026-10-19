@@ -128,33 +128,41 @@ export function LanguagePicker({ variant = "dropdown" }: { variant?: "dropdown" 
     }
   }
 
-  if (variant === "drawer") {
-    return (
-      <div className="language-drawer-segmented" role="group" aria-label="Choose page language">
-        {languages.map((item) => (
-          <button
-            key={item.code}
-            type="button"
-            className={`language-drawer-btn ${item.code === language ? "is-selected" : ""}`}
-            aria-pressed={item.code === language}
-            onClick={() => chooseLanguage(item.code)}
-          >
-            {item.name}
-          </button>
-        ))}
+  return (
+    <>
+      <div className={`language-picker ${variant === "drawer" ? "language-picker-drawer" : ""}${open ? " is-open" : ""}`}>
+        <button
+          className="language-picker-trigger google-rainbow-pill"
+          type="button"
+          aria-label="Choose page language"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span>{languages.find((item) => item.code === language)?.name ?? "English"}</span>
+          <ChevronDown size={14} aria-hidden="true" className={`lang-chevron ${open ? "is-open" : ""}`} />
+        </button>
+        {open && (
+          <div className="language-picker-options" role="listbox" aria-label="Page language">
+            {languages.map((item) => (
+              <button
+                key={item.code}
+                className={item.code === language ? "is-selected" : ""}
+                type="button"
+                role="option"
+                aria-selected={item.code === language}
+                onClick={() => {
+                  chooseLanguage(item.code);
+                  setOpen(false);
+                }}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-    );
-  }
-
-  return <>
-    <div className={`language-picker${open ? " is-open" : ""}`}>
-      <button className="language-picker-trigger" type="button" aria-label="Choose page language" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        <span>{languages.find((item) => item.code === language)?.name ?? "English"}</span><ChevronDown size={15} aria-hidden="true" />
-      </button>
-      {open && <div className="language-picker-options" role="listbox" aria-label="Page language">
-        {languages.map((item) => <button key={item.code} className={item.code === language ? "is-selected" : ""} type="button" role="option" aria-selected={item.code === language} onClick={() => { chooseLanguage(item.code); setOpen(false); }}>{item.name}</button>)}
-      </div>}
-    </div>
-    {error && <span className="translation-error" role="status">{error}</span>}
-  </>;
+      {error && <span className="translation-error" role="status">{error}</span>}
+    </>
+  );
 }

@@ -4,7 +4,7 @@ import { db, logMemberActivity } from "@/lib/db";
 import { currentUser, newId, startSession } from "@/lib/session";
 import { deliverPendingRegistrationNotices } from "@/lib/notifications";
 
-const ADMIN_EMAIL = "pavansai580@gmail.com";
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "pavansai580@gmail.com").trim().toLowerCase();
 
 export async function GET() {
   return NextResponse.json({ user: await currentUser() });
@@ -176,20 +176,26 @@ export async function POST(request: NextRequest) {
     if (email) await deliverPendingRegistrationNotices(notificationId);
   } else if (identifier.toLowerCase() === ADMIN_EMAIL) {
     const adminPassword = process.env.ADMIN_PASSWORD;
-    if (!adminPassword) {
-      return NextResponse.json({ error: "Admin sign-in is not configured on this server." }, { status: 503 });
-    }
-    if (password !== adminPassword) {
+    const existingAdmin = db.prepare("SELECT id, passwordHash FROM users WHERE email = ?").get(ADMIN_EMAIL) as { id: string; passwordHash: string } | undefined;
+
+    const matchesEnv = adminPassword ? (password === adminPassword || (adminPassword.startsWith("$2") && await compare(password, adminPassword))) : false;
+    const matchesDb = existingAdmin?.passwordHash ? await compare(password, existingAdmin.passwordHash) : false;
+
+    if (!matchesEnv && !matchesDb) {
+      if (!adminPassword && !existingAdmin) {
+        return NextResponse.json({ error: "Admin sign-in is not configured on this server." }, { status: 503 });
+      }
       return NextResponse.json({ error: "The email or password is incorrect." }, { status: 401 });
     }
-    const id = db.prepare("SELECT id FROM users WHERE email = ?").get(ADMIN_EMAIL) as { id: string } | undefined;
-    const adminId = id?.id ?? newId();
-    db.prepare(`
-      INSERT INTO users (id, name, email, passwordHash, role)
-      VALUES (?, 'NILAY Admin', ?, ?, 'admin')
-      ON CONFLICT(email) DO UPDATE SET
-        name = excluded.name, passwordHash = excluded.passwordHash, role = 'admin'
-    `).run(adminId, ADMIN_EMAIL, await hash(adminPassword, 12));
+    const adminId = existingAdmin?.id ?? newId();
+    if (!existingAdmin) {
+      db.prepare(`
+        INSERT INTO users (id, name, email, passwordHash, role)
+        VALUES (?, 'NILAY Admin', ?, ?, 'admin')
+        ON CONFLICT(email) DO UPDATE SET
+          name = excluded.name, passwordHash = excluded.passwordHash, role = 'admin'
+      `).run(adminId, ADMIN_EMAIL, await hash(password, 12));
+    }
     user = { id: adminId, name: "NILAY Admin", email: ADMIN_EMAIL, phone: "", role: "admin" };
   } else {
     const isEmail = identifier.includes("@");

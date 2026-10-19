@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowUpRight, Heart, Menu, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Heart, Menu, X } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
 
@@ -129,7 +129,10 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
           <Link href="/lender-interest" className="nav-item-secondary">Become a lender</Link>
           <Link className="mobile-menu-favorites" href="/saved">Favorites <Heart size={17} /></Link>
           <details className="services-nav">
-            <summary className="services-nav-trigger">Services</summary>
+            <summary className="services-nav-trigger">
+              <span>Services</span>
+              <ChevronDown size={14} aria-hidden="true" className="services-chevron" />
+            </summary>
             <div className="services-nav-menu">
               <Link href="/services">All services</Link>
               <Link href="/lender-interest">Become a lender</Link>

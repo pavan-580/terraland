@@ -96,9 +96,9 @@ export function InquiryForm({ propertyId, title, type, listingCategory = "sale",
       <form onSubmit={(event) => void submit(event)}>
         {!user && <label>Your name<input required minLength={2} maxLength={80} autoComplete="name" value={contactName} onChange={(event) => setContactName(event.target.value)} /></label>}
         {(!user || !user.email) && <label>Email address{!user && <span className="optional-label">required</span>}<input required={!user} type="email" autoComplete="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} /></label>}
-        <label>Mobile number with country code
-          <div className="inquiry-phone-input"><span aria-hidden="true">+91</span><input required type="tel" inputMode="numeric" autoComplete="off" pattern="[0-9]{10}" maxLength={10} value={contactPhone} onChange={(event) => setContactPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Mobile Number" /></div>
-          <small>Enter 10 digits. The +91 country code is added automatically.</small>
+        <label>Mobile number
+          <div className="inquiry-phone-input"><span aria-hidden="true">+91</span><input required type="tel" inputMode="numeric" autoComplete="off" pattern="[0-9]{10}" maxLength={10} value={contactPhone} onChange={(event) => setContactPhone(event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="9876543210" /></div>
+          <small>Enter your 10-digit mobile number (+91 is added automatically).</small>
         </label>
         {listingCategory === "rent" && <div className="rental-request-fields">
           <div className="form-row">

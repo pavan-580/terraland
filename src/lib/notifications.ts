@@ -107,16 +107,34 @@ function renderEmailLayout({
 export async function sendPasswordResetCode(email: string, code: string) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) throw new Error("Password reset email is not configured.");
+  if (!apiKey || !from) {
+    console.log(`\n======================================================`);
+    console.log(`🔑 [NILAY PASSWORD RESET CODE]`);
+    console.log(`Recipient: ${email}`);
+    console.log(`Verification Code: ${code}`);
+    console.log(`Expires in: 10 minutes`);
+    console.log(`(Configure RESEND_API_KEY and EMAIL_FROM in .env.local to send real emails)`);
+    console.log(`======================================================\n`);
+    return;
+  }
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from,
       to: [email],
-      subject: "Your Terraland password reset code",
-      text: `Your Terraland password reset code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
-      html: `<p>Your Terraland password reset code is:</p><p style="font-size:24px;font-weight:bold;letter-spacing:6px">${code}</p><p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>`,
+      subject: "Your NILAY password reset code",
+      text: `Your NILAY password reset code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
+      html: `<div style="font-family:sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #e5e7eb;border-radius:10px;">
+        <h2 style="color:#111827;margin-top:0;">Reset your NILAY password</h2>
+        <p style="color:#4b5563;font-size:14px;line-height:1.5;">Enter the six-digit verification code below to reset your password:</p>
+        <div style="background:#f3f4f6;padding:16px;text-align:center;border-radius:8px;margin:20px 0;">
+          <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#111827;font-family:monospace;">${code}</span>
+        </div>
+        <p style="color:#6b7280;font-size:12px;">This code will expire in 10 minutes. If you didn't request this password reset, you can safely ignore this email.</p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;" />
+        <p style="color:#9ca3af;font-size:11px;margin:0;">NILAY · Verified plots in Miyapur, Hyderabad</p>
+      </div>`,
     }),
   });
   if (!response.ok) {

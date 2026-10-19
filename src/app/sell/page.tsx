@@ -451,22 +451,30 @@ export default function SellPage() {
 
           <div className="listing-form-section">
             <span className="eyebrow">SELLER AUTHORITY & CONSENT</span>
-            <p>To keep Terraland trustworthy, all listings require owner confirmation and explicit publication consent.</p>
+            <p>To keep NILAY trustworthy, all listings require owner confirmation and explicit publication consent.</p>
           </div>
 
           <label>
             Contact Phone
-            <input
-              required
-              name="phone"
-              type="tel"
-              inputMode="tel"
-              pattern="[+()0-9 -]{8,24}"
-              value={contactPhone}
-              onChange={(event) => setContactPhone(event.target.value)}
-              placeholder="98765 43210"
-            />
-            <small>Your contact phone is securely saved. The founder will contact you to verify details before listing.</small>
+            <div className="phone-input-wrap" style={{ marginTop: "6px" }}>
+              <span className="phone-input-prefix">+91</span>
+              <input
+                required
+                name="phone"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={contactPhone}
+                onChange={(event) => {
+                  const val = event.target.value.replace(/\D/g, "");
+                  const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;
+                  setContactPhone(clean.slice(0, 10));
+                }}
+                placeholder="9876543210"
+              />
+            </div>
+            <small>Enter your 10-digit mobile number (+91 is added automatically). The NILAY team will contact you to verify details before listing.</small>
           </label>
 
           <label>

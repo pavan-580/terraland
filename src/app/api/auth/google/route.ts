@@ -20,7 +20,15 @@ function safeDestination(value: string | undefined): string {
 }
 
 function getOrigin(request: NextRequest): string {
-  return new URL(process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin).origin;
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL).origin;
+  }
+  const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") || (forwardedHost?.includes("localhost") ? "http" : "https");
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  return request.nextUrl.origin;
 }
 
 function signInRedirect(request: NextRequest, code: string, destination: string) {

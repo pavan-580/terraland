@@ -203,28 +203,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
           </div>
         </section>
 
-        <PropertyGallery images={photos} title={property.title} badge={property.badge} />
-
-        {property.videos?.length ? (
-          <section className="detail-video-gallery" aria-label="Property videos">
-            <div className="detail-card-heading">
-              <span className="eyebrow">PROPERTY VIDEOS</span>
-              <h2>Actual Site Footage</h2>
-            </div>
-            <div className="detail-video-grid">
-              {property.videos.map((video, index) => (
-                <video
-                  key={`${video}-${index}`}
-                  src={video}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  aria-label={`${property.title} video ${index + 1}`}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
+        <PropertyGallery images={photos} videos={property.videos} title={property.title} badge={property.badge} />
 
         <div className="detail-layout detail-layout-rich">
           <div className="detail-main detail-cards">

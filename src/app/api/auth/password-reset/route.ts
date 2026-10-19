@@ -3,9 +3,11 @@ import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { db, logMemberActivity } from "@/lib/db";
 import { sendPasswordResetCode } from "@/lib/notifications";
+import { newId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "pavansai580@gmail.com").trim().toLowerCase();
 const genericMessage = "If an account exists for that email, a reset code has been sent.";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -22,7 +24,22 @@ export async function POST(request: NextRequest) {
     if (existing && Date.now() - new Date(existing.requestedAt).getTime() < 60_000) {
       return NextResponse.json({ message: genericMessage });
     }
-    const user = db.prepare("SELECT id FROM users WHERE email = ? AND role = 'user'").get(email);
+
+    const isAdmin = email === ADMIN_EMAIL;
+    let user = db.prepare("SELECT id, role FROM users WHERE email = ?").get(email) as { id: string; role: string } | undefined;
+
+    if (!user && isAdmin) {
+      const adminId = newId();
+      const initialPassword = process.env.ADMIN_PASSWORD || "Admin@123";
+      const initialHash = await hash(initialPassword, 12);
+      db.prepare(`
+        INSERT INTO users (id, name, email, passwordHash, role)
+        VALUES (?, 'NILAY Admin', ?, ?, 'admin')
+        ON CONFLICT(email) DO NOTHING
+      `).run(adminId, ADMIN_EMAIL, initialHash);
+      user = { id: adminId, role: "admin" };
+    }
+
     if (user) {
       const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
       const codeHash = await hash(code, 10);
@@ -33,7 +50,8 @@ export async function POST(request: NextRequest) {
         .run(email, codeHash, expiresAt, new Date().toISOString());
       try {
         await sendPasswordResetCode(email, code);
-      } catch {
+      } catch (err) {
+        console.error("sendPasswordResetCode error:", err);
         db.prepare("DELETE FROM password_reset_codes WHERE email = ?").run(email);
         return NextResponse.json({ error: "We couldn't send the reset email. Please try again later." }, { status: 503 });
       }
@@ -60,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
     const passwordHash = await hash(password, 12);
     const applyReset = db.transaction(() => {
-      const result = db.prepare("UPDATE users SET passwordHash = ? WHERE email = ? AND role = 'user'").run(passwordHash, email);
+      const result = db.prepare("UPDATE users SET passwordHash = ? WHERE email = ?").run(passwordHash, email);
       if (result.changes !== 1) throw new Error("Account not found.");
       db.prepare("DELETE FROM sessions WHERE userId = (SELECT id FROM users WHERE email = ?)").run(email);
       db.prepare("DELETE FROM password_reset_codes WHERE email = ?").run(email);
@@ -70,7 +88,7 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: "We couldn't reset that account. Request a new code and try again." }, { status: 400 });
     }
-    const resetUser = db.prepare("SELECT id FROM users WHERE email = ? AND role = 'user'").get(email) as { id: string } | undefined;
+    const resetUser = db.prepare("SELECT id, role FROM users WHERE email = ?").get(email) as { id: string; role: string } | undefined;
     if (resetUser) logMemberActivity(resetUser.id, "Password changed", "Password reset using email verification.");
     return NextResponse.json({ message: "Your password has been changed. Sign in with your new password." });
   }

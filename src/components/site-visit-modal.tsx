@@ -99,7 +99,7 @@ export function SiteVisitModal({ isOpen, onClose, property }: SiteVisitModalProp
         body: JSON.stringify({
           propertyId: property.id,
           name,
-          phone,
+          phone: phone.startsWith("+") ? phone : `+91${phone.replace(/\D/g, "")}`,
           proposedDate: proposedDate || todayStr,
           proposedTime,
           notes: combinedNotes
@@ -214,15 +214,26 @@ export function SiteVisitModal({ isOpen, onClose, property }: SiteVisitModalProp
 
               <label>
                 Mobile Number (WhatsApp) <span className="req">*</span>
-                <input
-                  required
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 9876543210"
-                  minLength={10}
-                  maxLength={15}
-                />
+                <div className="phone-input-wrap" style={{ marginTop: "6px" }}>
+                  <span className="phone-input-prefix">+91</span>
+                  <input
+                    required
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    value={phone}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;
+                      setPhone(clean.slice(0, 10));
+                    }}
+                    placeholder="9876543210"
+                  />
+                </div>
+                <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "4px", display: "block" }}>
+                  Enter your 10-digit mobile number (+91 is added automatically).
+                </small>
               </label>
             </div>
 

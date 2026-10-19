@@ -110,11 +110,11 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
 
   const googleErrorMessage =
     googleError === "not_configured"
-      ? "Google Sign-In needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET configured in .env.local to access accounts on this device. Sign in below using your phone or email."
+      ? "Google Sign-In needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET set in your deployment environment variables (Render/Vercel) to work on mobile. Sign in below using your 10-digit mobile number."
       : googleError === "cancelled"
       ? "Google sign-in was cancelled."
       : googleError
-      ? "Unable to complete Google sign-in. Please sign in below."
+      ? "Unable to complete Google sign-in on this network or device. Sign in below using your 10-digit mobile number."
       : null;
 
   return (
@@ -308,12 +308,19 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                       required
                       autoComplete="tel-national"
                       inputMode="numeric"
-                      placeholder="80743 99964"
+                      pattern="[0-9]{10}"
+                      maxLength={10}
+                      placeholder="98765 43210"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;
+                        e.target.value = clean.slice(0, 10);
+                      }}
                       style={{ flex: 1 }}
                     />
                   </div>
                   <small style={{ color: "var(--muted)", fontSize: "10px", marginTop: "4px" }}>
-                    Enter your 10-digit mobile number.
+                    Enter your 10-digit mobile number (country code +91 is added automatically).
                   </small>
                 </label>
                 <label>
@@ -323,7 +330,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
               </>
             ) : (
               <label>
-                Phone number or email address
+                10-digit mobile number or email address
                 <input
                   name="identifier"
                   type="text"
@@ -331,7 +338,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   autoComplete="username"
                   value={identifierInput}
                   onChange={(e) => setIdentifierInput(e.target.value)}
-                  placeholder="+91 98765 43210 or pavansai580@gmail.com"
+                  placeholder="e.g. 9876543210 or pavansai580@gmail.com"
                 />
               </label>
             )}

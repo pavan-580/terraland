@@ -164,21 +164,21 @@ export function AccountPhoneGate() {
                 required
                 type="tel"
                 inputMode="numeric"
-                autoComplete="tel-national"
+                pattern="[0-9]{10}"
+                maxLength={10}
                 value={phoneNumber}
                 onChange={(event) => {
-                  let val = event.target.value.replace(/[^\d+ ]/g, "");
-                  // If user pasted with +91, cleanly strip +91
-                  if (val.startsWith("+91")) val = val.slice(3).trim();
-                  setPhoneNumber(val);
+                  let val = event.target.value.replace(/\D/g, "");
+                  if (val.startsWith("91") && val.length > 10) val = val.slice(2);
+                  setPhoneNumber(val.slice(0, 10));
                   setError("");
                 }}
-                placeholder="80743 99964"
+                placeholder="9876543210"
                 className="account-phone-input"
               />
             </div>
             <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "2px" }}>
-              Enter your 10-digit mobile number.
+              Enter your 10-digit mobile number (+91 is added automatically).
             </small>
           </label>
 

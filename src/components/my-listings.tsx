@@ -133,7 +133,7 @@ export function MyListings() {
                 {(property.images?.length ? property.images : [property.image]).filter((image) => !(removedMedia[property.id]?.images ?? []).includes(image)).map((image, index) => <div className="my-listing-media-item" key={`${image}-${index}`}><div role="img" aria-label={`Current listing photo ${index + 1}`} style={{ backgroundImage: `url("${image}")` }} /><button type="button" aria-label={`Remove photo ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: [...(current[property.id]?.images ?? []), image], videos: current[property.id]?.videos ?? [] } }))}>Remove</button></div>)}
               </div>
               {property.videos?.length ? <div className="my-listing-current-photos" aria-label={`${property.videos.length} current listing videos`}>
-                {property.videos.filter((video) => !(removedMedia[property.id]?.videos ?? []).includes(video)).map((video, index) => <div className="my-listing-media-item" key={`${video}-${index}`}><video src={video} controls preload="metadata" aria-label={`Current listing video ${index + 1}`} /><button type="button" aria-label={`Remove video ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: current[property.id]?.images ?? [], videos: [...(current[property.id]?.videos ?? []), video] } }))}>Remove</button></div>)}
+                {property.videos.filter((video) => !(removedMedia[property.id]?.videos ?? []).includes(video)).map((video, index) => <div className="my-listing-media-item" key={`${video}-${index}`}><video src={video} controls muted playsInline preload="metadata" aria-label={`Current listing video ${index + 1}`} /><button type="button" aria-label={`Remove video ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: current[property.id]?.images ?? [], videos: [...(current[property.id]?.videos ?? []), video] } }))}>Remove</button></div>)}
               </div> : null}
               <div className="my-listing-fields">
             <label>Listing title<input name="title" required minLength={4} maxLength={100} defaultValue={property.title} /></label>
@@ -163,7 +163,22 @@ export function MyListings() {
             <label className="my-listing-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
             <label className="my-listing-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
             <label className="my-listing-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
-            <label className="my-listing-wide">Contact phone<input name="phone" required type="tel" inputMode="tel" pattern="[+()0-9 -]{8,24}" defaultValue={property.phone} placeholder="98765 43210" /></label>
+            <label className="my-listing-wide">
+              Contact phone
+              <div className="phone-input-wrap" style={{ marginTop: "6px" }}>
+                <span className="phone-input-prefix">+91</span>
+                <input
+                  name="phone"
+                  required
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  defaultValue={property.phone ? property.phone.replace(/^\+91/, "").replace(/\D/g, "") : ""}
+                  placeholder="9876543210"
+                />
+              </div>
+            </label>
             <label className="my-listing-wide">Description<textarea name="description" required minLength={10} maxLength={1500} rows={4} defaultValue={property.description} /></label>
             <label className="my-listing-wide">Replace listing photos and videos<input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm" multiple /></label>
             <p className="my-listing-wide photo-help">Choose photos and videos together. Selected photos replace current photos; selected videos replace current videos. Leave either type unselected to keep it. Up to 5 MB per photo and 100 MB per video.</p>
