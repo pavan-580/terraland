@@ -16,7 +16,7 @@ export function getAdminRecipients(): string[] {
 export function getSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "";
   if (raw) return raw.replace(/\/+$/, "");
-  return "https://terraland.in";
+  return "https://nkart.store";
 }
 
 export function getWhatsAppLink(phone: string, text?: string): string {

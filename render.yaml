@@ -8,6 +8,6 @@ services:
     schedule: "29 18 * * *"
     envVars:
       - key: NEXT_PUBLIC_SITE_URL
-        value: https://terraland.onrender.com
+        value: https://nkart.store
       - key: CRON_SECRET
         sync: false

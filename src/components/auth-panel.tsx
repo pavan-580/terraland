@@ -64,11 +64,10 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
         setSuccess(`Signed in! Welcome back, ${result.user?.name || "Member"}. Redirecting…`);
       }
 
-      // Automatically navigate to target without trapping user
+      // Automatically navigate to target without trapping user (using window.location.assign ensures clean cookie pickup on mobile)
       setTimeout(() => {
-        router.push(target);
-        router.refresh();
-      }, 500);
+        window.location.assign(target);
+      }, 350);
     } catch {
       setError("We couldn't reach the server. Please check your connection and try again.");
     } finally {
@@ -111,10 +110,12 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
   const googleErrorMessage =
     googleError === "not_configured"
       ? "Google Sign-In needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET set in your deployment environment variables (Render/Vercel) to work on mobile. Sign in below using your 10-digit mobile number."
-      : googleError === "cancelled"
+      : googleError === "redirect_uri_mismatch"
+      ? "Google Sign-In error: Redirect URI mismatch. In Google Cloud Console, please add 'https://nkart.store/api/auth/google' to Authorized Redirect URIs."
+      : googleError === "cancelled" || googleError === "access_denied"
       ? "Google sign-in was cancelled."
       : googleError
-      ? "Unable to complete Google sign-in on this network or device. Sign in below using your 10-digit mobile number."
+      ? `Unable to complete Google sign-in (${googleError}). Sign in below using your 10-digit mobile number.`
       : null;
 
   return (

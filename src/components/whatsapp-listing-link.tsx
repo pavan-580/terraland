@@ -4,7 +4,7 @@ import type { MouseEvent } from "react";
 import { formatListingPrice, type Property } from "@/lib/market";
 
 const customerCareNumber = "918074399963";
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nkart.store").replace(/\/+$/, "");
 
 export function WhatsAppListingLink({ property, className = "" }: { property: Property; className?: string }) {
   const listingUrl = `${siteUrl}/properties/${encodeURIComponent(property.id)}`;

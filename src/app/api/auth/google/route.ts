@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { db, logMemberActivity } from "@/lib/db";
@@ -20,15 +20,57 @@ function safeDestination(value: string | undefined): string {
 }
 
 function getOrigin(request: NextRequest): string {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return new URL(process.env.NEXT_PUBLIC_SITE_URL).origin;
+  // Always prioritize the actual host the user is connecting to (e.g. nkart.store)
+  const rawForwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const host = rawForwardedHost?.split(",")[0]?.trim()?.replace(/:(?:80|443)$/, "");
+
+  if (host) {
+    const rawForwardedProto = request.headers.get("x-forwarded-proto");
+    let proto = rawForwardedProto?.split(",")[0]?.trim();
+    if (!proto) {
+      proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
+    }
+    return `${proto}://${host}`;
   }
-  const forwardedHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  const forwardedProto = request.headers.get("x-forwarded-proto") || (forwardedHost?.includes("localhost") ? "http" : "https");
-  if (forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
+
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    try {
+      return new URL(process.env.NEXT_PUBLIC_SITE_URL).origin;
+    } catch {}
   }
   return request.nextUrl.origin;
+}
+
+function generateOAuthState(secret: string, nextDestination: string): string {
+  const nonce = randomBytes(16).toString("base64url");
+  const timestamp = Date.now().toString();
+  const safeNext = safeDestination(nextDestination);
+  const nextEncoded = Buffer.from(safeNext, "utf-8").toString("base64url");
+  const payload = `${nonce}.${timestamp}.${nextEncoded}`;
+  const signature = createHmac("sha256", secret).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function verifyOAuthState(state: string, secret: string): { valid: boolean; destination: string } {
+  try {
+    const parts = state.split(".");
+    if (parts.length !== 4) return { valid: false, destination: "/" };
+    const [nonce, timestampStr, nextEncoded, signature] = parts;
+    const timestamp = parseInt(timestampStr, 10);
+    // Allow up to 20 minutes for user to complete mobile sign-in
+    if (isNaN(timestamp) || Date.now() - timestamp > 20 * 60 * 1000 || timestamp > Date.now() + 60 * 1000) {
+      return { valid: false, destination: "/" };
+    }
+    const payload = `${nonce}.${timestampStr}.${nextEncoded}`;
+    const expectedSig = createHmac("sha256", secret).update(payload).digest("base64url");
+    if (signature !== expectedSig) {
+      return { valid: false, destination: "/" };
+    }
+    const destination = safeDestination(Buffer.from(nextEncoded, "base64url").toString("utf-8"));
+    return { valid: true, destination };
+  } catch {
+    return { valid: false, destination: "/" };
+  }
 }
 
 function signInRedirect(request: NextRequest, code: string, destination: string) {
@@ -51,10 +93,10 @@ export async function GET(request: NextRequest) {
   const oauthError = request.nextUrl.searchParams.get("error");
 
   if (!code) {
-    if (oauthError) return signInRedirect(request, "cancelled", safeDestination(request.cookies.get(oauthNextCookie)?.value));
+    if (oauthError) return signInRedirect(request, oauthError, safeDestination(request.cookies.get(oauthNextCookie)?.value));
     if (!clientId || !clientSecret) return signInRedirect(request, "not_configured", safeDestination(request.nextUrl.searchParams.get("next") ?? undefined));
     const next = safeDestination(request.nextUrl.searchParams.get("next") ?? undefined);
-    const csrfState = randomBytes(32).toString("base64url");
+    const csrfState = generateOAuthState(clientSecret, next);
     const authorizeUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authorizeUrl.searchParams.set("client_id", clientId);
     authorizeUrl.searchParams.set("redirect_uri", callbackUrl);
@@ -65,26 +107,36 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(authorizeUrl);
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: getOrigin(request).startsWith("https"),
       sameSite: "lax" as const,
-      path: "/api/auth/google",
-      maxAge: 600,
+      path: "/",
+      maxAge: 900,
     };
     response.cookies.set(oauthStateCookie, csrfState, cookieOptions);
     response.cookies.set(oauthNextCookie, next, cookieOptions);
     return response;
   }
 
-  const destination = safeDestination(request.cookies.get(oauthNextCookie)?.value);
+  const verifiedState = clientSecret ? verifyOAuthState(state ?? "", clientSecret) : { valid: false, destination: "/" };
+  const cookieDestination = safeDestination(request.cookies.get(oauthNextCookie)?.value);
+  const destination = verifiedState.valid ? verifiedState.destination : cookieDestination;
   const storedState = request.cookies.get(oauthStateCookie)?.value;
   const clearOAuthCookies = (response: NextResponse) => {
-    response.cookies.set(oauthStateCookie, "", { path: "/api/auth/google", maxAge: 0 });
-    response.cookies.set(oauthNextCookie, "", { path: "/api/auth/google", maxAge: 0 });
+    response.cookies.set(oauthStateCookie, "", { path: "/", maxAge: 0 });
+    response.cookies.set(oauthNextCookie, "", { path: "/", maxAge: 0 });
     return response;
   };
 
   if (!clientId || !clientSecret) return clearOAuthCookies(signInRedirect(request, "not_configured", destination));
-  if (!state || !storedState || state !== storedState) {
+
+  // Accept if cookie matches OR if cryptographic HMAC signature is valid (handles mobile cookie drops)
+  const isStateValid = Boolean(
+    (state && storedState && state === storedState) ||
+    verifiedState.valid
+  );
+
+  if (!isStateValid) {
+    console.warn("Google OAuth invalid state. Received:", state, "Stored cookie:", storedState);
     return clearOAuthCookies(signInRedirect(request, "invalid_state", destination));
   }
 
@@ -187,7 +239,7 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(new URL(finalDestination, getOrigin(request)));
   response.cookies.set("landmark_session", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: getOrigin(request).startsWith("https"),
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
@@ -264,7 +316,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set("landmark_session", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: getOrigin(request).startsWith("https"),
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
