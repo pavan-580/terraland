@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDownRight, ArrowUpRight, Check, MoveUpRight, ShieldCheck, MapPin, Sparkles, UserCheck } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Check, MoveUpRight, ShieldCheck, MapPin, UserCheck } from "lucide-react";
 import { PropertyCard } from "@/components/property-card";
 import { PropertyTypePicker } from "@/components/property-type-picker";
 import { SiteHeader } from "@/components/site-header";
@@ -10,25 +10,13 @@ import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-const targetCorridors = [
-  {
-    name: "Miyapur",
-    subtext: "Metro & Mumbai Highway Belt",
-    badge: "Primary Focus Corridor",
-    image: "photo-1500382017468-9049fed747ef",
-  },
-  {
-    name: "Bachupally",
-    subtext: "Residential Growth Hub & Schools",
-    badge: "Fast Growing",
-    image: "photo-1510798831971-661eb04b3739",
-  },
-  {
-    name: "Ameenpur",
-    subtext: "Residential Plots & Green Belts",
-    badge: "High Buyer Demand",
-    image: "photo-1472396961693-142e6e269027",
-  },
+const cityCards = [
+  { name: "Hyderabad", image: "https://etimg.etb2bimg.com/thumb/msid-99644024%2Cwidth-1200%2Cheight-900%2Cresizemode-4/.jpg" },
+  { name: "Vijayawada", image: "https://www.ghar.tv/intelligence/pics/giart190.jpg" },
+  { name: "Visakhapatnam", image: "https://images.unsplash.com/photo-1763230302722-f93efbc94ec5?auto=format&fit=crop&w=1000&q=80" },
+  { name: "Kakinada", image: "https://media.viacation.com/a1adb5c9530a51376e8d9.webp" },
+  { name: "Tirupati", image: "https://news.tirumala.org/wp-content/uploads/2024/08/TEMPLE-AERIAL-VIEW.jpg" },
+  { name: "Guntur", image: "https://www.gunturmunicipalcorporation.com/assets/his.png" },
 ];
 
 export default async function Home() {
@@ -56,49 +44,70 @@ export default async function Home() {
           <div className="hero-image hero-image-three" aria-hidden="true" />
           <div className="hero-scrim" />
           <div className="hero-content">
-            <div className="hero-kicker">
-              <span /> RESIDENTIAL LAND &amp; PLOTS · MIYAPUR, HYDERABAD
+            <div className="hero-search-section">
+              <h1 className="hero-search-heading">Verified plots, direct from owners.</h1>
+              <p className="hero-search-intro">Search by area or choose a city.</p>
+              <form action="/search" className="hero-search">
+                <label className="search-field">
+                  <span>LOCALITY / COLONY</span>
+                  <input name="locality" placeholder="e.g. Miyapur, Bachupally, Ameenpur" />
+                </label>
+                <label className="search-field type-field">
+                  <span>PROPERTY TYPE</span>
+                  <PropertyTypePicker options={searchablePropertyTypes} />
+                </label>
+                <button className="button button-dark search-submit search-submit-google-edge" type="submit">
+                  Find Plots <ArrowUpRight size={17} />
+                </button>
+              </form>
             </div>
-            <h1>
-              Direct plot acquisition.<br />
-              <em>Zero fake listings.</em>
-            </h1>
-            <p>
-              Connect directly with genuine landowners and verified residential plots in Miyapur, Bachupally, and Ameenpur. Facilitated by a local founder, backed by physical site inspections.
-            </p>
+            <div className="hero-cities-section">
+              <p className="hero-cities-heading">Explore by city</p>
+              <div className="hero-city-grid" aria-label="Search plots by city">
+                {cityCards.map((city) => (
+                  <Link
+                    className="hero-city-card"
+                    key={city.name}
+                    href={`/search?q=${encodeURIComponent(city.name)}`}
+                    style={{
+                      backgroundImage: `linear-gradient(180deg, rgba(11,20,16,.02) 30%, rgba(11,20,16,.76)),url(${city.image})`
+                    }}
+                  >
+                    <strong>{city.name}</strong>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
-            <form action="/search" className="hero-search">
-              <label className="search-field">
-                <span>LOCALITY / COLONY</span>
-                <input name="locality" placeholder="e.g. Miyapur, Bachupally, Ameenpur" />
-              </label>
-              <label className="search-field type-field">
-                <span>PROPERTY TYPE</span>
-                <PropertyTypePicker options={searchablePropertyTypes} />
-              </label>
-              <button className="button button-dark search-submit" type="submit">
-                Find Plots <ArrowUpRight size={17} />
-              </button>
-            </form>
-
-            <div className="hero-under">
-              <span><Check size={14} /> Founder-verified titles</span>
-              <span><Check size={14} /> ₹/Sq. Yd. transparency</span>
-              <Link href="/requirements" className="hero-req-cta">
-                <Sparkles size={14} /> Register buyer requirement
+        <section className="section places-section">
+          <div className="places-heading">
+            <div>
+              <h2>Explore by city</h2>
+            </div>
+          </div>
+          <div className="place-grid city-grid">
+            {cityCards.map((city) => (
+              <Link
+                className="city-photo-card"
+                key={city.name}
+                href={`/search?q=${encodeURIComponent(city.name)}`}
+                aria-label={`Explore plots in ${city.name}`}
+                style={{
+                  backgroundImage: `linear-gradient(180deg, rgba(11,20,16,.02) 34%, rgba(11,20,16,.76)),url(${city.image})`
+                }}
+              >
+                <strong>{city.name}</strong>
               </Link>
-            </div>
+            ))}
           </div>
-          <div className="hero-caption">
-            HYDERABAD <span>TELANGANA</span>
-          </div>
-          <div className="hero-index"><span>01</span> — 03</div>
         </section>
 
         <section className="trust-strip">
-          <span>THE TRANSPARENT LAND ACQUISITION PLATFORM</span>
-          <div><strong>100% Genuine Landowners.</strong> Physically Inspected. Direct Coordination.</div>
-          <Link href="/requirements">Register your requirement <ArrowUpRight size={15} /></Link>
+          <span>THE TERRALAND STANDARD</span>
+          <div><strong>Verified owners.</strong> Every plot is checked on site.</div>
+          <Link href="/requirements">Tell us what you need <ArrowUpRight size={15} /></Link>
         </section>
 
         {/* Featured Listings or Launch Zero-State */}
@@ -106,10 +115,10 @@ export default async function Home() {
           <div className="section-heading">
             <div>
               <span className="eyebrow">VERIFIED RESIDENTIAL PLOTS</span>
-              <h2>Good ground,<br /><em>hand-checked.</em></h2>
+              <h2>Verified plots,<br /><em>clearly presented.</em></h2>
             </div>
             <div className="section-aside">
-              <p>Every listing is personally checked with revenue documents and site coordinates in Miyapur &amp; surrounding corridors.</p>
+              <p>We check the owner, site details, and available records before publishing.</p>
               <Link className="text-link" href="/search?category=sale">
                 View all available plots <ArrowUpRight size={16} />
               </Link>
@@ -128,29 +137,26 @@ export default async function Home() {
                 <div className="zero-icon">
                   <ShieldCheck size={36} />
                 </div>
-                <span className="eyebrow">LAUNCH INTEGRITY COMMITMENT</span>
-                <h3>We never show fake listings or dummy broker ads.</h3>
-                <p>
-                  Terraland is actively onboarding and vetting residential plots in the Miyapur-West corridor.
-                  Rather than copying unchecked listings from the web, our founder meets sellers in person to verify survey numbers and physical boundaries.
-                </p>
+                <span className="eyebrow">VERIFIED LISTINGS ONLY</span>
+                <h3>No verified plots are listed just yet.</h3>
+                <p>We meet owners and check plot details before a listing goes live. Tell us what you need, or submit a plot for review.</p>
 
                 <div className="zero-state-options">
                   <div className="option-col">
                     <UserCheck size={20} />
-                    <h4>Looking to buy a residential plot?</h4>
-                    <p>Tell us your preferred locality and budget. We match you with verified private sellers.</p>
+                    <h4>Looking to buy?</h4>
+                    <p>Share your preferred area and budget. We’ll help you find a verified owner.</p>
                     <Link href="/requirements" className="button button-dark">
-                      Register Plot Requirement <ArrowUpRight size={16} />
+                      Share your requirements <ArrowUpRight size={16} />
                     </Link>
                   </div>
 
                   <div className="option-col">
                     <MapPin size={20} />
-                    <h4>Own a plot in Miyapur / West Hyderabad?</h4>
-                    <p>List directly with Terraland. Zero commission scams; reviewed before publishing.</p>
+                    <h4>Have a plot to sell?</h4>
+                    <p>Send us the details. We’ll review the plot before publishing it.</p>
                     <Link href="/sell" className="button button-outline">
-                      Submit Your Plot for Verification <ArrowUpRight size={16} />
+                      Submit your plot <ArrowUpRight size={16} />
                     </Link>
                   </div>
                 </div>
@@ -159,49 +165,17 @@ export default async function Home() {
           )}
         </section>
 
-        {/* Focus Locality Corridors */}
-        <section className="section places-section">
-          <div className="places-heading">
-            <div>
-              <span className="eyebrow">CORE FOCUS MARKET</span>
-              <h2>Miyapur &amp; <em>Hyderabad West Corridors.</em></h2>
-            </div>
-            <Link className="text-link" href="/search?category=sale">
-              Browse corridor plots <ArrowUpRight size={16} />
-            </Link>
-          </div>
-          <div className="place-grid">
-            {targetCorridors.map((corridor, index) => (
-              <Link
-                className={`place-card place-${index + 1}`}
-                key={corridor.name}
-                href={`/search?category=sale&locality=${encodeURIComponent(corridor.name)}`}
-                style={{
-                  backgroundImage: `linear-gradient(180deg, transparent 30%, rgba(19,30,24,.8)),url(https://images.unsplash.com/${corridor.image}?auto=format&fit=crop&w=1000&q=85)`
-                }}
-              >
-                <span className="place-index">0{index + 1}</span>
-                <div>
-                  <span>{corridor.subtext} · {corridor.badge}</span>
-                  <strong>{corridor.name}</strong>
-                </div>
-                <ArrowUpRight size={20} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
         {/* Direct Seller Acquisition Band */}
         <section className="seller-band">
           <div className="seller-copy">
             <span className="eyebrow">FOR GENUINE LANDOWNERS</span>
-            <h2>Selling a plot in Miyapur?<br /><em>Find direct buyers.</em></h2>
+            <h2>Sell your plot.<br /><em>Meet real buyers.</em></h2>
             <p>
-              Skip multiple layers of commission-hungry middlemen. Terraland connects you with vetted, pre-qualified buyers ready to transact.
+              List directly with Terraland and connect with buyers looking in Miyapur and nearby areas.
             </p>
             <div className="seller-actions">
               <Link className="button button-cream" href="/sell">
-                List plot for verification <ArrowUpRight size={16} />
+                Submit your plot <ArrowUpRight size={16} />
               </Link>
               <a
                 className="seller-whatsapp"
@@ -229,39 +203,39 @@ export default async function Home() {
         <section className="section assurance-section">
           <div className="assurance-intro">
             <span className="eyebrow">THE TERRALAND STANDARD</span>
-            <h2>Why buyers &amp; sellers trust us in <em>Miyapur.</em></h2>
-            <p>We operate with high integrity: no artificial listings, transparent pricing, and rigorous title disclosures.</p>
+            <h2>How we check <em>each plot.</em></h2>
+            <p>Clear details help you decide what to explore and what to verify further.</p>
           </div>
           <div className="assurance-list">
             <div>
               <span>01</span>
               <div>
-                <strong>Physical Site Inspection</strong>
-                <p>We visit the plot, check 30ft+ road access, verify boundaries, and capture actual site photos.</p>
+                <strong>On-site inspection</strong>
+                <p>We visit the plot and record its boundaries, access, and actual site photos.</p>
               </div>
               <Check size={18} />
             </div>
             <div>
               <span>02</span>
               <div>
-                <strong>Price per Sq. Yard Transparency</strong>
-                <p>Clear rate breakdown based on prevailing Miyapur market realities, with explicit negotiability disclosures.</p>
+                <strong>Clear pricing</strong>
+                <p>See the rate per square yard and whether the price is negotiable.</p>
               </div>
               <Check size={18} />
             </div>
             <div>
               <span>03</span>
               <div>
-                <strong>Legal &amp; Title Diligence Facilitation</strong>
-                <p>We review link documents, pattadar passbooks, and layout approvals without falsely claiming automatic legal clearance.</p>
+                <strong>Document review</strong>
+                <p>We share available records and approvals for you to review with your legal adviser.</p>
               </div>
               <Check size={18} />
             </div>
             <div>
               <span>04</span>
               <div>
-                <strong>Accompanied Site Visits</strong>
-                <p>The founder coordinates and accompanies you on site visits to discuss ground realities directly.</p>
+                <strong>Guided site visits</strong>
+                <p>Arrange a visit to see the plot and discuss the location in person.</p>
               </div>
               <Check size={18} />
             </div>
@@ -271,10 +245,10 @@ export default async function Home() {
         {/* Due Diligence Field Notes */}
         <section className="journal-band">
           <span className="eyebrow">BUYER &amp; SELLER ADVISORY</span>
-          <h2>Knowledge is your best<br /><em>protection in land deals.</em></h2>
-          <p>Read our field notes on checking layout approvals (HMDA/GHMC/Gram Panchayat), obtaining Encumbrance Certificates, and verifying title deeds in Telangana.</p>
+          <h2>Make an informed<br /><em>land purchase.</em></h2>
+          <p>Practical guides to land records, layout approvals, and title checks in Telangana.</p>
           <Link href="/guides" className="button button-outline-light">
-            Read due diligence guides <MoveUpRight size={16} /></Link>
+            Explore buyer guides <MoveUpRight size={16} /></Link>
           <div className="journal-orbit">T.</div>
         </section>
       </main>

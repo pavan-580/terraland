@@ -71,7 +71,7 @@ export function AccountPhoneGate() {
     setSaving(true);
     setError("");
 
-    let cleaned = phoneNumber.trim().replace(/[\s()-]/g, "");
+    const cleaned = phoneNumber.trim().replace(/[\s()-]/g, "");
     if (!cleaned) {
       setError("Please enter your mobile number.");
       setSaving(false);

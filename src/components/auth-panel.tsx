@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowUpRight, Check, Eye, EyeOff } from "lucide-react";
-import { BackButton } from "@/components/back-button";
+import { ArrowUpRight, Eye, EyeOff } from "lucide-react";
 
 export function AuthPanel({ destination, googleError }: { destination: string; googleError?: string }) {
   const router = useRouter();
@@ -19,6 +17,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
   const [resetStep, setResetStep] = useState<"closed" | "request" | "verify">("closed");
   const [resetEmail, setResetEmail] = useState("");
   const [resetComplete, setResetComplete] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,7 +66,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
       // Automatically navigate to target without trapping user (using window.location.assign ensures clean cookie pickup on mobile)
       setTimeout(() => {
         window.location.assign(target);
-      }, 350);
+      }, 750);
     } catch {
       setError("We couldn't reach the server. Please check your connection and try again.");
     } finally {
@@ -120,8 +119,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
 
   return (
     <section className="auth-panel">
-      <BackButton className="back-link" fallbackHref="/" label="Back to home" />
-      <span className="eyebrow">YOUR NILAY ACCOUNT</span>
+      <span className="auth-brand" aria-label="NILAY">NILAY<span aria-hidden="true">.</span></span>
       <h2>{signup ? "A new beginning." : "Welcome back."}</h2>
       <p>{signup ? "Create an account to save places and list your land." : "Sign in to manage your listings and enquiries."}</p>
 
@@ -210,8 +208,24 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
           </button>
         </div>
       ) : success ? (
-        <div className="auth-success" role="status">
-          <p>{success}</p>
+        <div className="auth-success auth-redirect-success" role="status" aria-live="polite">
+          <div className="auth-redirect-loader">
+            <div className="auth-loader-scene" aria-hidden="true">
+              <svg viewBox="0 0 64 64" fill="none">
+                <path className="loader-land" d="M7 51.5 57 51.5" />
+                <path className="loader-house" d="m15 30 17-14 17 14v20H15V30Z" />
+                <path className="loader-roof" d="m10 31 22-18 22 18" />
+                <path className="loader-door" d="M27 50V37h10v13" />
+                <path className="loader-window" d="M19 34h6v6h-6zM39 34h6v6h-6z" />
+              </svg>
+              <span className="loader-site-pin" />
+            </div>
+            <div className="auth-redirect-copy">
+              <span>ACCOUNT READY</span>
+              <strong>Finding your place</strong>
+              <div className="auth-redirect-progress" aria-hidden="true"><i /></div>
+            </div>
+          </div>
           <button className="button button-dark auth-submit" onClick={() => router.push(continueTo || "/")}>
             Continue <ArrowUpRight size={16} />
           </button>
@@ -260,14 +274,20 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
             </div>
           )}
 
-          <a className="google-signin-button" href={`/api/auth/google?next=${encodeURIComponent(destination)}`}>
+          <a className={`google-signin-button${googleBusy ? " is-loading" : ""}`} href={`/api/auth/google?next=${encodeURIComponent(destination)}`} aria-busy={googleBusy} onClick={(event) => {
+            if (googleBusy) { event.preventDefault(); return; }
+            event.preventDefault();
+            const href = event.currentTarget.href;
+            setGoogleBusy(true);
+            window.setTimeout(() => window.location.assign(href), 220);
+          }}>
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style={{ flexShrink: 0 }}>
               <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
               <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
               <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.16 0 9.94 0 12s.45 3.84 1.25 5.42l4.03-3.15z" />
               <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
             </svg>
-            <span className="google-btn-text">Sign in with Google</span>
+            <span className="google-btn-text">{googleBusy ? "Connecting to Google…" : "Continue with Google"}</span>
           </a>
 
           <div className="auth-divider">
@@ -407,12 +427,6 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
         </button>
       </div>
 
-      <div className="auth-reassurance">
-        <Check size={14} /> Your account details stay private.
-      </div>
-      <Link href="/" className="text-link auth-home">
-        Explore without an account <ArrowUpRight size={14} />
-      </Link>
     </section>
   );
 }

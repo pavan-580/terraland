@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Check, ShieldCheck, ChevronDown } from "lucide-react";
+import { ArrowUpRight, Check, ShieldCheck, ChevronDown } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, BadgeCheck, Check, MapPin, ShieldAlert, Sparkles } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, MapPin, ShieldAlert, Sparkles } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { EmiCalculator } from "@/components/emi-calculator";
 import { InquiryForm } from "@/components/inquiry-form";

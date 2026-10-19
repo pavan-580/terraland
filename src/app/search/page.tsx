@@ -16,11 +16,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const initial = {
     q: typeof params.q === "string" ? params.q : "",
     city: typeof params.city === "string" ? params.city : "",
+    locality: typeof params.locality === "string" ? params.locality : "",
     type: typeof params.type === "string" ? params.type : "",
     category: params.category === "rent" || params.category === "sale"
       ? params.category
       : requestedTypeIsRental ? "rent" : "sale",
   };
-  const searchKey = [initial.q, initial.city, initial.type, initial.category].join("\u0000");
+  const searchKey = [initial.q, initial.city, initial.locality, initial.type, initial.category].join("\u0000");
   return <SearchResults key={searchKey} initial={initial} />;
 }

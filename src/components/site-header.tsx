@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ArrowUpRight, ChevronDown, Heart, Menu, X } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
@@ -11,7 +11,6 @@ type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
 export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { variant?: "standard" | "hero"; mobileLogoOnly?: boolean }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [logoutError, setLogoutError] = useState("");
   const [farmstayIndex, setFarmstayIndex] = useState(0);
@@ -127,7 +126,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
           </div>
           <Link href="/my-listings">My listings</Link>
           <Link href="/lender-interest" className="nav-item-secondary">Become a lender</Link>
-          <Link className="mobile-menu-favorites" href="/saved">Favorites <Heart size={17} /></Link>
+          <Link className="mobile-menu-favorites" href="/saved">Favorites <span className="mobile-favorites-heart"><Heart size={16} /></span></Link>
           <details className="services-nav">
             <summary className="services-nav-trigger">
               <span>Services</span>
@@ -160,15 +159,22 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
                     </div>
                     <div className="mobile-user-profile-meta">
                       <span className="mobile-user-role-badge">
-                        {user.role === "admin" ? "ADMINISTRATOR" : "MEMBER"}
+                        {user.role === "admin" ? "ADMINISTRATOR" : "YOUR ACCOUNT"}
                       </span>
-                      <strong className="mobile-user-profile-name">{user.name}</strong>
+                    <Link className="mobile-user-profile-name" href={user.role === "admin" ? "/admin" : "/profile"}>
+                      {user.name}<ArrowUpRight size={12} aria-hidden="true" />
+                    </Link>
                     </div>
                   </div>
                   <div className="mobile-user-profile-actions">
                     {user.role === "admin" && (
                       <Link href="/admin" className="mobile-user-admin-pill">
                         Admin CRM →
+                      </Link>
+                    )}
+                    {user.role !== "admin" && (
+                      <Link href="/profile#my-requirements" className="mobile-user-requirements-link">
+                        My requirements <ArrowUpRight size={12} aria-hidden="true" />
                       </Link>
                     )}
                     <button className="mobile-user-logout-pill" type="button" onClick={() => void logout()}>

@@ -1,6 +1,5 @@
 import { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft, Shield, MapPin, Eye } from "lucide-react";
+import { Shield, MapPin, Eye } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";

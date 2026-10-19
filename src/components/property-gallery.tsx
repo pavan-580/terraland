@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -44,19 +43,17 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
 
   const viewerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const thumbnailsRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const totalCount = mediaItems.length;
 
   const activeMedia = mediaItems[activeIndex] ?? mediaItems[0];
 
-  // Auto-cycle through images if viewer is closed and active item is not a video
   useEffect(() => {
-    if (totalCount < 2 || viewerOpen || activeMedia?.type === "video") return;
-    const timer = window.setInterval(() => {
-      setActiveIndex((index) => (index + 1) % totalCount);
-    }, 6000);
-    return () => window.clearInterval(timer);
-  }, [totalCount, viewerOpen, activeMedia?.type]);
+    const strip = thumbnailsRef.current;
+    const activeThumbnail = strip?.querySelector<HTMLButtonElement>(".gallery-thumbnail.is-active");
+    activeThumbnail?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }, [activeIndex]);
 
   // Reset zoom whenever active item or viewer changes
   const resetZoom = useCallback(() => {
@@ -273,7 +270,7 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
 
       {/* Thumbnails Filmstrip with Play Badge for Videos */}
       {totalCount > 1 && (
-        <div className="gallery-thumbnails" aria-label="Choose property media">
+        <div ref={thumbnailsRef} className="gallery-thumbnails" aria-label="Choose property media">
           {mediaItems.map((item, index) => {
             const isItemActive = activeIndex === index;
             return (
@@ -291,14 +288,18 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
                 }
               >
                 {item.type === "video" && (
-                  <div className="gallery-thumbnail-video-badge">
-                    <Play size={16} fill="white" />
+                  <div className="gallery-thumbnail-video-badge" aria-hidden="true">
+                    <Play size={14} fill="white" />
+                    <span>VIDEO</span>
                   </div>
                 )}
               </button>
             );
           })}
         </div>
+      )}
+      {totalCount > 1 && (
+        <p className="gallery-swipe-hint" aria-hidden="true">Swipe to browse photos and video</p>
       )}
 
       {/* Full-Screen Interactive Lightbox Viewer with Zoom & Download */}

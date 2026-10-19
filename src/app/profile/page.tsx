@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { MyListings } from "@/components/my-listings";
+import { MyRequirements } from "@/components/my-requirements";
 import { ProfilePanel } from "@/components/profile-panel";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -16,8 +17,9 @@ export default async function ProfilePage() {
     <BackButton className="back-link" fallbackHref="/" label="Back to home" />
     <span className="eyebrow">YOUR NILAY ACCOUNT</span>
     <h1>Your NILAY account</h1>
-    <p>Update your account details and manage the listings connected to your account.</p>
+    <p>Update your details, review your buyer requirements, and manage your listings.</p>
     <ProfilePanel user={user} />
+    <MyRequirements />
     <section className="profile-listings">
       <div className="profile-panel-heading"><div><span className="eyebrow">YOUR PROPERTIES</span><h2>Your listings</h2></div></div>
       <MyListings />
