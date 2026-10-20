@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/session";
 import { BrandLogo } from "@/components/brand-logo";
@@ -13,5 +12,26 @@ export const metadata: Metadata = { title: "Visitor analytics", robots: { index:
 export default async function AdminAnalyticsPage() {
   const user = await currentUser();
   if (user?.role !== "admin") redirect("/sign-in?next=%2Fadmin%2Fanalytics");
-  return <main className="admin-page"><header className="admin-heading"><div style={{ display: "flex", alignItems: "center", gap: "12px" }}><BackButton fallbackHref="/admin" label="Back to dashboard" /><Link href="/" className="brand" aria-label="Terraland home"><BrandLogo /></Link></div><div><span>Signed in as {user.name}</span><LanguagePicker /><Link href="/">View website</Link><LogoutButton /></div></header><AdminAnalytics /></main>;
+  return (
+    <main className="admin-page">
+      <header className="admin-heading">
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <BackButton fallbackHref="/admin" label="Back to dashboard" />
+          <a href="/" className="brand" aria-label="NILAY Home" style={{ cursor: "pointer", display: "inline-flex" }}>
+            <BrandLogo />
+          </a>
+          <a href="/" className="admin-pill-link" style={{ gap: 6, fontWeight: 700, color: "var(--lime)" }}>
+            🏠 Website Home
+          </a>
+        </div>
+        <div>
+          <span>Signed in as {user.name}</span>
+          <LanguagePicker />
+          <a href="/" style={{ fontWeight: 700, color: "var(--lime)" }}>View website</a>
+          <LogoutButton />
+        </div>
+      </header>
+      <AdminAnalytics />
+    </main>
+  );
 }

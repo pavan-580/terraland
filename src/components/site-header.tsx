@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowUpRight, ChevronDown, Heart, Menu, X } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
 import { BrandLogo } from "@/components/brand-logo";
@@ -11,12 +11,30 @@ type HeaderUser = { name: string; email: string; role: "user" | "admin" };
 
 export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { variant?: "standard" | "hero"; mobileLogoOnly?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [ticker, setTicker] = useState("");
   const [user, setUser] = useState<HeaderUser | null>(null);
   const [logoutError, setLogoutError] = useState("");
   const [farmstayIndex, setFarmstayIndex] = useState(0);
   const [farmstayPaused, setFarmstayPaused] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  useEffect(() => {
+    if (pathname.startsWith("/admin") || pathname.startsWith("/sign-in")) {
+      setTicker("");
+      return;
+    }
+    let active = true;
+    void fetch("/api/promotion-popup", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.announcement?.enabled) return;
+        setTicker(data.announcement.text?.trim() || "");
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [pathname]);
+
   const farmstayHref = "/search?category=rent";
   useEffect(() => {
     if (farmstayPaused) return;
@@ -82,6 +100,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
   }
 
   return (
+    <>
       <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
         <Link className="brand" href="/" aria-label="NILAY Real Estate home">
@@ -224,5 +243,19 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
         {logoutError && <span className="header-auth-error" role="alert">{logoutError}</span>}
       </div>
     </header>
+      {!mobileMenuOpen && !pathname.startsWith("/admin") && !pathname.startsWith("/sign-in") && Boolean(ticker) && (
+        <div className="site-announcement-ticker" role="status" aria-label="Latest announcement">
+          <span className="site-announcement-label">
+            <span aria-hidden="true">⚡</span> LATEST UPDATES
+          </span>
+          <div className="site-announcement-window">
+            <div className="site-announcement-track">
+              <span>{ticker}</span>
+              <span aria-hidden="true">{ticker}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

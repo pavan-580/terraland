@@ -34,11 +34,9 @@ export function PromotionPopup() {
   const pathname = usePathname();
   const [listing, setListing] = useState<PopupListing | null>(null);
   const [open, setOpen] = useState(false);
-  const [ticker, setTicker] = useState("");
 
   useEffect(() => {
     setOpen(false);
-    setTicker("");
     if (pathname.startsWith("/admin") || pathname.startsWith("/sign-in")) return;
 
     let active = true;
@@ -51,11 +49,7 @@ export function PromotionPopup() {
         return (await response.json()) as PromotionSettings | null;
       })
       .then((result) => {
-        if (!active || !result) return;
-        if (result.announcement?.enabled && result.announcement.text.trim()) {
-          setTicker(result.announcement.text.trim());
-        }
-        if (!result.ad) return;
+        if (!active || !result?.ad) return;
 
         setListing(result.ad);
 
@@ -109,78 +103,62 @@ export function PromotionPopup() {
 
   const destinationHref = listing?.id ? `/properties/${encodeURIComponent(listing.id)}` : "/search";
 
+  if (!open || !listing) return null;
+
   return (
-    <>
-      {ticker && (
-        <div className="site-announcement-ticker" role="status" aria-label="Latest announcement">
-          <span className="site-announcement-label">
-            <span aria-hidden="true">⚡</span> LATEST UPDATES
-          </span>
-          <div className="site-announcement-window">
-            <div className="site-announcement-track">
-              <span>{ticker}</span>
-              <span aria-hidden="true">{ticker}</span>
+    <div
+      className="promotion-popup"
+      role="dialog"
+      aria-modal="true"
+      aria-label={listing.heading || listing.title}
+      onClick={handleDismiss}
+    >
+      <div className="promotion-popup-modal-wrap" onClick={(event) => event.stopPropagation()}>
+        <article className="promotion-popup-card">
+          {/* Corner Close Button ("wrong mark" X) right on the card corner */}
+          <button
+            type="button"
+            className="promotion-popup-card-close"
+            aria-label="Close announcement"
+            title="Close"
+            onClick={handleDismiss}
+          >
+            <X size={18} strokeWidth={2.5} />
+          </button>
+
+          <Link
+            className="promotion-popup-link"
+            href={destinationHref}
+            aria-label={`View listing: ${listing.title}`}
+          >
+            <div className="promotion-popup-tabs">
+              <span>{listing.kicker || "IMPORTANT ANNOUNCEMENT"}</span>
+              <span>{listing.date || "Verified listing"}</span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {open && listing && (
-        <div
-          className="promotion-popup"
-          role="dialog"
-          aria-modal="true"
-          aria-label={listing.heading || listing.title}
-          onClick={handleDismiss}
-        >
-          <div className="promotion-popup-modal-wrap" onClick={(event) => event.stopPropagation()}>
-            <article className="promotion-popup-card">
-              {/* Corner Close Button ("wrong mark" X) right on the card corner */}
-              <button
-                type="button"
-                className="promotion-popup-card-close"
-                aria-label="Close announcement"
-                title="Close"
-                onClick={handleDismiss}
-              >
-                <X size={18} strokeWidth={2.5} />
-              </button>
-
-              <Link
-                className="promotion-popup-link"
-                href={destinationHref}
-                aria-label={`View listing: ${listing.title}`}
-              >
-                <div className="promotion-popup-tabs">
-                  <span>{listing.kicker || "IMPORTANT ANNOUNCEMENT"}</span>
-                  <span>{listing.date || "Verified listing"}</span>
-                </div>
-                <img
-                  className="promotion-popup-image"
-                  src={listing.image}
-                  alt={`Announcement: ${listing.heading || listing.title}`}
-                />
-                <div className="promotion-popup-copy">
-                  <span className="eyebrow">{listing.kicker || "IMPORTANT ANNOUNCEMENT"}</span>
-                  {listing.date && <span className="promotion-popup-date">{listing.date}</span>}
-                  <h2>{listing.heading || listing.title}</h2>
-                  <p className="promotion-popup-body">
-                    {listing.body ||
-                      `${[listing.locality, listing.city].filter(Boolean).join(", ")} · ${formatPrice(listing.price)} · ${new Intl.NumberFormat("en-IN").format(listing.area)} ${listing.unit}`}
-                  </p>
-                  <div className="promotion-popup-details">
-                    <strong>{listing.price ? formatPrice(listing.price) : "Special Opportunity"}</strong>
-                    <span>{[listing.locality, listing.city].filter(Boolean).join(" · ")}</span>
-                  </div>
-                  <span className="promotion-popup-cta">
-                    View listing <ArrowUpRight size={16} aria-hidden="true" />
-                  </span>
-                </div>
-              </Link>
-            </article>
-          </div>
-        </div>
-      )}
-    </>
+            <img
+              className="promotion-popup-image"
+              src={listing.image}
+              alt={`Announcement: ${listing.heading || listing.title}`}
+            />
+            <div className="promotion-popup-copy">
+              <span className="eyebrow">{listing.kicker || "IMPORTANT ANNOUNCEMENT"}</span>
+              {listing.date && <span className="promotion-popup-date">{listing.date}</span>}
+              <h2>{listing.heading || listing.title}</h2>
+              <p className="promotion-popup-body">
+                {listing.body ||
+                  `${[listing.locality, listing.city].filter(Boolean).join(", ")} · ${formatPrice(listing.price)} · ${new Intl.NumberFormat("en-IN").format(listing.area)} ${listing.unit}`}
+              </p>
+              <div className="promotion-popup-details">
+                <strong>{listing.price ? formatPrice(listing.price) : "Special Opportunity"}</strong>
+                <span>{[listing.locality, listing.city].filter(Boolean).join(" · ")}</span>
+              </div>
+              <span className="promotion-popup-cta">
+                View listing <ArrowUpRight size={16} aria-hidden="true" />
+              </span>
+            </div>
+          </Link>
+        </article>
+      </div>
+    </div>
   );
 }

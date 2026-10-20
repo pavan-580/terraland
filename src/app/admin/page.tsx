@@ -18,9 +18,12 @@ export default async function AdminPage() {
     <main className="admin-page">
       <header className="admin-heading">
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Link href="/" className="brand" aria-label="NILAY Home">
+          <a href="/" className="brand" aria-label="NILAY Home" style={{ cursor: "pointer", display: "inline-flex" }}>
             <BrandLogo />
-          </Link>
+          </a>
+          <a href="/" className="admin-pill-link" style={{ gap: 6, fontWeight: 700, color: "var(--lime)" }}>
+            🏠 Website Home
+          </a>
         </div>
         <div className="admin-header-actions">
           <span>Signed in as {user.email}</span>

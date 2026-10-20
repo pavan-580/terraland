@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 
-type LenderInterestRow = {
+export type LenderInterestRow = {
   id: string;
   name: string;
   email: string;
   phone: string;
   amount: number;
   message: string;
-  notificationStatus: string;
+  notificationStatus: string | null;
   notificationError: string | null;
   createdAt: string;
 };

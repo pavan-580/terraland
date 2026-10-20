@@ -4720,3 +4720,183 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   color: #0c1811 !important;
   border-color: #ffffff !important;
 }
+
+/* ==========================================================================
+   SEARCH TOOLBAR: LONG FILTERS & COMPACT SORT ON ALL VIEWPORTS
+   ========================================================================== */
+.search-sticky-toolbar {
+  grid-column: 1 / -1;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.search-sticky-toolbar > .site-back-btn,
+.search-sticky-toolbar > .search-back-link {
+  flex: 0 0 38px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  margin: 0 !important;
+}
+
+.search-sticky-toolbar .mobile-filter-toggle,
+.search-sticky-toolbar .search-toolbar-filter,
+.search-sticky-toolbar .mobile-filter-toggle.is-compact,
+.search-sticky-toolbar .search-toolbar-filter.is-compact {
+  display: inline-flex !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+.search-sticky-toolbar .mobile-filter-toggle.is-compact span,
+.search-sticky-toolbar .search-toolbar-filter.is-compact span {
+  display: inline !important;
+}
+.search-sticky-toolbar .mobile-filter-toggle.is-compact svg,
+.search-sticky-toolbar .search-toolbar-filter.is-compact svg {
+  display: inline-block !important;
+}
+
+.search-sticky-toolbar .sort-dropdown-wrap,
+.search-sticky-toolbar .sort-dropdown-wrap.search-toolbar-sort {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  margin: 0 !important;
+  margin-left: auto !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 105px !important;
+  flex: 0 0 auto !important;
+}
+
+.search-sticky-toolbar .sort-dropdown-wrap.search-toolbar-sort .sort-select {
+  font-size: 11px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  padding: 0 2px !important;
+  color: var(--ink) !important;
+  background: transparent !important;
+}
+
+/* ==========================================================================
+   ANNOUNCEMENT TICKER: DARK THEME & UNDER HEADER / NEVER OVER SIDEBAR
+   ========================================================================== */
+.site-announcement-ticker {
+  position: relative !important;
+  z-index: 8 !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  min-height: 38px !important;
+  overflow: hidden !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #0d1612 !important;
+  color: #edf2ed !important;
+}
+
+.site-announcement-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 0 16px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  white-space: nowrap !important;
+}
+
+.site-announcement-label span[aria-hidden="true"] {
+  color: var(--lime) !important;
+}
+
+.site-announcement-window {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.site-announcement-track {
+  display: flex !important;
+  width: max-content !important;
+  gap: 64px !important;
+  color: rgba(240, 244, 233, 0.95) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  animation: siteAnnouncementScroll 24s linear infinite !important;
+}
+
+.site-announcement-track span {
+  flex: 0 0 auto !important;
+}
+
+.site-announcement-ticker:hover .site-announcement-track {
+  animation-play-state: paused !important;
+}
+
+@media (max-width: 520px) {
+  .site-announcement-ticker { min-height: 36px !important; }
+  .site-announcement-label { padding-inline: 11px !important; font-size: 9px !important; }
+  .site-announcement-track { gap: 36px !important; font-size: 11px !important; }
+}
+
+/* Sidebar opens cleanly over everything: ticker completely hidden */
+body:has(.main-nav.is-open) .site-announcement-ticker,
+.site-header:has(.main-nav.is-open) + .site-announcement-ticker {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.site-header {
+  z-index: 50 !important;
+}
+.mobile-menu-backdrop {
+  z-index: 100 !important;
+}
+.main-nav.is-open {
+  z-index: 150 !important;
+}
+
+/* Admin Brand Logo Clickable */
+.admin-heading .brand {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
