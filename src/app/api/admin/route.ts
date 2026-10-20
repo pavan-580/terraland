@@ -89,7 +89,7 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false", homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.", homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "", popupAdEnabled: getSiteSetting("popupAdEnabled") === "true", popupAdPropertyId: getSiteSetting("popupAdPropertyId") ?? "" } });
+  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false", homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.", homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "", popupAdEnabled: getSiteSetting("popupAdEnabled") === "true", popupAdPropertyId: getSiteSetting("popupAdPropertyId") ?? "", popupAdKicker: getSiteSetting("popupAdKicker") ?? "IMPORTANT ANNOUNCEMENT", popupAdTitle: getSiteSetting("popupAdTitle") ?? "", popupAdDate: getSiteSetting("popupAdDate") ?? "", popupAdBody: getSiteSetting("popupAdBody") ?? "", popupAdImage: getSiteSetting("popupAdImage") ?? "", announcementEnabled: getSiteSetting("announcementEnabled") === "true", announcementText: getSiteSetting("announcementText") ?? "" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -135,13 +135,32 @@ export async function PATCH(request: NextRequest) {
 
   if (input.resource === "setting" && input.key === "popupAd") {
     const value = input.value as Record<string, unknown> | null;
-    if (!value || typeof value.enabled !== "boolean" || typeof value.propertyId !== "string") return NextResponse.json({ error: "Choose whether the popup is enabled and select a listing." }, { status: 400 });
+    if (!value || typeof value.enabled !== "boolean" || typeof value.propertyId !== "string" || typeof value.kicker !== "string" || typeof value.title !== "string" || typeof value.date !== "string" || typeof value.body !== "string" || typeof value.image !== "string") return NextResponse.json({ error: "Complete the popup announcement details." }, { status: 400 });
     const propertyId = value.propertyId.trim();
     if (value.enabled && !propertyId) return NextResponse.json({ error: "Select a published plot before enabling the popup." }, { status: 400 });
     if (propertyId && !db.prepare("SELECT 1 FROM properties WHERE id = ? AND status = 'published' AND listingCategory = 'sale'").get(propertyId)) return NextResponse.json({ error: "Choose a published sale listing for the popup." }, { status: 400 });
+    const fields = [["popupAdKicker", value.kicker, 80], ["popupAdTitle", value.title, 140], ["popupAdDate", value.date, 80], ["popupAdBody", value.body, 700], ["popupAdImage", value.image, 1000]] as const;
+    const normalizedFields: [string, string][] = [];
+    for (const [key, raw, max] of fields) {
+      const text = raw.trim();
+      if (text.length > max) return NextResponse.json({ error: `Popup ${key.replace("popupAd", "").toLowerCase()} must be ${max} characters or fewer.` }, { status: 400 });
+      normalizedFields.push([key, text]);
+    }
     setSiteSetting("popupAdEnabled", value.enabled ? "true" : "false");
     setSiteSetting("popupAdPropertyId", propertyId);
-    return NextResponse.json({ message: value.enabled ? "Listing popup enabled." : "Listing popup disabled." });
+    for (const [key, text] of normalizedFields) setSiteSetting(key, text);
+    return NextResponse.json({ message: value.enabled ? "Announcement popup saved and enabled." : "Announcement popup settings saved." });
+  }
+
+  if (input.resource === "setting" && input.key === "announcementTicker") {
+    const value = input.value as Record<string, unknown> | null;
+    if (!value || typeof value.enabled !== "boolean" || typeof value.text !== "string") return NextResponse.json({ error: "Enter announcement text and choose whether it is visible." }, { status: 400 });
+    const text = value.text.trim();
+    if (text.length > 240) return NextResponse.json({ error: "Announcement text must be 240 characters or fewer." }, { status: 400 });
+    if (value.enabled && !text) return NextResponse.json({ error: "Enter the announcement before enabling the ticker." }, { status: 400 });
+    setSiteSetting("announcementEnabled", value.enabled ? "true" : "false");
+    setSiteSetting("announcementText", text);
+    return NextResponse.json({ message: value.enabled ? "Scrolling announcement enabled." : "Scrolling announcement saved and disabled." });
   }
 
   if (input.resource === "property" && input.action === "dismiss-deletion") {

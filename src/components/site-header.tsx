@@ -90,6 +90,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
         <button className="mobile-menu-toggle" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label={mobileMenuOpen ? "Close menu" : "Open menu"} aria-expanded={mobileMenuOpen} aria-controls="site-mobile-navigation">
           {mobileMenuOpen ? <X size={25} strokeWidth={2} aria-hidden="true" /> : <Menu size={25} strokeWidth={2} aria-hidden="true" />}
         </button>
+        {mobileMenuOpen && <button className="mobile-menu-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)} />}
         <nav id="site-mobile-navigation" className={`main-nav${mobileMenuOpen ? " is-open" : ""}`} aria-label="Main navigation" onClick={(event) => {
           if ((event.target as HTMLElement).closest("a")) setMobileMenuOpen(false);
         }}>

@@ -3627,6 +3627,23 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .admin-ad-toggle input { width: 17px; height: 17px; accent-color: var(--lime); }
 .admin-ad-manager > .button { position: relative; isolation: isolate; justify-self: start; min-height: 42px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--lime); }
 .admin-ad-manager > .button::before { position: absolute; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+.admin-promotion-controls { display: grid; gap: 16px; }
+.admin-ad-manager textarea { width: 100%; min-height: 100px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.05); color: var(--ink); font: inherit; resize: vertical; }
+.site-announcement-ticker { position: relative; z-index: 25; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: stretch; min-height: 42px; overflow: hidden; border-bottom: 1px solid rgba(198,220,129,.42); background: #14231b; color: #edf2ed; }
+.site-announcement-label { display: flex; align-items: center; gap: 7px; padding: 0 16px; background: var(--lime); color: #152019; font-size: 10px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; }
+.site-announcement-window { min-width: 0; overflow: hidden; display: flex; align-items: center; }
+.site-announcement-track { display: flex; width: max-content; gap: 64px; color: #f0f4e9; font-size: 13px; font-weight: 650; white-space: nowrap; animation: siteAnnouncementScroll 24s linear infinite; }
+.site-announcement-track span { flex: 0 0 auto; }
+.site-announcement-ticker:hover .site-announcement-track { animation-play-state: paused; }
+@keyframes siteAnnouncementScroll { to { transform: translateX(-50%); } }
+@media (max-width: 1080px) {
+  .mobile-menu-backdrop { background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+@media (max-width: 520px) {
+  .site-announcement-ticker { min-height: 38px; grid-template-columns: auto minmax(0,1fr); }
+  .site-announcement-label { padding-inline: 10px; font-size: 9px; }
+  .site-announcement-track { gap: 42px; font-size: 11px; }
+}
 .promotion-popup { position: fixed; z-index: 10000; inset: 0; isolation: isolate; background: rgba(3,9,6,.78); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); animation: promotionPopupFade .24s ease-out both; }
 .promotion-popup-link { position: absolute; inset: 0; display: grid; place-items: center; padding: 22px; color: inherit; text-decoration: none; }
 .promotion-popup-card { width: min(100%, 520px); overflow: hidden; border: 1px solid rgba(198,220,129,.55); border-radius: 18px; background: #14231b; box-shadow: 0 25px 90px rgba(0,0,0,.58); animation: promotionPopupRise .34s cubic-bezier(.2,.75,.25,1) both; }
@@ -4117,5 +4134,29 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   .hero .hero-cities-section { padding-top: 16px; }
   .hero .hero-city-grid { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; overflow: visible; padding-bottom: 0; scroll-snap-type: none; }
   .sign-in-page-shell { place-items: center; }
+}
+
+/* Keep the admin-editable announcement popup overrides after its base styles. */
+.promotion-popup { display: grid; place-items: center; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.promotion-popup-link { position: relative; inset: auto; display: block; width: min(100%, 540px); max-height: min(94dvh, 850px); overflow: auto; padding: 0; border: 1px solid rgba(198,220,129,.55); border-radius: 18px; background: #14231b; box-shadow: 0 25px 90px rgba(0,0,0,.58); color: inherit; text-decoration: none; overscroll-behavior: contain; }
+.promotion-popup-card { width: 100%; max-height: none; overflow: visible; border: 0; border-radius: inherit; background: transparent; box-shadow: none; }
+.promotion-popup-tabs { position: sticky; top: 0; z-index: 1; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; min-height: 46px; padding: 8px 55px 8px 13px; border-bottom: 1px solid rgba(198,220,129,.2); background: rgba(12,25,19,.97); }
+.promotion-popup-tabs span:first-child { overflow: hidden; color: var(--lime); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-overflow: ellipsis; white-space: nowrap; }
+.promotion-popup-tabs span:last-child { color: #e5eee0; font-size: 10px; font-weight: 650; text-align: right; }
+.promotion-popup-image { height: clamp(170px, 40vh, 360px); object-fit: contain; background: #0b110e; }
+.promotion-popup-copy { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px 12px; padding: 15px 17px 17px; }
+.promotion-popup-copy .eyebrow { grid-column: 1; }
+.promotion-popup-date { grid-column: 2; grid-row: 1; color: #c6dc81; font-size: 10px; font-weight: 700; text-align: right; }
+.promotion-popup-copy h2, .promotion-popup-copy .promotion-popup-body { grid-column: 1 / -1; }
+.promotion-popup-copy h2 { margin: 1px 0 0; }
+.promotion-popup-copy .promotion-popup-body { margin: 0; color: #d3ded4; font-size: 12px; line-height: 1.55; white-space: pre-line; }
+.promotion-popup-details, .promotion-popup-cta { grid-column: 1 / -1; }
+.promotion-popup-details { margin-top: 4px; }
+.promotion-popup-cta { margin-top: 2px; padding-top: 11px; }
+.promotion-popup-close { top: max(22px, env(safe-area-inset-top)); right: max(22px, env(safe-area-inset-right)); }
+@media (max-width: 520px) {
+  .promotion-popup-link { max-height: min(94dvh, 820px); }
+  .promotion-popup-image { height: clamp(150px, 36vh, 300px); }
+  .promotion-popup-copy { padding: 12px 13px 14px; }
 }
 

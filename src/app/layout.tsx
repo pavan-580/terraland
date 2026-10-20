@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-IN">
-      <body>{children}<ChatWidget /><AccountPhoneGate /><PromotionPopup /><VisitTracker /></body>
+      <body><PromotionPopup />{children}<ChatWidget /><AccountPhoneGate /><VisitTracker /></body>
     </html>
   );
 }

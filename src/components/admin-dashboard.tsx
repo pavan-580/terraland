@@ -93,7 +93,7 @@ type DashboardData = {
   memberActivity: MemberActivity[];
   siteActivity: SiteActivity[];
   registrationNotifications: RegistrationNotification[];
-  settings: { showSellerPhones: boolean; homeTickerText: string; homeTickerPropertyId: string; popupAdEnabled: boolean; popupAdPropertyId: string };
+  settings: { showSellerPhones: boolean; homeTickerText: string; homeTickerPropertyId: string; popupAdEnabled: boolean; popupAdPropertyId: string; popupAdKicker: string; popupAdTitle: string; popupAdDate: string; popupAdBody: string; popupAdImage: string; announcementEnabled: boolean; announcementText: string };
 };
 
 function formatAdminDate(value: string) {
@@ -160,7 +160,7 @@ function AdminListingMediaManager({ title, initialImages, initialVideos, disable
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true, homeTickerText: "New verified plots are added after owner and site checks.", homeTickerPropertyId: "", popupAdEnabled: false, popupAdPropertyId: "" } });
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true, homeTickerText: "New verified plots are added after owner and site checks.", homeTickerPropertyId: "", popupAdEnabled: false, popupAdPropertyId: "", popupAdKicker: "IMPORTANT ANNOUNCEMENT", popupAdTitle: "", popupAdDate: "", popupAdBody: "", popupAdImage: "", announcementEnabled: false, announcementText: "" } });
   const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity" | "ads">("leads");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
@@ -178,6 +178,14 @@ export function AdminDashboard() {
   const [savingTicker, setSavingTicker] = useState(false);
   const [popupEnabled, setPopupEnabled] = useState(false);
   const [popupListingId, setPopupListingId] = useState("");
+  const [popupKicker, setPopupKicker] = useState("IMPORTANT ANNOUNCEMENT");
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupDate, setPopupDate] = useState("");
+  const [popupBody, setPopupBody] = useState("");
+  const [popupImage, setPopupImage] = useState("");
+  const [announcementEnabled, setAnnouncementEnabled] = useState(false);
+  const [announcementText, setAnnouncementText] = useState("");
+  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
   const [savingPopup, setSavingPopup] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupError, setBackupError] = useState("");
@@ -208,6 +216,13 @@ export function AdminDashboard() {
       setTickerPropertyId(result.settings.homeTickerPropertyId ?? "");
       setPopupEnabled(result.settings.popupAdEnabled ?? false);
       setPopupListingId(result.settings.popupAdPropertyId ?? "");
+      setPopupKicker(result.settings.popupAdKicker ?? "IMPORTANT ANNOUNCEMENT");
+      setPopupTitle(result.settings.popupAdTitle ?? "");
+      setPopupDate(result.settings.popupAdDate ?? "");
+      setPopupBody(result.settings.popupAdBody ?? "");
+      setPopupImage(result.settings.popupAdImage ?? "");
+      setAnnouncementEnabled(result.settings.announcementEnabled ?? false);
+      setAnnouncementText(result.settings.announcementText ?? "");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
     } finally {
@@ -384,7 +399,7 @@ export function AdminDashboard() {
     setError("");
     setMessage("");
     try {
-      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "setting", key: "popupAd", value: { enabled: popupEnabled, propertyId: popupListingId } }) });
+      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "setting", key: "popupAd", value: { enabled: popupEnabled, propertyId: popupListingId, kicker: popupKicker, title: popupTitle, date: popupDate, body: popupBody, image: popupImage } }) });
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "The listing popup could not be saved.");
       setMessage(result.message ?? "Listing popup settings saved.");
@@ -393,6 +408,23 @@ export function AdminDashboard() {
       setError(reason instanceof Error ? reason.message : "The listing popup could not be saved.");
     } finally {
       setSavingPopup(false);
+    }
+  }
+
+  async function saveAnnouncementTicker() {
+    setSavingAnnouncement(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "setting", key: "announcementTicker", value: { enabled: announcementEnabled, text: announcementText } }) });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The scrolling announcement could not be saved.");
+      setMessage(result.message ?? "Scrolling announcement saved.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The scrolling announcement could not be saved.");
+    } finally {
+      setSavingAnnouncement(false);
     }
   }
 
@@ -546,13 +578,26 @@ export function AdminDashboard() {
       {section === "visits" && <AdminSiteVisitsView />}
       {section === "matches" && <AdminMatchesView />}
       {section === "packages" && <AdminPackagesView />}
-      {section === "ads" && <section className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
+      {section === "ads" && <div className="admin-promotion-controls">
+      <section className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
         <div><span className="eyebrow">SITE PROMOTION</span><h2 id="admin-ad-manager-title">Listing popup</h2><p>Visitors see this featured plot after five seconds. Tapping anywhere on the popup opens the listing; the close button dismisses it. It appears once per browser tab session.</p></div>
         <label className="admin-ad-toggle"><input type="checkbox" checked={popupEnabled} onChange={(event) => setPopupEnabled(event.target.checked)} />Enable the five-second listing popup</label>
         <label>Published plot to feature<select value={popupListingId} onChange={(event) => setPopupListingId(event.target.value)}><option value="">Select a published plot</option>{data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === "sale").map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}</select></label>
-        {(() => { const featured = data.properties.find((property) => property.id === popupListingId); return featured?.image ? <div className="admin-home-ticker-preview"><img src={featured.image} alt={`Popup preview for ${featured.title}`} /><span>Popup preview · {featured.title}</span></div> : null; })()}
+        <label>Popup image URL<input value={popupImage} onChange={(event) => setPopupImage(event.target.value)} maxLength={1000} placeholder="Leave blank to use the selected plot photo" /></label>
+        {(() => { const featured = data.properties.find((property) => property.id === popupListingId); const image = popupImage || featured?.image; return image ? <div className="admin-home-ticker-preview"><img src={image} alt="Popup poster preview" /><span>Popup poster preview</span></div> : null; })()}
+        <label>Top label<input value={popupKicker} onChange={(event) => setPopupKicker(event.target.value)} maxLength={80} placeholder="IMPORTANT ANNOUNCEMENT" /></label>
+        <label>Announcement heading<input value={popupTitle} onChange={(event) => setPopupTitle(event.target.value)} maxLength={140} placeholder="Defaults to the selected plot title" /></label>
+        <label>Date or short note<input value={popupDate} onChange={(event) => setPopupDate(event.target.value)} maxLength={80} placeholder="Optional" /></label>
+        <label>Announcement details<textarea value={popupBody} onChange={(event) => setPopupBody(event.target.value)} maxLength={700} rows={4} placeholder="Write the announcement visitors should see." /></label>
         <button className="button button-dark" type="button" disabled={savingPopup} onClick={() => void savePopupAd()}>{savingPopup ? "Saving…" : "Save ads & popup settings"}</button>
-      </section>}
+      </section>
+      <section className="admin-ad-manager" aria-labelledby="admin-announcement-title">
+        <div><span className="eyebrow">SITEWIDE MESSAGE</span><h2 id="admin-announcement-title">Scrolling announcement</h2><p>This theme-colored ticker runs above the site navigation on Explore, Farmhouse, and the other public pages. Edit or pause it here.</p></div>
+        <label className="admin-ad-toggle"><input type="checkbox" checked={announcementEnabled} onChange={(event) => setAnnouncementEnabled(event.target.checked)} />Show scrolling announcement</label>
+        <label>Announcement text<input value={announcementText} onChange={(event) => setAnnouncementText(event.target.value)} maxLength={240} placeholder="Latest update: …" /></label>
+        <button className="button button-dark" type="button" disabled={savingAnnouncement} onClick={() => void saveAnnouncementTicker()}>{savingAnnouncement ? "Saving…" : "Save announcement ticker"}</button>
+      </section>
+      </div>}
       {section === "properties" && <>
         <div className="listing-admin-tabs">
           <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
