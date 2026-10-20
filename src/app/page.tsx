@@ -14,9 +14,9 @@ const cityCards = [
   { name: "Hyderabad", image: "https://etimg.etb2bimg.com/thumb/msid-99644024%2Cwidth-1200%2Cheight-900%2Cresizemode-4/.jpg" },
   { name: "Vijayawada", image: "https://www.ghar.tv/intelligence/pics/giart190.jpg" },
   { name: "Visakhapatnam", image: "https://images.unsplash.com/photo-1763230302722-f93efbc94ec5?auto=format&fit=crop&w=1000&q=80" },
-  { name: "Kakinada", image: "https://media.viacation.com/a1adb5c9530a51376e8d9.webp" },
+  { name: "Kakinada", image: "https://www.dekholand.com/assets/img/city/kakinada.jpeg" },
   { name: "Tirupati", image: "https://news.tirumala.org/wp-content/uploads/2024/08/TEMPLE-AERIAL-VIEW.jpg" },
-  { name: "Guntur", image: "https://www.gunturmunicipalcorporation.com/assets/his.png" },
+  { name: "Guntur", image: "https://www.dekholand.com/assets/img/city/guntur.png" },
 ];
 
 export default async function Home() {
