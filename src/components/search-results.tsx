@@ -265,54 +265,58 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
             </div>
 
             {/* Interactive Corridor & Budget Quick Filter Bar */}
-            <div className="search-quick-corridors">
+            <div className="search-quick-filter-row">
               <span className="quick-label">Corridors:</span>
-              {[
-                { label: "All", value: "" },
-                { label: "Miyapur", value: "Miyapur" },
-                { label: "Bachupally", value: "Bachupally" },
-                { label: "Ameenpur", value: "Ameenpur" },
-                { label: "Chandanagar", value: "Chandanagar" },
-                { label: "Nizampet", value: "Nizampet" },
-                { label: "Tellapur", value: "Tellapur" },
-              ].map((c) => (
-                <button
-                  key={c.label}
-                  type="button"
-                  className={`quick-corridor-btn ${locality.toLowerCase() === c.value.toLowerCase() ? "is-active" : ""}`}
-                  onClick={() => setLocality(c.value)}
-                >
-                  {c.label}
-                </button>
-              ))}
+              <div className="search-quick-corridors">
+                {[
+                  { label: "All", value: "" },
+                  { label: "Miyapur", value: "Miyapur" },
+                  { label: "Bachupally", value: "Bachupally" },
+                  { label: "Ameenpur", value: "Ameenpur" },
+                  { label: "Chandanagar", value: "Chandanagar" },
+                  { label: "Nizampet", value: "Nizampet" },
+                  { label: "Tellapur", value: "Tellapur" },
+                ].map((c) => (
+                  <button
+                    key={c.label}
+                    type="button"
+                    className={`quick-corridor-btn ${locality.toLowerCase() === c.value.toLowerCase() ? "is-active" : ""}`}
+                    onClick={() => setLocality(c.value)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="search-quick-corridors search-quick-budgets">
+            <div className="search-quick-filter-row">
               <span className="quick-label">Budget:</span>
-              {[
-                { label: "All", minVal: "", maxVal: "" },
-                { label: "< ₹10 Lakhs", minVal: "", maxVal: "10" },
-                { label: "₹10L - ₹25L", minVal: "10", maxVal: "25" },
-                { label: "₹25L - ₹50L", minVal: "25", maxVal: "50" },
-                { label: "₹50L - ₹1 Cr", minVal: "50", maxVal: "100" },
-                { label: "₹1 Cr - ₹2 Cr", minVal: "100", maxVal: "200" },
-                { label: "> ₹2 Cr", minVal: "200", maxVal: "" },
-              ].map((b) => {
-                const isActive = min === b.minVal && max === b.maxVal;
-                return (
-                  <button
-                    key={b.label}
-                    type="button"
-                    className={`quick-corridor-btn ${isActive ? "is-active" : ""}`}
-                    onClick={() => {
-                      setMin(b.minVal);
-                      setMax(b.maxVal);
-                    }}
-                  >
-                    {b.label}
-                  </button>
-                );
-              })}
+              <div className="search-quick-corridors search-quick-budgets">
+                {[
+                  { label: "All", minVal: "", maxVal: "" },
+                  { label: "< ₹10 Lakhs", minVal: "", maxVal: "10" },
+                  { label: "₹10L - ₹25L", minVal: "10", maxVal: "25" },
+                  { label: "₹25L - ₹50L", minVal: "25", maxVal: "50" },
+                  { label: "₹50L - ₹1 Cr", minVal: "50", maxVal: "100" },
+                  { label: "₹1 Cr - ₹2 Cr", minVal: "100", maxVal: "200" },
+                  { label: "> ₹2 Cr", minVal: "200", maxVal: "" },
+                ].map((b) => {
+                  const isActive = min === b.minVal && max === b.maxVal;
+                  return (
+                    <button
+                      key={b.label}
+                      type="button"
+                      className={`quick-corridor-btn ${isActive ? "is-active" : ""}`}
+                      onClick={() => {
+                        setMin(b.minVal);
+                        setMax(b.maxVal);
+                      }}
+                    >
+                      {b.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {error && <div className="form-error">{error}</div>}
