@@ -36,6 +36,14 @@ export default async function Home() {
     ORDER BY properties.createdAt DESC, properties.rowid DESC
     LIMIT 6
   `).all() as Record<string, unknown>[]).map((row) => publicPropertyFromRow(row, getSiteSetting("showSellerPhones") !== "false" && Boolean(user)));
+  const tickerText = getSiteSetting("homeTickerText")?.trim() || "New verified plots are added after owner and site checks.";
+  const tickerPropertyId = getSiteSetting("homeTickerPropertyId")?.trim();
+  const tickerPropertyRow = tickerPropertyId
+    ? db.prepare("SELECT properties.*, users.email AS sellerEmail FROM properties LEFT JOIN users ON users.id = properties.ownerId WHERE properties.id = ? AND properties.status = 'published'").get(tickerPropertyId) as Record<string, unknown> | undefined
+    : undefined;
+  const tickerProperty = tickerPropertyRow
+    ? publicPropertyFromRow(tickerPropertyRow, getSiteSetting("showSellerPhones") !== "false" && Boolean(user))
+    : latestProperties[0];
 
 
   return (
@@ -64,6 +72,7 @@ export default async function Home() {
                   Find Plots <ArrowUpRight size={17} />
                 </button>
               </form>
+              <Link className="hero-sell-link" href="/sell">Have a plot to sell? <span>List your plot</span><MoveUpRight size={14} /></Link>
             </div>
             <div className="hero-cities-section">
               <p className="hero-cities-heading">Explore by city</p>
@@ -85,6 +94,16 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        {tickerProperty && <section className="home-listing-ticker" aria-label="Featured new listing">
+          <Link className="home-listing-ticker-image" href={`/properties/${tickerProperty.id}`} aria-label={`View ${tickerProperty.title}`} style={{ backgroundImage: `url("${tickerProperty.image}")` }} />
+          <div className="home-listing-ticker-copy">
+            <span className="eyebrow">NEW VERIFIED LISTING</span>
+            <Link href={`/properties/${tickerProperty.id}`} className="home-listing-ticker-title">{tickerProperty.title}</Link>
+            <div className="home-listing-ticker-track" aria-label={tickerText}><span>{tickerText}</span><span aria-hidden="true">{tickerText}</span></div>
+          </div>
+          <Link className="home-listing-ticker-link" href={`/properties/${tickerProperty.id}`} aria-label="View the new listing"><MoveUpRight size={17} /></Link>
+        </section>}
 
         <section className="section places-section">
           <div className="places-heading">

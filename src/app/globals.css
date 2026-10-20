@@ -3587,6 +3587,60 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .sign-in-page-shell .google-signin-button { transition: none; }
 }
 
+/* Compact mobile filter controls, balanced sign-in actions, and CRM-managed home banner. */
+.sort-dropdown-wrap:focus-within { box-shadow: none; }
+.empty-state-actions { display: flex; width: min(100%, 470px); align-items: stretch; justify-content: center; gap: 10px; margin: 20px auto 0; }
+.empty-state-actions > * { position: relative; display: inline-flex; min-width: 0; min-height: 44px; flex: 1 1 0; align-items: center; justify-content: center; gap: 7px; padding: 9px 12px; border: 1px solid transparent; border-radius: 10px; text-align: center; font-size: 12px; line-height: 1.25; }
+.empty-state-actions > .button-dark { isolation: isolate; background: transparent; color: var(--lime); }
+.empty-state-actions > .button-dark::before { position: absolute; z-index: -1; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+.empty-state-actions > .button-outline { background: rgba(255,255,255,.05); }
+.sign-in-page-shell { place-items: center; }
+.sign-in-page-shell .auth-submit { position: relative; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+.sign-in-page-shell .auth-submit { gap: 7px; }
+.hero .hero-search-section .hero-sell-link { position: relative; display: inline-flex; min-height: 35px; align-items: center; justify-content: center; gap: 6px; margin-top: 7px; padding: 5px 12px; border: 1px solid transparent; border-radius: 10px; color: var(--lime); font-size: 11px; font-weight: 600; text-decoration: none; isolation: isolate; }
+.hero .hero-search-section .hero-sell-link::before { position: absolute; z-index: -1; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+.hero .hero-search-section .hero-sell-link span { color: #fff; }
+.home-listing-ticker { display: grid; grid-template-columns: 150px minmax(0,1fr) 40px; align-items: center; gap: 18px; max-width: 1200px; min-height: 118px; margin: 20px auto; padding: 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: rgba(255,255,255,.035); }
+.home-listing-ticker-image { display: block; width: 150px; height: 92px; border-radius: 9px; background-color: #26372e; background-position: center; background-size: cover; }
+.home-listing-ticker-copy { min-width: 0; overflow: hidden; }
+.home-listing-ticker-copy .eyebrow { color: #c6dc81; font-size: 8px; letter-spacing: .13em; }
+.home-listing-ticker-title { display: block; overflow: hidden; margin: 5px 0 8px; color: var(--ink); font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.home-listing-ticker-track { display: flex; gap: 36px; width: max-content; max-width: none; overflow: hidden; color: var(--muted); font-size: 11px; white-space: nowrap; animation: homeTickerScroll 22s linear infinite; }
+.home-listing-ticker:hover .home-listing-ticker-track { animation-play-state: paused; }
+.home-listing-ticker-track span { flex: 0 0 auto; }
+.home-listing-ticker-link { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid rgba(198,220,129,.4); border-radius: 50%; color: var(--lime); }
+@keyframes homeTickerScroll { to { transform: translateX(-50%); } }
+.admin-home-ticker-setting { display: grid; gap: 12px; margin: 14px 0 22px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
+.admin-home-ticker-setting h2 { margin: 5px 0; color: var(--ink); font: 400 22px/1.2 var(--serif); }
+.admin-home-ticker-setting p { max-width: 720px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.admin-home-ticker-setting label { display: grid; gap: 6px; color: var(--ink); font-size: 11px; font-weight: 600; }
+.admin-home-ticker-setting input, .admin-home-ticker-setting select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.045); color: var(--ink); font: inherit; }
+.admin-home-ticker-setting select option { background: #17231c; color: #edf2ed; }
+.admin-home-ticker-setting .button { position: relative; isolation: isolate; justify-self: start; min-height: 40px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--lime); }
+.admin-home-ticker-setting .button::before { position: absolute; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+.admin-home-ticker-preview { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; }
+.admin-home-ticker-preview img { width: 96px; height: 62px; border: 1px solid var(--line); border-radius: 7px; object-fit: cover; }
+@media (max-width: 700px) {
+  .search-quick-corridors { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .search-quick-corridors::-webkit-scrollbar { display: none; }
+  .quick-label { flex: 0 0 auto; }
+  .quick-corridor-btn { flex: 0 0 auto; white-space: nowrap; }
+  .empty-state-actions { gap: 8px; margin-top: 16px; }
+  .empty-state-actions > * { min-height: 43px; padding: 8px 9px; font-size: 10px; }
+  .hero .hero-search-section .hero-sell-link { width: 100%; min-height: 34px; margin-top: 5px; }
+  .hero .hero-cities-section { padding-top: 16px; }
+  .home-listing-ticker { grid-template-columns: 84px minmax(0,1fr) 30px; gap: 10px; min-height: 82px; margin: 12px 14px; padding: 8px; }
+  .home-listing-ticker-image { width: 84px; height: 64px; border-radius: 7px; }
+  .home-listing-ticker-title { margin: 4px 0 6px; font-size: 12px; }
+  .home-listing-ticker-track { font-size: 9px; }
+  .home-listing-ticker-link { width: 30px; height: 30px; }
+  .admin-home-ticker-preview img { width: 76px; height: 52px; }
+  .sign-in-page-shell { place-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-listing-ticker-track, .hero .hero-search-section .hero-sell-link::before, .empty-state-actions > .button-dark::before, .admin-home-ticker-setting .button::before { animation: none; }
+}
+
 /* Home hero: concise search above an easy city picker. */
 .hero .hero-search-heading { margin: 0 0 5px; color: #fff; font: 500 clamp(19px, 2.2vw, 27px)/1.15 var(--sans); letter-spacing: -.025em; }
 .hero .hero-search-intro { margin: 0 0 14px; color: rgba(255,255,255,.8); font-size: 12px; line-height: 1.45; }
@@ -4027,5 +4081,14 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   .admin-page .analytics-actions button.is-active,
   .admin-page .admin-user-record.is-profile-focus,
   .admin-page .admin-listing-details[open] { animation: none; }
+}
+
+@media (max-width: 700px) {
+  .search-quick-corridors { flex-wrap: nowrap; overflow-x: auto; }
+  .quick-label { flex: 0 0 auto; margin: 0 4px 0 0; }
+  .hero .hero-cities-section { padding-top: 16px; }
+  .hero .hero-city-grid { grid-auto-flow: column; grid-auto-columns: minmax(138px, 42vw); grid-template-columns: none !important; overflow-x: auto; padding-bottom: 5px; overscroll-behavior-inline: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+  .hero .hero-city-card { scroll-snap-align: start; }
+  .sign-in-page-shell { place-items: center; }
 }
 

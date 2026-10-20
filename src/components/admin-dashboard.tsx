@@ -93,7 +93,7 @@ type DashboardData = {
   memberActivity: MemberActivity[];
   siteActivity: SiteActivity[];
   registrationNotifications: RegistrationNotification[];
-  settings: { showSellerPhones: boolean };
+  settings: { showSellerPhones: boolean; homeTickerText: string; homeTickerPropertyId: string };
 };
 
 function formatAdminDate(value: string) {
@@ -160,7 +160,7 @@ function AdminListingMediaManager({ title, initialImages, initialVideos, disable
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true } });
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true, homeTickerText: "New verified plots are added after owner and site checks.", homeTickerPropertyId: "" } });
   const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity">("leads");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
@@ -173,6 +173,9 @@ export function AdminDashboard() {
   const [retryingEmail, setRetryingEmail] = useState(false);
   const [retryingInquiryEmail, setRetryingInquiryEmail] = useState(false);
   const [savingPhoneSetting, setSavingPhoneSetting] = useState(false);
+  const [tickerText, setTickerText] = useState("New verified plots are added after owner and site checks.");
+  const [tickerPropertyId, setTickerPropertyId] = useState("");
+  const [savingTicker, setSavingTicker] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupError, setBackupError] = useState("");
   const [backupMessage, setBackupMessage] = useState("");
@@ -198,6 +201,8 @@ export function AdminDashboard() {
       if (!response.ok) throw new Error(result.error ?? "The dashboard could not be loaded.");
       if (!("properties" in result) || !("phoneClicks" in result) || !("siteActivity" in result)) throw new Error(result.error ?? "The dashboard data is incomplete. Refresh and try again.");
       setData(result);
+      setTickerText(result.settings.homeTickerText ?? "New verified plots are added after owner and site checks.");
+      setTickerPropertyId(result.settings.homeTickerPropertyId ?? "");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
     } finally {
@@ -352,6 +357,23 @@ export function AdminDashboard() {
     }
   }
 
+  async function saveHomeTicker() {
+    setSavingTicker(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "setting", key: "homeTicker", value: { text: tickerText, propertyId: tickerPropertyId } }) });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The homepage banner could not be saved.");
+      setMessage(result.message ?? "Homepage listing banner saved.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The homepage banner could not be saved.");
+    } finally {
+      setSavingTicker(false);
+    }
+  }
+
   async function retryRegistrationEmails() {
     setRetryingEmail(true);
     setError("");
@@ -450,6 +472,13 @@ export function AdminDashboard() {
         <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
       </button>
     </div>
+    <section className="admin-home-ticker-setting" aria-labelledby="admin-home-ticker-title">
+      <div><span className="eyebrow">HOMEPAGE FEATURE</span><h2 id="admin-home-ticker-title">New listing banner</h2><p>Choose a published listing image and edit the scrolling message shown on the homepage. Leave the listing unselected to show the newest published sale listing automatically.</p></div>
+      <label>Scrolling message<input value={tickerText} maxLength={180} onChange={(event) => setTickerText(event.target.value)} placeholder="New verified plots are added after owner and site checks." /></label>
+      <label>Listing image<select value={tickerPropertyId} onChange={(event) => setTickerPropertyId(event.target.value)}><option value="">Newest published sale listing</option>{data.properties.filter((property) => property.status === "published" && property.listingCategory === "sale").map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}</select></label>
+      {(() => { const featured = data.properties.find((property) => property.id === tickerPropertyId) ?? data.properties.filter((property) => property.status === "published" && property.listingCategory === "sale").sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0]; return featured?.image ? <div className="admin-home-ticker-preview"><img src={featured.image} alt={`Homepage banner preview for ${featured.title}`} /><span>Image preview · {featured.title}</span></div> : null; })()}
+      <button className="button button-dark" type="button" disabled={savingTicker} onClick={() => void saveHomeTicker()}>{savingTicker ? "Saving…" : "Save homepage banner"}</button>
+    </section>
     <section className="admin-backup-card" aria-labelledby="admin-backup-title">
       {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
       {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}

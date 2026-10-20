@@ -89,7 +89,7 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false" } });
+  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false", homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.", homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -119,6 +119,18 @@ export async function PATCH(request: NextRequest) {
     if (typeof input.value !== "boolean") return NextResponse.json({ error: "Choose whether seller phone numbers should be shown." }, { status: 400 });
     setSiteSetting("showSellerPhones", input.value ? "true" : "false");
     return NextResponse.json({ message: `Seller phone numbers are now ${input.value ? "visible" : "hidden"}.` });
+  }
+
+  if (input.resource === "setting" && input.key === "homeTicker") {
+    const value = input.value as Record<string, unknown> | null;
+    if (!value || typeof value.text !== "string" || typeof value.propertyId !== "string") return NextResponse.json({ error: "Enter ticker text and choose a listing." }, { status: 400 });
+    const text = value.text.trim();
+    const propertyId = value.propertyId.trim();
+    if (text.length > 180) return NextResponse.json({ error: "Ticker text must be 180 characters or fewer." }, { status: 400 });
+    if (propertyId && !db.prepare("SELECT 1 FROM properties WHERE id = ? AND status = 'published' AND listingCategory = 'sale'").get(propertyId)) return NextResponse.json({ error: "Choose a published sale listing for the homepage image." }, { status: 400 });
+    setSiteSetting("homeTickerText", text);
+    setSiteSetting("homeTickerPropertyId", propertyId);
+    return NextResponse.json({ message: "Homepage listing banner saved." });
   }
 
   if (input.resource === "property" && input.action === "dismiss-deletion") {
