@@ -3885,6 +3885,9 @@ body { min-width: 320px; }
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    height: auto !important;
+    min-height: calc(100dvh - 66px);
+    overflow-y: visible !important;
     padding-bottom: calc(94px + env(safe-area-inset-bottom));
   }
   .detail-heading, .detail-heading-copy, .detail-layout-rich, .detail-main,

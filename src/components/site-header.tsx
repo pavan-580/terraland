@@ -31,13 +31,14 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
   }, []);
   useEffect(() => {
     if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setMobileMenuOpen(false);
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [mobileMenuOpen]);
