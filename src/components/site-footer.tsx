@@ -13,7 +13,7 @@ export function SiteFooter() {
           <p>
             The transparent residential land acquisition platform in Miyapur, Hyderabad. We connect genuine buyers and sellers with verified plot titles and physically inspected properties.
           </p>
-          <a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20inquire%20about%20plots%20in%20Miyapur." target="_blank" rel="noreferrer">
+          <a className="footer-whatsapp-link" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20inquire%20about%20plots%20in%20Miyapur." target="_blank" rel="noreferrer">
             Connect with NILAY on WhatsApp <ArrowUpRight size={14} />
           </a>
         </div>
@@ -49,7 +49,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 NILAY. Operating in Miyapur, Hyderabad.</span>
+        <span>© 2026 <span className="footer-nilay-word">NILAY</span>. Operating in Miyapur, Hyderabad.</span>
         <div>
           <Link href="/terms">Terms &amp; Disclosures</Link>
           <Link href="/privacy">Privacy Policy</Link>
