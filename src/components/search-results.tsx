@@ -79,22 +79,31 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
       <SiteHeader />
       <main className="search-page">
         <div className="results-layout">
-          <div className="search-top-nav">
+          <div className="search-sticky-toolbar" aria-label="Search tools">
             <BackButton className="search-back-link" fallbackHref="/" label="Back to home" />
+            <button
+              type="button"
+              className={`mobile-filter-toggle${hasSearched ? " is-compact" : ""}`}
+              aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
+              aria-expanded={filtersOpen}
+              aria-controls="search-filter-panel"
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              {hasSearched ? <Search size={17} /> : <SlidersHorizontal size={16} />}
+              <span>Filters</span>
+              <ChevronDown size={14} className={filtersOpen ? "is-rotated" : ""} />
+            </button>
+            <div className="sort-dropdown-wrap search-toolbar-sort">
+              <ArrowUpDown size={13} className="sort-icon" />
+              <select value={sort} onChange={(e) => setSort(e.target.value)} className="sort-select" aria-label="Sort listings">
+                <option value="recent">Recently Listed</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="area_asc">Plot Size: Small to Large</option>
+              </select>
+              <ChevronDown size={13} className="sort-chevron" />
+            </div>
           </div>
-
-          <button
-            type="button"
-            className={`mobile-filter-toggle${hasSearched ? " is-compact" : ""}`}
-            aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
-            aria-expanded={filtersOpen}
-            aria-controls="search-filter-panel"
-            onClick={() => setFiltersOpen((open) => !open)}
-          >
-            {hasSearched ? <Search size={18} /> : <SlidersHorizontal size={17} />}
-            <span>{hasSearched ? "Search filters" : "Refine your search"}</span>
-            <ChevronDown size={16} className={filtersOpen ? "is-rotated" : ""} />
-          </button>
 
           <aside id="search-filter-panel" className={`filter-panel${filtersOpen ? " is-open" : ""}`} aria-label="Search filters">
             <div className="filter-title">
@@ -242,24 +251,16 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
               <div>
                 <span className="eyebrow">{(locality || city || "TELANGANA").toLocaleUpperCase()} {category === "rent" ? "LAND & RENTALS" : "RESIDENTIAL PLOTS"}</span>
                 <h1 className="results-page-title">
-                  {`Plots ${category === "rent" ? "for rent" : "for sale"}${locality || city ? ` in ${locality || city}` : " across Telangana"}`}
+                  {`Plots ${category === "rent" ? "for rent" : "for sale"}${locality || city ? ` in ${locality || city}` : " across Telangana and Andhra Pradesh"}`}
                 </h1>
-                <h2>
-                  {loading
-                    ? "Searching verified plots…"
-                    : `${properties.length} ${properties.length === 1 ? "plot" : "plots"} available`}
-                </h2>
-              </div>
-
-              <div className="sort-dropdown-wrap">
-                <ArrowUpDown size={13} className="sort-icon" />
-                <select value={sort} onChange={(e) => setSort(e.target.value)} className="sort-select" aria-label="Sort listings">
-                  <option value="recent">Recently Listed</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                  <option value="area_asc">Plot Size: Small to Large</option>
-                </select>
-                <ChevronDown size={13} className="sort-chevron" />
+                <div className="results-availability-row">
+                  <h2>
+                    {loading
+                      ? "Searching verified plots…"
+                      : `${properties.length} ${properties.length === 1 ? "plot" : "plots"} available`}
+                  </h2>
+                  <Link href="/requirements" className="results-requirement-link">Register your plot requirement <ArrowUpRight size={14} /></Link>
+                </div>
               </div>
             </div>
 

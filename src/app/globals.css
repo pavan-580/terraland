@@ -4209,3 +4209,34 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   }
 }
 
+/* Search controls dock beneath the mobile header while quick filters scroll away. */
+.search-sticky-toolbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; min-width: 0; }
+.search-toolbar-filter { display: none; }
+.search-toolbar-sort { margin-left: auto; }
+.results-availability-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.results-availability-row h2 { min-width: 0; }
+.results-requirement-link { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 5px; min-height: 34px; padding: 6px 9px; border: 1px solid rgba(198,220,129,.3); border-radius: 8px; color: var(--lime); font-size: 10px; font-weight: 650; text-align: center; text-decoration: none; transition: border-color .18s ease, color .18s ease, background .18s ease; }
+.results-requirement-link:hover { border-color: rgba(198,220,129,.65); background: rgba(198,220,129,.06); color: #e8f2cf; }
+.sort-dropdown-wrap:focus-within { border-color: rgba(198,220,129,.65); box-shadow: none !important; }
+@media (max-width: 700px) {
+  .search-sticky-toolbar { position: sticky; top: 70px; z-index: 19; width: calc(100% + 32px); margin: 0 -16px 14px; padding: 8px 16px; overflow-x: auto; flex-wrap: nowrap; overscroll-behavior-inline: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(12,22,17,.97); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .search-sticky-toolbar::-webkit-scrollbar { display: none; }
+  .search-sticky-toolbar > .site-back-btn { flex: 0 0 36px; }
+  .search-toolbar-filter { display: inline-flex !important; width: 108px !important; min-width: 108px; max-width: 108px; min-height: 40px !important; flex: 0 0 108px; align-items: center; justify-content: flex-start; gap: 7px; margin: 0 !important; padding: 0 9px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 9px !important; background: rgba(255,255,255,.045) !important; color: var(--ink) !important; box-shadow: none !important; font-size: 11px !important; white-space: nowrap; }
+  .search-toolbar-filter > svg:last-child { width: 13px; height: 13px; flex: 0 0 auto; margin-left: auto; }
+  .search-toolbar-filter.is-compact { width: auto !important; min-height: 40px !important; justify-content: flex-start; margin: 0 !important; padding: 0 9px !important; }
+  .search-toolbar-filter.is-compact span, .search-toolbar-filter.is-compact > svg:last-child { display: initial; }
+  .search-toolbar-filter.is-compact > svg:last-child { display: block; }
+  .search-toolbar-sort { width: clamp(138px, 43vw, 164px); min-width: 0; min-height: 40px; flex: 0 0 clamp(138px, 43vw, 164px); margin: 0; padding-inline: 9px; border-radius: 9px; box-shadow: none; }
+  .search-toolbar-sort .sort-select { min-width: 0; width: 100%; font-size: 10px; }
+  .results-header { display: block; margin-bottom: 14px; }
+  .results-availability-row { align-items: flex-start; }
+  .results-availability-row h2 { font-size: 22px; white-space: nowrap; }
+  .results-requirement-link { max-width: 148px; min-height: 32px; padding: 5px 7px; font-size: 9px; line-height: 1.2; }
+  .results-requirement-link svg { width: 12px; height: 12px; flex: 0 0 auto; }
+}
+.site-back-btn, .search-back-link, .breadcrumb-back-link, .back-link, .admin-back-button { position: relative !important; isolation: isolate !important; border-color: transparent !important; }
+.site-back-btn::before, .search-back-link::before, .breadcrumb-back-link::before, .back-link::before, .admin-back-button::before { position: absolute; z-index: -1; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+.site-back-btn:hover, .search-back-link:hover, .breadcrumb-back-link:hover, .back-link:hover, .admin-back-button:hover { border-color: transparent !important; }
+@media (prefers-reduced-motion: reduce) { .site-back-btn::before, .search-back-link::before, .breadcrumb-back-link::before, .back-link::before, .admin-back-button::before { animation: none; } }
+
