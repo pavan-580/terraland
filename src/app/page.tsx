@@ -4,6 +4,7 @@ import { PropertyCard } from "@/components/property-card";
 import { PropertyTypePicker } from "@/components/property-type-picker";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { StickyRegisterButton } from "@/components/sticky-register-button";
 import { allPropertyTypes } from "@/lib/market";
 import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
 import { currentUser } from "@/lib/session";
@@ -80,9 +81,7 @@ export default async function Home() {
                   </Link>
                 ))}
               </div>
-              <Link className="hero-register-cta" href="/sell">
-                Register your land for free <ArrowUpRight size={15} />
-              </Link>
+              <StickyRegisterButton />
             </div>
           </div>
         </section>
