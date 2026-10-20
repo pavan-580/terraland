@@ -72,7 +72,6 @@ export default async function Home() {
                   Find Plots <ArrowUpRight size={17} />
                 </button>
               </form>
-              <Link className="hero-sell-link" href="/sell">Have a plot to sell? <span>List your plot</span><MoveUpRight size={14} /></Link>
             </div>
             <div className="hero-cities-section">
               <p className="hero-cities-heading">Explore by city</p>

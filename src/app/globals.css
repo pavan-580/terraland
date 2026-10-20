@@ -3597,9 +3597,6 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .sign-in-page-shell { place-items: center; }
 .sign-in-page-shell .auth-submit { position: relative; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
 .sign-in-page-shell .auth-submit { gap: 7px; }
-.hero .hero-search-section .hero-sell-link { position: relative; display: inline-flex; min-height: 35px; align-items: center; justify-content: center; gap: 6px; margin-top: 7px; padding: 5px 12px; border: 1px solid transparent; border-radius: 10px; color: var(--lime); font-size: 11px; font-weight: 600; text-decoration: none; isolation: isolate; }
-.hero .hero-search-section .hero-sell-link::before { position: absolute; z-index: -1; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
-.hero .hero-search-section .hero-sell-link span { color: #fff; }
 .home-listing-ticker { display: grid; grid-template-columns: 150px minmax(0,1fr) 40px; align-items: center; gap: 18px; max-width: 1200px; min-height: 118px; margin: 20px auto; padding: 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: rgba(255,255,255,.035); }
 .home-listing-ticker-image { display: block; width: 150px; height: 92px; border-radius: 9px; background-color: #26372e; background-position: center; background-size: cover; }
 .home-listing-ticker-copy { min-width: 0; overflow: hidden; }
@@ -3627,7 +3624,6 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .quick-corridor-btn { flex: 0 0 auto; white-space: nowrap; }
   .empty-state-actions { gap: 8px; margin-top: 16px; }
   .empty-state-actions > * { min-height: 43px; padding: 8px 9px; font-size: 10px; }
-  .hero .hero-search-section .hero-sell-link { width: 100%; min-height: 34px; margin-top: 5px; }
   .hero .hero-cities-section { padding-top: 16px; }
   .home-listing-ticker { grid-template-columns: 84px minmax(0,1fr) 30px; gap: 10px; min-height: 82px; margin: 12px 14px; padding: 8px; }
   .home-listing-ticker-image { width: 84px; height: 64px; border-radius: 7px; }
@@ -3638,7 +3634,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .sign-in-page-shell { place-items: center; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .home-listing-ticker-track, .hero .hero-search-section .hero-sell-link::before, .empty-state-actions > .button-dark::before, .admin-home-ticker-setting .button::before { animation: none; }
+  .home-listing-ticker-track, .empty-state-actions > .button-dark::before, .admin-home-ticker-setting .button::before { animation: none; }
 }
 
 /* Home hero: concise search above an easy city picker. */
