@@ -3897,3 +3897,68 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   .hero { height: auto; min-height: 100dvh; overflow: visible; }
 }
 
+/* Admin selected states use the same slim animated outline as the main CTAs. */
+.admin-page .admin-stats button.is-active,
+.admin-page .listing-admin-segment button.is-active,
+.admin-page .listing-admin-tabs > button.pending-is-active,
+.admin-page .listing-admin-tabs > button.hidden-is-active,
+.admin-page .analytics-actions button.is-active,
+.admin-page .admin-user-record.is-profile-focus,
+.admin-page .admin-listing-details[open] {
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(transparent, transparent),
+    conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4);
+  background-color: transparent;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: aiBorderRotate 5s linear infinite;
+  box-shadow: none;
+  transition: color .2s ease, border-color .2s ease, background-color .2s ease;
+}
+.admin-page .admin-stats button.is-active,
+.admin-page .listing-admin-segment button.is-active,
+.admin-page .listing-admin-tabs > button.pending-is-active,
+.admin-page .listing-admin-tabs > button.hidden-is-active,
+.admin-page .analytics-actions button.is-active { color: var(--lime); }
+.admin-page .admin-record,
+.admin-page .admin-summary-card,
+.admin-page .admin-backup-card,
+.admin-page .admin-listing-details,
+.admin-page .lead-card,
+.admin-page .requirement-admin-card,
+.admin-page .visit-card,
+.admin-page .match-card,
+.admin-page .package-card,
+.admin-page .metric-tile {
+  transition: border-color .2s ease, background-color .2s ease, color .2s ease;
+}
+.admin-page .admin-record:hover,
+.admin-page .admin-summary-card:hover,
+.admin-page .admin-backup-card:hover,
+.admin-page .admin-listing-details:hover,
+.admin-page .lead-card:hover,
+.admin-page .requirement-admin-card:hover,
+.admin-page .visit-card:hover,
+.admin-page .match-card:hover,
+.admin-page .package-card:hover,
+.admin-page .metric-tile:hover,
+.admin-page .admin-record:focus-within,
+.admin-page .lead-card:focus-within,
+.admin-page .requirement-admin-card:focus-within,
+.admin-page .visit-card:focus-within,
+.admin-page .match-card:focus-within,
+.admin-page .package-card:focus-within {
+  border-color: rgba(198,220,129,.48);
+}
+.admin-page .metric-tile:hover { background: rgba(0,0,0,.3); }
+@media (prefers-reduced-motion: reduce) {
+  .admin-page .admin-stats button.is-active,
+  .admin-page .listing-admin-segment button.is-active,
+  .admin-page .listing-admin-tabs > button.pending-is-active,
+  .admin-page .listing-admin-tabs > button.hidden-is-active,
+  .admin-page .analytics-actions button.is-active,
+  .admin-page .admin-user-record.is-profile-focus,
+  .admin-page .admin-listing-details[open] { animation: none; }
+}
+
