@@ -267,6 +267,68 @@ export function AdminDashboard() {
   const [selectedPromoPlotId, setSelectedPromoPlotId] = useState("");
   const [copiedPromo, setCopiedPromo] = useState(false);
   const [showLivePopupModal, setShowLivePopupModal] = useState(false);
+  const [focusedListingId, setFocusedListingId] = useState("");
+
+  const scrollToElementAndFocus = (targetId: string, focusSelector?: string) => {
+    const applyFocusAndScroll = (el: Element) => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const inputToFocus = (focusSelector ? (el.querySelector(focusSelector) as HTMLElement | null) : null) ||
+        (el.querySelector("input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled])") as HTMLElement | null) ||
+        (el instanceof HTMLElement ? el : null);
+
+      if (inputToFocus) {
+        inputToFocus.focus({ preventScroll: true });
+        inputToFocus.classList.add("admin-field-highlight");
+        window.setTimeout(() => inputToFocus.classList.remove("admin-field-highlight"), 1800);
+      }
+    };
+
+    // Try immediately for instant 0ms response
+    const immediateEl = document.getElementById(targetId) || document.querySelector(targetId);
+    if (immediateEl) {
+      applyFocusAndScroll(immediateEl);
+      return;
+    }
+
+    // If not in DOM yet (e.g. tab just switched), run on next animation frame
+    requestAnimationFrame(() => {
+      const el = document.getElementById(targetId) || document.querySelector(targetId);
+      if (el) {
+        applyFocusAndScroll(el);
+      } else {
+        window.setTimeout(() => {
+          const delayedEl = document.getElementById(targetId) || document.querySelector(targetId);
+          if (delayedEl) applyFocusAndScroll(delayedEl);
+        }, 40);
+      }
+    });
+  };
+
+  const navigateToSection = (
+    targetSection: typeof section,
+    options?: {
+      elementId?: string;
+      focusSelector?: string;
+      listingTab?: "sale" | "rent" | "hidden" | "pending";
+      openListingId?: string;
+    }
+  ) => {
+    setSection(targetSection);
+    if (options?.listingTab) {
+      setListingTab(options.listingTab);
+    }
+    if (options?.openListingId) {
+      setFocusedListingId(options.openListingId);
+    }
+
+    const targetId = options?.elementId || `admin-section-${targetSection}`;
+    scrollToElementAndFocus(targetId, options?.focusSelector);
+  };
+
+  const openAndFocusListing = (propertyId: string) => {
+    setFocusedListingId(propertyId);
+    scrollToElementAndFocus(`admin-listing-${propertyId}`, "input[name='title']");
+  };
 
   const selectedPromoPlot = data.properties.find((p) => p.id === (selectedPromoPlotId || popupListingId)) ?? data.properties[0];
 
@@ -337,9 +399,10 @@ export function AdminDashboard() {
   }
 
   function reviewPendingListings() {
-    setSection("properties");
-    setListingTab("pending");
-    window.requestAnimationFrame(() => listingsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    navigateToSection("properties", {
+      listingTab: "pending",
+      elementId: "admin-section-properties",
+    });
   }
 
   async function load() {
@@ -398,7 +461,10 @@ export function AdminDashboard() {
 
   function openUserProfile(userId: string) {
     setProfileFocusId(userId);
-    setSection("users");
+    navigateToSection("users", {
+      elementId: `[data-admin-user-id="${CSS.escape(userId)}"]`,
+      focusSelector: "input[name='name']",
+    });
   }
 
   function activityForUser(userId: string) {
@@ -764,7 +830,7 @@ export function AdminDashboard() {
         <button
           type="button"
           className={`admin-nav-pill ${section === "ads" ? "is-active" : ""}`}
-          onClick={() => setSection("ads")}
+          onClick={() => navigateToSection("ads", { elementId: "admin-section-ads", focusSelector: "#popup-ad-title" })}
         >
           <Megaphone size={15} />
           <span>Ads &amp; Promotion</span>
@@ -773,7 +839,7 @@ export function AdminDashboard() {
         <button
           type="button"
           className={`admin-nav-pill ${section === "rolling" ? "is-active" : ""}`}
-          onClick={() => setSection("rolling")}
+          onClick={() => navigateToSection("rolling", { elementId: "admin-section-rolling", focusSelector: "#announcement-text-input" })}
         >
           <Sparkles size={15} />
           <span>Rolling Tickers</span>
@@ -782,7 +848,7 @@ export function AdminDashboard() {
         <button
           type="button"
           className={`admin-nav-pill ${section === "leads" ? "is-active" : ""}`}
-          onClick={() => setSection("leads")}
+          onClick={() => navigateToSection("leads", { elementId: "admin-section-leads" })}
         >
           <Users size={15} />
           <span>Leads CRM</span>
@@ -790,7 +856,7 @@ export function AdminDashboard() {
         <button
           type="button"
           className={`admin-nav-pill ${section === "properties" ? "is-active" : ""}`}
-          onClick={() => setSection("properties")}
+          onClick={() => navigateToSection("properties", { elementId: "admin-section-properties" })}
         >
           <Home size={15} />
           <span>Plots &amp; Listings ({data.properties.length})</span>
@@ -802,7 +868,14 @@ export function AdminDashboard() {
         </Link>
       </div>
 
-      <AdminDailySummary onSelectSection={(s) => setSection(s)} />
+      <AdminDailySummary
+        onSelectSection={(s, options) => {
+          navigateToSection(s, {
+            listingTab: options?.listingTab,
+            elementId: options?.leadId ? `admin-lead-${options.leadId}` : `admin-section-${s}`,
+          });
+        }}
+      />
 
       {pendingDelete && (
         <ConfirmDialog
@@ -859,7 +932,7 @@ export function AdminDashboard() {
         </div>
       )}
 
-      <div className="admin-setting-card">
+      <div id="admin-setting-seller-phones" className="admin-setting-card">
         <div>
           <strong>Site-wide seller contact visibility</strong>
           <p>This overall switch overrides every listing. When it is on, each listing&apos;s phone visibility switch controls whether its number appears. When it is off, seller contact details are hidden across the website and enquiries go to NILAY.</p>
@@ -875,7 +948,7 @@ export function AdminDashboard() {
         </button>
       </div>
 
-      <section className="admin-setting-card admin-contact-channels-card" style={{ display: "grid", gap: 14 }}>
+      <section id="admin-setting-contacts" className="admin-setting-card admin-contact-channels-card" style={{ display: "grid", gap: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
           <div>
             <strong style={{ fontSize: 14 }}>Direct Contact, WhatsApp & Support Channels</strong>
@@ -969,7 +1042,7 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      <section className="admin-backup-card" aria-labelledby="admin-backup-title">
+      <section id="admin-setting-backup" className="admin-backup-card" aria-labelledby="admin-backup-title">
         {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
         {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}
         <div className="admin-backup-copy">
@@ -1037,55 +1110,55 @@ export function AdminDashboard() {
 
       {/* Main Section Navigation Bar */}
       <div className="admin-stats">
-        <button className={section === "ads" ? "is-active" : ""} onClick={() => setSection("ads")}>
+        <button className={section === "ads" ? "is-active" : ""} onClick={() => navigateToSection("ads", { elementId: "admin-section-ads", focusSelector: "#popup-ad-title" })}>
           <span>ADS &amp; PROMO</span>
           <strong>{data.settings.popupAdEnabled ? "ACTIVE" : "PAUSED"}</strong>
         </button>
-        <button className={section === "rolling" ? "is-active" : ""} onClick={() => setSection("rolling")}>
+        <button className={section === "rolling" ? "is-active" : ""} onClick={() => navigateToSection("rolling", { elementId: "admin-section-rolling", focusSelector: "#announcement-text-input" })}>
           <span>ROLLING TICKERS</span>
           <strong>{data.settings.announcementEnabled ? "ROLLING" : "OFF"}</strong>
         </button>
-        <button className={section === "leads" ? "is-active" : ""} onClick={() => setSection("leads")}>
+        <button className={section === "leads" ? "is-active" : ""} onClick={() => navigateToSection("leads", { elementId: "admin-section-leads" })}>
           <span>LEADS CRM</span>
           <strong>CRM</strong>
         </button>
-        <button className={section === "requirements" ? "is-active" : ""} onClick={() => setSection("requirements")}>
+        <button className={section === "requirements" ? "is-active" : ""} onClick={() => navigateToSection("requirements", { elementId: "admin-section-requirements" })}>
           <span>BUYER REQS</span>
           <strong>REQS</strong>
         </button>
-        <button className={section === "visits" ? "is-active" : ""} onClick={() => setSection("visits")}>
+        <button className={section === "visits" ? "is-active" : ""} onClick={() => navigateToSection("visits", { elementId: "admin-section-visits" })}>
           <span>SITE VISITS</span>
           <strong>VISITS</strong>
         </button>
-        <button className={section === "matches" ? "is-active" : ""} onClick={() => setSection("matches")}>
+        <button className={section === "matches" ? "is-active" : ""} onClick={() => navigateToSection("matches", { elementId: "admin-section-matches" })}>
           <span>MATCHMAKER</span>
           <strong>MATCH</strong>
         </button>
-        <button className={section === "packages" ? "is-active" : ""} onClick={() => setSection("packages")}>
+        <button className={section === "packages" ? "is-active" : ""} onClick={() => navigateToSection("packages", { elementId: "admin-section-packages" })}>
           <span>PACKAGES</span>
           <strong>FEES</strong>
         </button>
-        <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}>
+        <button className={section === "properties" ? "is-active" : ""} onClick={() => navigateToSection("properties", { elementId: "admin-section-properties" })}>
           <span>LISTINGS</span>
           <strong>{data.properties.length}</strong>
         </button>
-        <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}>
+        <button className={section === "users" ? "is-active" : ""} onClick={() => navigateToSection("users", { elementId: "admin-section-users" })}>
           <span>MEMBERS</span>
           <strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong>
         </button>
-        <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}>
+        <button className={section === "inquiries" ? "is-active" : ""} onClick={() => navigateToSection("inquiries", { elementId: "admin-section-inquiries" })}>
           <span>ENQUIRIES</span>
           <strong>{data.inquiries.length}</strong>
         </button>
-        <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}>
+        <button className={section === "reviews" ? "is-active" : ""} onClick={() => navigateToSection("reviews", { elementId: "admin-section-reviews" })}>
           <span>REVIEWS</span>
           <strong>{data.reviews.length}</strong>
         </button>
-        <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}>
+        <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => navigateToSection("phoneClicks", { elementId: "admin-section-phoneClicks" })}>
           <span>PHONE &amp; WHATSAPP</span>
           <strong>{data.phoneClicks.length}</strong>
         </button>
-        <button className={section === "activity" ? "is-active" : ""} onClick={() => setSection("activity")}>
+        <button className={section === "activity" ? "is-active" : ""} onClick={() => navigateToSection("activity", { elementId: "admin-section-activity" })}>
           <span>ALL ACTIVITY</span>
           <strong>{data.siteActivity.length}</strong>
         </button>
@@ -1098,17 +1171,17 @@ export function AdminDashboard() {
         <p className="admin-empty">Loading site records…</p>
       ) : (
         <>
-          {section === "leads" && <AdminLeadsCrm />}
-          {section === "requirements" && <AdminRequirementsView />}
-          {section === "visits" && <AdminSiteVisitsView />}
-          {section === "matches" && <AdminMatchesView />}
-          {section === "packages" && <AdminPackagesView />}
+          {section === "leads" && <div id="admin-section-leads"><AdminLeadsCrm /></div>}
+          {section === "requirements" && <div id="admin-section-requirements"><AdminRequirementsView /></div>}
+          {section === "visits" && <div id="admin-section-visits"><AdminSiteVisitsView /></div>}
+          {section === "matches" && <div id="admin-section-matches"><AdminMatchesView /></div>}
+          {section === "packages" && <div id="admin-section-packages"><AdminPackagesView /></div>}
 
           {/* ADS & PROMOTION CONTROL CENTER */}
           {section === "ads" && (
-            <div className="admin-promotion-controls">
+            <div id="admin-section-ads" className="admin-promotion-controls">
               {/* 5-Second Modal Popup Ad */}
-              <section className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
+              <section id="admin-popup-ad-section" className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
                 <div className="admin-section-header">
                   <span className="eyebrow">SITE PROMOTION</span>
                   <h2 id="admin-ad-manager-title">5-Second Modal Popup Ad</h2>
@@ -1132,7 +1205,10 @@ export function AdminDashboard() {
                       Published plot to feature
                       <select
                         value={popupListingId}
-                        onChange={(event) => handleSelectPopupPlot(event.target.value)}
+                        onChange={(event) => {
+                          handleSelectPopupPlot(event.target.value);
+                          scrollToElementAndFocus("admin-popup-ad-section", "#popup-ad-title");
+                        }}
                       >
                         <option value="">Select a published plot</option>
                         {data.properties
@@ -1148,7 +1224,10 @@ export function AdminDashboard() {
                       <button
                         type="button"
                         className="admin-helper-btn"
-                        onClick={() => autoFillPopupFromPlot(popupListingId)}
+                        onClick={() => {
+                          autoFillPopupFromPlot(popupListingId);
+                          scrollToElementAndFocus("admin-popup-ad-section", "#popup-ad-title");
+                        }}
                       >
                         ⚡ Auto-fill heading &amp; details from this plot
                       </button>
@@ -1159,6 +1238,7 @@ export function AdminDashboard() {
                     <label>
                       Top Badge / Kicker Label
                       <input
+                        id="popup-ad-kicker"
                         value={popupKicker}
                         onChange={(event) => setPopupKicker(event.target.value)}
                         maxLength={80}
@@ -1172,7 +1252,10 @@ export function AdminDashboard() {
                           key={preset}
                           type="button"
                           className="admin-preset-btn"
-                          onClick={() => setPopupKicker(preset)}
+                          onClick={() => {
+                            setPopupKicker(preset);
+                            scrollToElementAndFocus("admin-popup-ad-section", "#popup-ad-kicker");
+                          }}
                         >
                           {preset}
                         </button>
@@ -1183,6 +1266,7 @@ export function AdminDashboard() {
                   <label>
                     Announcement heading
                     <input
+                      id="popup-ad-title"
                       value={popupTitle}
                       onChange={(event) => setPopupTitle(event.target.value)}
                       maxLength={140}
@@ -1193,6 +1277,7 @@ export function AdminDashboard() {
                   <label>
                     Date, Subtitle or Urgency note
                     <input
+                      id="popup-ad-date"
                       value={popupDate}
                       onChange={(event) => setPopupDate(event.target.value)}
                       maxLength={80}
@@ -1203,6 +1288,7 @@ export function AdminDashboard() {
                   <label>
                     Custom popup image URL (optional)
                     <input
+                      id="popup-ad-image"
                       value={popupImage}
                       onChange={(event) => setPopupImage(event.target.value)}
                       maxLength={1000}
@@ -1213,6 +1299,7 @@ export function AdminDashboard() {
                   <label>
                     Announcement details / pitch
                     <textarea
+                      id="popup-ad-body"
                       value={popupBody}
                       onChange={(event) => setPopupBody(event.target.value)}
                       maxLength={700}
@@ -1299,7 +1386,10 @@ export function AdminDashboard() {
                             className="button button-dark"
                             style={{ minHeight: 32, fontSize: 11, padding: "5px 10px", marginTop: 4 }}
                             disabled={savingPopup}
-                            onClick={() => void activatePlotAsPopup(plot)}
+                            onClick={() => {
+                              void activatePlotAsPopup(plot);
+                              scrollToElementAndFocus("admin-popup-ad-section", "#popup-ad-title");
+                            }}
                           >
                             {popupListingId === plot.id && popupEnabled ? "✓ Active Popup" : "🚀 Set as 5-Sec Popup"}
                           </button>
@@ -1371,9 +1461,9 @@ export function AdminDashboard() {
 
           {/* ROLLING ANNOUNCEMENTS & TICKERS CONTROL CENTER */}
           {section === "rolling" && (
-            <div className="admin-promotion-controls">
+            <div id="admin-section-rolling" className="admin-promotion-controls">
               {/* Sitewide Scrolling Top Marquee Ticker */}
-              <section className="admin-ad-manager" aria-labelledby="admin-announcement-title">
+              <section id="admin-announcement-section" className="admin-ad-manager" aria-labelledby="admin-announcement-title">
                 <div className="admin-section-header">
                   <span className="eyebrow">GLOBAL HEADER MARQUEE</span>
                   <h2 id="admin-announcement-title">Sitewide Scrolling Announcement</h2>
@@ -1396,6 +1486,7 @@ export function AdminDashboard() {
                     <label>
                       Announcement message ({announcementText.length}/240 chars)
                       <input
+                        id="announcement-text-input"
                         value={announcementText}
                         onChange={(event) => setAnnouncementText(event.target.value)}
                         maxLength={240}
@@ -1414,7 +1505,10 @@ export function AdminDashboard() {
                           key={i}
                           type="button"
                           className="admin-preset-btn"
-                          onClick={() => setAnnouncementText(preset)}
+                          onClick={() => {
+                            setAnnouncementText(preset);
+                            scrollToElementAndFocus("admin-announcement-section", "#announcement-text-input");
+                          }}
                         >
                           Preset {i + 1}
                         </button>
@@ -1452,7 +1546,7 @@ export function AdminDashboard() {
               </section>
 
               {/* Homepage Hero Rolling Listing Banner */}
-              <section className="admin-ad-manager" aria-labelledby="admin-home-ticker-title">
+              <section id="admin-home-ticker-section" className="admin-ad-manager" aria-labelledby="admin-home-ticker-title">
                 <div className="admin-section-header">
                   <span className="eyebrow">HOMEPAGE HERO FEATURE</span>
                   <h2 id="admin-home-ticker-title">Homepage Rolling Listing Banner</h2>
@@ -1465,6 +1559,7 @@ export function AdminDashboard() {
                   <label>
                     Rolling ticker message ({tickerText.length}/180 chars)
                     <input
+                      id="home-ticker-text-input"
                       value={tickerText}
                       maxLength={180}
                       onChange={(event) => setTickerText(event.target.value)}
@@ -1519,23 +1614,53 @@ export function AdminDashboard() {
           )}
 
           {section === "properties" && (
-            <>
+            <div id="admin-section-properties">
               <div className="listing-admin-tabs">
                 <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
                   {([["sale", "For sale"], ["rent", "For rent"]] as const).map(([tab, label]) => {
                     const count = data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === tab).length;
                     return (
-                      <button key={tab} type="button" role="tab" aria-selected={listingTab === tab} className={listingTab === tab ? "is-active" : ""} onClick={() => setListingTab(tab)}>
+                      <button
+                        key={tab}
+                        type="button"
+                        role="tab"
+                        aria-selected={listingTab === tab}
+                        className={listingTab === tab ? "is-active" : ""}
+                        onClick={() => {
+                          setListingTab(tab);
+                          scrollToElementAndFocus("admin-properties-list");
+                        }}
+                      >
                         {label} <span>{count}</span>
                       </button>
                     );
                   })}
                 </div>
-                <button type="button" className={listingTab === "hidden" ? "hidden-is-active" : ""} aria-pressed={listingTab === "hidden"} onClick={() => setListingTab("hidden")}>Hidden listings <span>{data.properties.filter((property) => property.status === "hidden").length}</span></button>
-                <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending review <span>{data.properties.filter((property) => property.status === "pending" || property.deleteRequestedAt).length}</span></button>
+                <button
+                  type="button"
+                  className={listingTab === "hidden" ? "hidden-is-active" : ""}
+                  aria-pressed={listingTab === "hidden"}
+                  onClick={() => {
+                    setListingTab("hidden");
+                    scrollToElementAndFocus("admin-properties-list");
+                  }}
+                >
+                  Hidden listings <span>{data.properties.filter((property) => property.status === "hidden").length}</span>
+                </button>
+                <button
+                  type="button"
+                  className={listingTab === "pending" ? "pending-is-active" : ""}
+                  aria-pressed={listingTab === "pending"}
+                  onClick={() => {
+                    setListingTab("pending");
+                    scrollToElementAndFocus("admin-properties-list");
+                  }}
+                >
+                  Pending review <span>{data.properties.filter((property) => property.status === "pending" || property.deleteRequestedAt).length}</span>
+                </button>
               </div>
 
-              <div className="admin-record-list" ref={listingsRef}>
+              <div id="admin-properties-list" className="admin-record-list" ref={listingsRef}>
                 {data.properties
                   .filter((property) =>
                     listingTab === "hidden"
@@ -1545,9 +1670,14 @@ export function AdminDashboard() {
                       : property.status === "published" && (property.listingCategory ?? "sale") === listingTab
                   )
                   .map((property) => (
-                    <details className="admin-listing-details" key={property.id} open={Boolean((property.deleteRequestedAt || property.status === "pending") && listingTab === "pending")}>
+                    <details
+                      id={`admin-listing-${property.id}`}
+                      className="admin-listing-details"
+                      key={property.id}
+                      open={focusedListingId === property.id || Boolean((property.deleteRequestedAt || property.status === "pending") && listingTab === "pending")}
+                    >
                       <summary className="admin-listing-summary">
-                        <span>
+                        <div className="admin-summary-main">
                           <span className="eyebrow">
                             {property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : property.status === "pending" ? "NEW LISTING · PENDING REVIEW" : property.status === "hidden" ? "HIDDEN LISTING" : property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}
                           </span>
@@ -1556,14 +1686,35 @@ export function AdminDashboard() {
                             {property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}
                           </span>
                           <span className="admin-listing-meta">Submitted {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span>
-                        </span>
-                        <span className="admin-listing-open">Open details</span>
+                        </div>
+                        <div className="admin-listing-actions-group">
+                          <button
+                            type="button"
+                            className="admin-edit-listing-btn"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openAndFocusListing(property.id);
+                            }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          {property.status === "published" && (
+                            <Link
+                              className="admin-listing-page-arrow"
+                              href={`/properties/${encodeURIComponent(property.id)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`Open ${property.title} listing page`}
+                              title="Open listing page"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <ArrowUpRight size={16} aria-hidden="true" />
+                            </Link>
+                          )}
+                          <span className="admin-listing-open">Open details</span>
+                        </div>
                       </summary>
-                      {property.status === "published" && (
-                        <Link className="admin-listing-page-arrow" href={`/properties/${encodeURIComponent(property.id)}`} target="_blank" rel="noreferrer" aria-label={`Open ${property.title} listing page`} title="Open listing page">
-                          <ArrowUpRight size={18} aria-hidden="true" />
-                        </Link>
-                      )}
                       <form
                         className="admin-record"
                         onSubmit={(event) => {
@@ -1687,11 +1838,11 @@ export function AdminDashboard() {
                   <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listings or deletion requests are waiting for review." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>
                 )}
               </div>
-            </>
+            </div>
           )}
 
           {section === "users" && (
-            <div className="admin-record-list">
+            <div id="admin-section-users" className="admin-record-list">
               {data.users.filter((user) => user.email !== "pavansai580@gmail.com" || user.id === profileFocusId).map((user) => (
                 <form className={`admin-record admin-user-record${user.id === profileFocusId ? " is-profile-focus" : ""}`} data-admin-user-id={user.id} key={user.id} onSubmit={(event) => {
                   event.preventDefault();
@@ -1735,7 +1886,7 @@ export function AdminDashboard() {
           )}
 
           {section === "inquiries" && (
-            <div className="admin-record-list">
+            <div id="admin-section-inquiries" className="admin-record-list">
               {data.inquiries.map((inquiry) => (
                 <article className="admin-record admin-inquiry" key={inquiry.id}>
                   <div className="admin-record-top">
@@ -1761,7 +1912,7 @@ export function AdminDashboard() {
           )}
 
           {section === "reviews" && (
-            <div className="admin-record-list">
+            <div id="admin-section-reviews" className="admin-record-list">
               {data.reviews.length ? (
                 data.reviews.map((review) => (
                   <article className="admin-record admin-review" key={review.id}>
@@ -1782,7 +1933,7 @@ export function AdminDashboard() {
           )}
 
           {section === "phoneClicks" && (
-            <div className="admin-record-list">
+            <div id="admin-section-phoneClicks" className="admin-record-list">
               {data.phoneClicks.length ? (
                 data.phoneClicks.map((click) => (
                   <article className="admin-record admin-phone-click" key={click.id}>
@@ -1809,7 +1960,7 @@ export function AdminDashboard() {
           )}
 
           {section === "activity" && (
-            <>
+            <div id="admin-section-activity">
               <div className="admin-site-activity-heading">
                 <div>
                   <span className="eyebrow">USER JOURNEY</span>
@@ -1838,7 +1989,7 @@ export function AdminDashboard() {
                   <p className="admin-empty">No activity recorded yet.</p>
                 )}
               </div>
-            </>
+            </div>
           )}
 
           {section === "users" && (

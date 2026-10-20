@@ -16,7 +16,10 @@ interface DailySummaryData {
 }
 
 interface AdminDailySummaryProps {
-  onSelectSection: (section: "leads" | "properties" | "visits" | "matches" | "requirements") => void;
+  onSelectSection: (
+    section: "leads" | "properties" | "visits" | "matches" | "requirements",
+    options?: { listingTab?: "sale" | "rent" | "hidden" | "pending"; leadId?: string }
+  ) => void;
 }
 
 export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
@@ -100,7 +103,7 @@ export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
         <button
           type="button"
           className={`metric-tile ${summary.followUpsDueCount > 0 ? "has-alert" : ""}`}
-          onClick={() => onSelectSection("leads")}
+          onClick={() => onSelectSection("leads", { leadId: summary.followUpsDue[0]?.id })}
         >
           <div className="metric-icon-wrap"><AlertCircle size={16} /></div>
           <span className="metric-label">Follow-ups Due</span>
@@ -122,7 +125,7 @@ export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
         <button
           type="button"
           className={`metric-tile ${summary.pendingPropertiesCount > 0 ? "has-alert" : ""}`}
-          onClick={() => onSelectSection("properties")}
+          onClick={() => onSelectSection("properties", { listingTab: "pending" })}
         >
           <div className="metric-icon-wrap"><Eye size={16} /></div>
           <span className="metric-label">Plots Awaiting Review</span>
@@ -155,7 +158,7 @@ export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
                 <button
                   type="button"
                   className="quick-action-link"
-                  onClick={() => onSelectSection("leads")}
+                  onClick={() => onSelectSection("leads", { leadId: item.id })}
                 >
                   View Lead →
                 </button>

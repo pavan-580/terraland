@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ChevronDown, Search, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { PropertyCard } from "@/components/property-card";
@@ -22,15 +22,10 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
   const [maxArea, setMaxArea] = useState("");
   const [sort, setSort] = useState("recent");
   const [loading, setLoading] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth <= 820) {
-      setFiltersOpen(false);
-    }
-  }, []);
 
   const propertyOptions = [...new Map([...(category === "rent" ? rentalTypes : propertyTypes), type, ...properties.map((property) => property.type)]
     .filter((item): item is string => Boolean(item?.trim())).map((item) => [item.toLocaleLowerCase(), item])).values()];
@@ -63,10 +58,18 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
     }
   }, [q, city, locality, type, category, min, max, minArea, maxArea, sort]);
 
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (initialProperties.length > 0) {
+        return;
+      }
+    }
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
-  }, [load]);
+  }, [load, initialProperties.length]);
 
   useEffect(() => {
     const refreshContacts = () => { void load(); };
@@ -74,10 +77,18 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
     return () => window.removeEventListener("terraland:account-changed", refreshContacts);
   }, [load]);
 
+  const handleFilterToggle = () => {
+    if (typeof window !== "undefined" && window.innerWidth <= 820) {
+      setMobileFiltersOpen((open) => !open);
+    } else {
+      setDesktopFiltersOpen((open) => !open);
+    }
+  };
+
   const submitSearch = () => {
     setHasSearched(true);
     if (typeof window !== "undefined" && window.innerWidth <= 820) {
-      setFiltersOpen(false);
+      setMobileFiltersOpen(false);
     }
     void load();
   };
@@ -86,20 +97,20 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
     <>
       <SiteHeader />
       <main className="search-page">
-        <div className={`results-layout ${filtersOpen ? "filters-open" : "filters-closed"}`}>
+        <div className={`results-layout ${mobileFiltersOpen ? "mobile-filters-open" : "mobile-filters-closed"} ${desktopFiltersOpen ? "filters-open" : "filters-closed"}`}>
           <div className="search-sticky-toolbar" aria-label="Search tools">
             <BackButton className="search-back-link" fallbackHref="/" label="Back to home" />
             <button
               type="button"
-              className={`mobile-filter-toggle search-toolbar-filter${hasSearched ? " is-compact" : ""}${filtersOpen ? " is-active" : ""}`}
-              aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
-              aria-expanded={filtersOpen}
+              className={`mobile-filter-toggle search-toolbar-filter${hasSearched ? " is-compact" : ""}${mobileFiltersOpen ? " is-mobile-active" : ""}${desktopFiltersOpen ? " is-desktop-active" : ""}`}
+              aria-label="Toggle search filters"
+              aria-expanded={mobileFiltersOpen}
               aria-controls="search-filter-panel"
-              onClick={() => setFiltersOpen((open) => !open)}
+              onClick={handleFilterToggle}
             >
               {hasSearched ? <Search size={17} /> : <SlidersHorizontal size={16} />}
               <span>Filters</span>
-              <ChevronDown size={14} className={filtersOpen ? "is-rotated" : ""} />
+              <ChevronDown size={14} className={`filter-chevron ${mobileFiltersOpen ? "is-mobile-rotated" : ""} ${desktopFiltersOpen ? "is-desktop-rotated" : ""}`} />
             </button>
             <div className="sort-dropdown-wrap search-toolbar-sort">
               <ArrowUpDown size={13} className="sort-icon" />
@@ -113,7 +124,7 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
             </div>
           </div>
 
-          <aside id="search-filter-panel" className={`filter-panel${filtersOpen ? " is-open" : ""}`} aria-label="Search filters">
+          <aside id="search-filter-panel" className={`filter-panel${mobileFiltersOpen ? " is-open" : ""}`} aria-label="Search filters">
             <div className="filter-title">
               <strong>Refine plot search</strong>
               <SlidersHorizontal size={17} />

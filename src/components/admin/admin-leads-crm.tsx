@@ -266,7 +266,7 @@ export function AdminLeadsCrm() {
             const isDueToday = lead.nextFollowUpDate && lead.nextFollowUpDate <= new Date().toISOString().slice(0, 10);
 
             return (
-              <div key={lead.id} className={`lead-card ${lead.type === "seller" ? "is-seller" : "is-buyer"} ${isDueToday ? "is-due" : ""}`}>
+              <div key={lead.id} id={`admin-lead-${lead.id}`} className={`lead-card ${lead.type === "seller" ? "is-seller" : "is-buyer"} ${isDueToday ? "is-due" : ""}`}>
                 <div className="lead-header">
                   <div className="lead-identity">
                     <span className={`lead-pill ${lead.type}`}>{lead.type.toUpperCase()}</span>

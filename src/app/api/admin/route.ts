@@ -64,6 +64,7 @@ export async function GET() {
       member_activity_log.createdAt
     FROM member_activity_log JOIN users ON users.id = member_activity_log.userId
     ORDER BY member_activity_log.createdAt DESC, member_activity_log.rowid DESC
+    LIMIT 200
   `).all();
   const siteActivity = db.prepare(`
     SELECT site_activity_log.id, CASE WHEN users.id IS NULL THEN NULL ELSE site_activity_log.userId END AS userId,
@@ -72,6 +73,7 @@ export async function GET() {
       site_activity_log.propertyId, site_activity_log.propertyTitle, site_activity_log.createdAt
     FROM site_activity_log LEFT JOIN users ON users.id = site_activity_log.userId
     ORDER BY site_activity_log.createdAt DESC, site_activity_log.rowid DESC
+    LIMIT 300
   `).all();
   const registrationNotifications = db.prepare(`
     SELECT id, name, email, status, attempts, lastError, createdAt, sentAt
