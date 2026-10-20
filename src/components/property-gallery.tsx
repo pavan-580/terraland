@@ -82,14 +82,14 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
   );
 
   useEffect(() => {
-    if (totalCount < 2 || viewerOpen || activeMedia?.type === "video") return;
+    if (images.length < 2 || viewerOpen || activeMedia?.type === "video") return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible" && Date.now() - lastGalleryInteraction.current > 12000) {
-        showMedia(activeIndex + 1);
+        showMedia(activeIndex + 1 < images.length ? activeIndex + 1 : 0);
       }
     }, 6000);
     return () => window.clearInterval(timer);
-  }, [activeIndex, activeMedia?.type, showMedia, totalCount, viewerOpen]);
+  }, [activeIndex, activeMedia?.type, images.length, showMedia, viewerOpen]);
 
   const zoomIn = useCallback(() => {
     setZoomScale((scale) => Math.min(3.5, Number((scale + 0.5).toFixed(1))));
@@ -239,12 +239,11 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
       {/* Main Display Area */}
       <div className="gallery-media-wrapper" onTouchStart={handleMainTouchStart} onTouchEnd={handleMainTouchEnd}>
         {mediaItems.map((item, idx) => {
-          const isActive = idx === activeIndex;
+          if (idx !== activeIndex) return null;
           return (
             <div
               key={`${item.url}-${idx}`}
-              className={`gallery-media-item ${isActive ? "is-active" : ""}`}
-              aria-hidden={!isActive}
+              className="gallery-media-item is-active"
             >
               {item.type === "video" ? (
                 <video
@@ -257,7 +256,6 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
                   aria-label={`${title} video tour ${idx + 1}`}
                   onVolumeChange={(event) => setIsMuted(event.currentTarget.muted || event.currentTarget.volume === 0)}
                   onEnded={() => showMedia(activeIndex + 1)}
-                  ref={(element) => { if (!isActive) element?.pause(); }}
                 />
               ) : (
                 <img
