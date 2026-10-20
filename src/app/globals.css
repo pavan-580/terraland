@@ -246,8 +246,8 @@ button:disabled { opacity: .55; cursor: wait; }
 .admin-visibility-button { min-height: 34px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--white); color: var(--ink); font-size: 10px; cursor: pointer; }
 .admin-visibility-button:hover { border-color: var(--lime); color: var(--forest); }
 .admin-visibility-button:disabled { opacity: .55; cursor: wait; }
-.seller-art { min-height: 464px; position: relative; overflow: hidden; }
-.seller-art-image { position: absolute; inset: 0; background: linear-gradient(0deg,rgba(20,34,25,.28),transparent 60%),url("https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1100&q=85") center/cover; }
+.seller-art { min-height: 464px; position: relative; overflow: hidden; background: #162a1f; }
+.seller-art-image { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,34,25,.65), rgba(20,34,25,.35) 60%, rgba(20,34,25,.8)), url("/images/hero-agricultural-land.webp") center/cover, #162a1f; }
 .seller-stamp { position: absolute; width: 132px; height: 132px; border-radius: 50%; top: 50%; left: 25%; transform: translate(-50%,-50%); background: var(--lime); color: var(--forest); display: flex; align-items: center; justify-content: center; gap: 12px; font-family: var(--serif); font-size: 16px; line-height: 1.03; }
 .seller-side-note { position: absolute; right: 22px; bottom: 22px; color: white; font-size: 8px; letter-spacing: 1.1px; line-height: 1.6; }
 
@@ -3992,7 +3992,7 @@ body { min-width: 320px; }
   .header-inner { width: 100%; padding-inline: max(14px, env(safe-area-inset-left)); }
   .brand { min-width: 0; }
   .brand-logo { width: 76px; height: 52px; }
-  .main-nav.is-open { max-height: calc(100svh - env(safe-area-inset-top)); padding-bottom: max(18px, env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; }
+  .main-nav.is-open { height: 100dvh !important; max-height: 100dvh !important; padding-bottom: max(28px, env(safe-area-inset-bottom)) !important; overflow-y: auto; overscroll-behavior: contain; }
   .hero { min-height: 100svh; min-height: 100dvh; }
   .hero .hero-content { width: 100%; }
   .section, .featured-section, .assurance-section, .sell-page,
@@ -4888,17 +4888,19 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   align-items: center !important;
   gap: 7px !important;
   padding: 0 16px !important;
-  background: #c6dc81 !important;
+  background: #FF671F !important;
+  background: linear-gradient(135deg, #FF9933 0%, #FF671F 100%) !important;
   border-right: 1px solid rgba(0, 0, 0, 0.15) !important;
-  color: #0c1811 !important;
+  color: #ffffff !important;
   font-size: 10.5px !important;
   font-weight: 800 !important;
   letter-spacing: 0.08em !important;
   white-space: nowrap !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
 }
 
 .site-announcement-label span[aria-hidden="true"] {
-  color: #ff6d00 !important;
+  color: #ffffff !important;
 }
 
 .site-announcement-window {
@@ -5069,4 +5071,30 @@ body:has(.main-nav.is-open) .site-announcement-ticker,
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
+}
+
+/* ==========================================================================
+   MOBILE SELLER BAND & SIDEBAR FULL GREEN COVERAGE
+   ========================================================================== */
+@media (max-width: 900px) {
+  .seller-band {
+    background: #162a1f !important;
+  }
+  .seller-art {
+    min-height: 240px !important;
+    background: #162a1f !important;
+  }
+  .seller-art-image {
+    background: linear-gradient(180deg, rgba(20, 34, 25, 0.72) 0%, rgba(20, 34, 25, 0.35) 50%, rgba(20, 34, 25, 0.85) 100%),
+                url("/images/hero-agricultural-land.webp") center/cover,
+                #162a1f !important;
+  }
+  .site-header .main-nav.is-open,
+  .main-nav.is-open {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    bottom: 0 !important;
+    background: #111e17 !important;
+    background-color: #111e17 !important;
+  }
 }
