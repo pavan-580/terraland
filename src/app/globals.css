@@ -4887,20 +4887,22 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   display: flex !important;
   align-items: center !important;
   gap: 7px !important;
-  padding: 0 16px !important;
-  background: #FF671F !important;
-  background: linear-gradient(135deg, #FF9933 0%, #FF671F 100%) !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.15) !important;
-  color: #ffffff !important;
+  padding: 0 24px 0 16px !important;
+  background: #FF5500 !important;
+  background: linear-gradient(135deg, #FF6A00 0%, #E64A00 100%) !important;
+  color: #000000 !important;
   font-size: 10.5px !important;
-  font-weight: 800 !important;
+  font-weight: 900 !important;
   letter-spacing: 0.08em !important;
   white-space: nowrap !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+  text-shadow: none !important;
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 100%, 0 100%) !important;
+  -webkit-clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 100%, 0 100%) !important;
 }
 
 .site-announcement-label span[aria-hidden="true"] {
-  color: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
 }
 
 .site-announcement-window {
@@ -4908,6 +4910,7 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   overflow: hidden !important;
   display: flex !important;
   align-items: center !important;
+  padding-left: 12px !important;
 }
 
 .site-announcement-track {
@@ -4931,7 +4934,13 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
 
 @media (max-width: 520px) {
   .site-announcement-ticker { min-height: 36px !important; }
-  .site-announcement-label { padding-inline: 11px !important; font-size: 9px !important; }
+  .site-announcement-label {
+    padding: 0 18px 0 11px !important;
+    font-size: 9.5px !important;
+    clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 100%, 0 100%) !important;
+    -webkit-clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 100%, 0 100%) !important;
+  }
+  .site-announcement-window { padding-left: 8px !important; }
   .site-announcement-track { gap: 36px !important; font-size: 11px !important; }
 }
 
