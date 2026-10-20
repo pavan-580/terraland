@@ -4874,43 +4874,49 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   position: relative !important;
   z-index: 8 !important;
   display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr) !important;
+  grid-template-columns: 25% 75% !important;
   align-items: stretch !important;
   min-height: 38px !important;
   overflow: hidden !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   background: #0d1612 !important;
   color: #edf2ed !important;
+  width: 100% !important;
 }
 
 .site-announcement-label {
   display: flex !important;
   align-items: center !important;
-  gap: 7px !important;
-  padding: 0 24px 0 16px !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  padding: 0 16px 0 8px !important;
+  width: 100% !important;
   background: #FF5500 !important;
   background: linear-gradient(135deg, #FF6A00 0%, #E64A00 100%) !important;
-  color: #000000 !important;
-  font-size: 10.5px !important;
-  font-weight: 900 !important;
-  letter-spacing: 0.08em !important;
+  color: #ffffff !important;
+  font-size: clamp(8px, 2.1vw, 10.5px) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
   white-space: nowrap !important;
-  text-shadow: none !important;
-  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 100%, 0 100%) !important;
-  -webkit-clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 100%, 0 100%) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 0 100%) !important;
+  -webkit-clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 100%, 0 100%) !important;
 }
 
 .site-announcement-label span[aria-hidden="true"] {
-  color: #000000 !important;
+  color: #ff0000 !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)) !important;
   font-weight: 900 !important;
+  font-size: 1.15em !important;
 }
 
 .site-announcement-window {
   min-width: 0 !important;
+  width: 100% !important;
   overflow: hidden !important;
   display: flex !important;
   align-items: center !important;
-  padding-left: 12px !important;
+  padding-left: 10px !important;
 }
 
 .site-announcement-track {
@@ -4933,14 +4939,22 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
 }
 
 @media (max-width: 520px) {
-  .site-announcement-ticker { min-height: 36px !important; }
-  .site-announcement-label {
-    padding: 0 18px 0 11px !important;
-    font-size: 9.5px !important;
-    clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 100%, 0 100%) !important;
-    -webkit-clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 100%, 0 100%) !important;
+  .site-announcement-ticker {
+    min-height: 36px !important;
+    grid-template-columns: 25% 75% !important;
   }
-  .site-announcement-window { padding-left: 8px !important; }
+  .site-announcement-label {
+    padding: 0 12px 0 5px !important;
+    font-size: clamp(7.5px, 2.4vw, 9.5px) !important;
+    gap: 3px !important;
+    letter-spacing: 0.02em !important;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 0 100%) !important;
+    -webkit-clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 0 100%) !important;
+  }
+  .site-announcement-label span[aria-hidden="true"] {
+    font-size: 11px !important;
+  }
+  .site-announcement-window { padding-left: 6px !important; }
   .site-announcement-track { gap: 36px !important; font-size: 11px !important; }
 }
 
