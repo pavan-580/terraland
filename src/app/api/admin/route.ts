@@ -89,7 +89,7 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false", homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.", homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "" } });
+  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false", homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.", homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "", popupAdEnabled: getSiteSetting("popupAdEnabled") === "true", popupAdPropertyId: getSiteSetting("popupAdPropertyId") ?? "" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -131,6 +131,17 @@ export async function PATCH(request: NextRequest) {
     setSiteSetting("homeTickerText", text);
     setSiteSetting("homeTickerPropertyId", propertyId);
     return NextResponse.json({ message: "Homepage listing banner saved." });
+  }
+
+  if (input.resource === "setting" && input.key === "popupAd") {
+    const value = input.value as Record<string, unknown> | null;
+    if (!value || typeof value.enabled !== "boolean" || typeof value.propertyId !== "string") return NextResponse.json({ error: "Choose whether the popup is enabled and select a listing." }, { status: 400 });
+    const propertyId = value.propertyId.trim();
+    if (value.enabled && !propertyId) return NextResponse.json({ error: "Select a published plot before enabling the popup." }, { status: 400 });
+    if (propertyId && !db.prepare("SELECT 1 FROM properties WHERE id = ? AND status = 'published' AND listingCategory = 'sale'").get(propertyId)) return NextResponse.json({ error: "Choose a published sale listing for the popup." }, { status: 400 });
+    setSiteSetting("popupAdEnabled", value.enabled ? "true" : "false");
+    setSiteSetting("popupAdPropertyId", propertyId);
+    return NextResponse.json({ message: value.enabled ? "Listing popup enabled." : "Listing popup disabled." });
   }
 
   if (input.resource === "property" && input.action === "dismiss-deletion") {

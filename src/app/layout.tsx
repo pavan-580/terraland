@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ChatWidget } from "@/components/chat-widget";
 import { AccountPhoneGate } from "@/components/account-phone-gate";
 import { VisitTracker } from "@/components/visit-tracker";
+import { PromotionPopup } from "@/components/promotion-popup";
 import "./globals.css";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-IN">
-      <body>{children}<ChatWidget /><AccountPhoneGate /><VisitTracker /></body>
+      <body>{children}<ChatWidget /><AccountPhoneGate /><PromotionPopup /><VisitTracker /></body>
     </html>
   );
 }

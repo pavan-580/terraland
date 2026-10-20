@@ -3617,6 +3617,32 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .admin-home-ticker-setting .button::before { position: absolute; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
 .admin-home-ticker-preview { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; }
 .admin-home-ticker-preview img { width: 96px; height: 62px; border: 1px solid var(--line); border-radius: 7px; object-fit: cover; }
+.admin-ad-manager { display: grid; gap: 14px; max-width: 820px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.035); }
+.admin-ad-manager h2 { margin: 5px 0; color: var(--ink); font: 400 26px/1.2 var(--serif); }
+.admin-ad-manager p { max-width: 660px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.admin-ad-manager label:not(.admin-ad-toggle) { display: grid; gap: 7px; color: var(--ink); font-size: 11px; font-weight: 600; }
+.admin-ad-manager select { width: 100%; min-height: 43px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.05); color: var(--ink); }
+.admin-ad-manager select option { background: #17231c; color: #edf2ed; }
+.admin-ad-toggle { display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 12px; font-weight: 600; }
+.admin-ad-toggle input { width: 17px; height: 17px; accent-color: var(--lime); }
+.admin-ad-manager > .button { position: relative; isolation: isolate; justify-self: start; min-height: 42px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--lime); }
+.admin-ad-manager > .button::before { position: absolute; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+.promotion-popup { position: fixed; z-index: 10000; inset: 0; isolation: isolate; background: rgba(3,9,6,.78); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); animation: promotionPopupFade .24s ease-out both; }
+.promotion-popup-link { position: absolute; inset: 0; display: grid; place-items: center; padding: 22px; color: inherit; text-decoration: none; }
+.promotion-popup-card { width: min(100%, 520px); overflow: hidden; border: 1px solid rgba(198,220,129,.55); border-radius: 18px; background: #14231b; box-shadow: 0 25px 90px rgba(0,0,0,.58); animation: promotionPopupRise .34s cubic-bezier(.2,.75,.25,1) both; }
+.promotion-popup-image { display: block; width: 100%; height: clamp(190px, 42vh, 310px); object-fit: cover; background: #26372e; }
+.promotion-popup-copy { padding: 20px 22px 22px; }
+.promotion-popup-copy .eyebrow { color: var(--lime); font-size: 9px; letter-spacing: .15em; }
+.promotion-popup-copy h2 { margin: 8px 0 4px; color: #f2f5ef; font: 400 clamp(22px, 5vw, 32px)/1.14 var(--serif); }
+.promotion-popup-copy p { margin: 0; color: rgba(231,239,230,.72); font-size: 12px; }
+.promotion-popup-details { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: #e4eee6; }
+.promotion-popup-details strong { color: var(--lime); font-size: 16px; }
+.promotion-popup-details span { color: var(--muted); font-size: 11px; }
+.promotion-popup-cta { display: flex; align-items: center; justify-content: space-between; margin-top: 17px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); color: #f1f5ec; font-size: 12px; font-weight: 700; }
+.promotion-popup-close { position: absolute; z-index: 2; top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(12,22,16,.88); color: #fff; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
+.promotion-popup-close:hover { border-color: var(--lime); color: var(--lime); }
+@keyframes promotionPopupFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes promotionPopupRise { from { opacity: .7; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (max-width: 700px) {
   .search-quick-corridors { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .search-quick-corridors::-webkit-scrollbar { display: none; }
@@ -3631,10 +3657,16 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .home-listing-ticker-track { font-size: 9px; }
   .home-listing-ticker-link { width: 30px; height: 30px; }
   .admin-home-ticker-preview img { width: 76px; height: 52px; }
+  .admin-ad-manager { padding: 17px 14px; }
+  .promotion-popup-link { padding: 14px; }
+  .promotion-popup-card { border-radius: 14px; }
+  .promotion-popup-image { height: min(36svh, 250px); }
+  .promotion-popup-copy { padding: 16px 16px 18px; }
   .sign-in-page-shell { place-items: center; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .home-listing-ticker-track, .empty-state-actions > .button-dark::before, .admin-home-ticker-setting .button::before { animation: none; }
+  .home-listing-ticker-track, .empty-state-actions > .button-dark::before, .admin-home-ticker-setting .button::before, .admin-ad-manager > .button::before { animation: none; }
+  .promotion-popup, .promotion-popup-card { animation: none; }
 }
 
 /* Home hero: concise search above an easy city picker. */

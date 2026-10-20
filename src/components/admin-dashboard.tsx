@@ -93,7 +93,7 @@ type DashboardData = {
   memberActivity: MemberActivity[];
   siteActivity: SiteActivity[];
   registrationNotifications: RegistrationNotification[];
-  settings: { showSellerPhones: boolean; homeTickerText: string; homeTickerPropertyId: string };
+  settings: { showSellerPhones: boolean; homeTickerText: string; homeTickerPropertyId: string; popupAdEnabled: boolean; popupAdPropertyId: string };
 };
 
 function formatAdminDate(value: string) {
@@ -160,8 +160,8 @@ function AdminListingMediaManager({ title, initialImages, initialVideos, disable
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true, homeTickerText: "New verified plots are added after owner and site checks.", homeTickerPropertyId: "" } });
-  const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity">("leads");
+  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true, homeTickerText: "New verified plots are added after owner and site checks.", homeTickerPropertyId: "", popupAdEnabled: false, popupAdPropertyId: "" } });
+  const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity" | "ads">("leads");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
@@ -176,6 +176,9 @@ export function AdminDashboard() {
   const [tickerText, setTickerText] = useState("New verified plots are added after owner and site checks.");
   const [tickerPropertyId, setTickerPropertyId] = useState("");
   const [savingTicker, setSavingTicker] = useState(false);
+  const [popupEnabled, setPopupEnabled] = useState(false);
+  const [popupListingId, setPopupListingId] = useState("");
+  const [savingPopup, setSavingPopup] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupError, setBackupError] = useState("");
   const [backupMessage, setBackupMessage] = useState("");
@@ -203,6 +206,8 @@ export function AdminDashboard() {
       setData(result);
       setTickerText(result.settings.homeTickerText ?? "New verified plots are added after owner and site checks.");
       setTickerPropertyId(result.settings.homeTickerPropertyId ?? "");
+      setPopupEnabled(result.settings.popupAdEnabled ?? false);
+      setPopupListingId(result.settings.popupAdPropertyId ?? "");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
     } finally {
@@ -374,6 +379,23 @@ export function AdminDashboard() {
     }
   }
 
+  async function savePopupAd() {
+    setSavingPopup(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "setting", key: "popupAd", value: { enabled: popupEnabled, propertyId: popupListingId } }) });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "The listing popup could not be saved.");
+      setMessage(result.message ?? "Listing popup settings saved.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The listing popup could not be saved.");
+    } finally {
+      setSavingPopup(false);
+    }
+  }
+
   async function retryRegistrationEmails() {
     setRetryingEmail(true);
     setError("");
@@ -514,6 +536,7 @@ export function AdminDashboard() {
       <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
       <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}><span>PHONE & WHATSAPP</span><strong>{data.phoneClicks.length}</strong></button>
       <button className={section === "activity" ? "is-active" : ""} onClick={() => setSection("activity")}><span>ALL ACTIVITY</span><strong>{data.siteActivity.length}</strong></button>
+      <button className={section === "ads" ? "is-active" : ""} onClick={() => setSection("ads")}><span>ADS &amp; POPUPS</span><strong>{data.settings.popupAdEnabled ? "ON" : "OFF"}</strong></button>
     </div>
     {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
     {message && <div className="admin-success" role="status">{message}</div>}
@@ -523,6 +546,13 @@ export function AdminDashboard() {
       {section === "visits" && <AdminSiteVisitsView />}
       {section === "matches" && <AdminMatchesView />}
       {section === "packages" && <AdminPackagesView />}
+      {section === "ads" && <section className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
+        <div><span className="eyebrow">SITE PROMOTION</span><h2 id="admin-ad-manager-title">Listing popup</h2><p>Visitors see this featured plot after five seconds. Tapping anywhere on the popup opens the listing; the close button dismisses it. It appears once per browser tab session.</p></div>
+        <label className="admin-ad-toggle"><input type="checkbox" checked={popupEnabled} onChange={(event) => setPopupEnabled(event.target.checked)} />Enable the five-second listing popup</label>
+        <label>Published plot to feature<select value={popupListingId} onChange={(event) => setPopupListingId(event.target.value)}><option value="">Select a published plot</option>{data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === "sale").map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}</select></label>
+        {(() => { const featured = data.properties.find((property) => property.id === popupListingId); return featured?.image ? <div className="admin-home-ticker-preview"><img src={featured.image} alt={`Popup preview for ${featured.title}`} /><span>Popup preview · {featured.title}</span></div> : null; })()}
+        <button className="button button-dark" type="button" disabled={savingPopup} onClick={() => void savePopupAd()}>{savingPopup ? "Saving…" : "Save ads & popup settings"}</button>
+      </section>}
       {section === "properties" && <>
         <div className="listing-admin-tabs">
           <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
