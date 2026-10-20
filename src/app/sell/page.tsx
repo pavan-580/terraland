@@ -12,6 +12,12 @@ import { NilayLoader } from "@/components/nilay-loader";
 import { listingCategories, pricePeriodsByCategory, propertyTypes, rentalTypes, type ListingCategory } from "@/lib/market";
 import { uploadPropertyPhotos, uploadPropertyVideos } from "@/lib/upload-property-photos";
 
+function normalizeIndianMobile(value: string) {
+  const digits = value.replace(/\D/g, "");
+  const localNumber = digits.startsWith("91") && digits.length > 10 ? digits.slice(2) : digits;
+  return localNumber.slice(0, 10);
+}
+
 export default function SellPage() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -23,7 +29,7 @@ export default function SellPage() {
   const [listingCategory, setListingCategory] = useState<ListingCategory>("sale");
   const [pricePeriod, setPricePeriod] = useState("total");
   const [propertyType, setPropertyType] = useState("Residential Plot");
-  const [contactPhone, setContactPhone] = useState("+91 ");
+  const [contactPhone, setContactPhone] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -33,7 +39,7 @@ export default function SellPage() {
         router.replace("/sign-in?next=%2Fsell");
         return;
       }
-      if (result.user.phone) setContactPhone(result.user.phone);
+      if (result.user.phone) setContactPhone(normalizeIndianMobile(result.user.phone));
       setCheckingAccess(false);
     }).catch(() => {
       if (active) router.replace("/sign-in?next=%2Fsell");
@@ -51,6 +57,7 @@ export default function SellPage() {
     setVideoProgress(null);
     try {
       const formData = new FormData(event.currentTarget);
+      formData.set("phone", `+91${normalizeIndianMobile(String(formData.get("phone") ?? ""))}`);
       const media = formData.getAll("media").filter((file): file is File => file instanceof File && file.size > 0);
       const photos = media.filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp)$/i.test(file.name));
       const videos = media.filter((file) => file.type.startsWith("video/") || /\.(mp4|webm)$/i.test(file.name));
@@ -464,12 +471,10 @@ export default function SellPage() {
                 type="tel"
                 inputMode="numeric"
                 pattern="[0-9]{10}"
-                maxLength={10}
+                maxLength={15}
                 value={contactPhone}
                 onChange={(event) => {
-                  const val = event.target.value.replace(/\D/g, "");
-                  const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;
-                  setContactPhone(clean.slice(0, 10));
+                  setContactPhone(normalizeIndianMobile(event.target.value));
                 }}
                 placeholder="9876543210"
               />
