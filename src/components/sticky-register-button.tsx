@@ -10,9 +10,9 @@ export function StickyRegisterButton() {
 
   useEffect(() => {
     const slot = slotRef.current;
-    const citySection = slot?.closest<HTMLElement>(".hero-cities-section");
     const searchSection = document.querySelector<HTMLElement>(".hero-search-section");
-    if (!slot || !citySection || !searchSection) return;
+    const hero = slot?.closest<HTMLElement>(".hero");
+    if (!slot || !searchSection || !hero) return;
 
     let frame = 0;
     const update = () => {
@@ -25,8 +25,8 @@ export function StickyRegisterButton() {
 
         const stickyTop = searchSection.getBoundingClientRect().bottom + 8;
         const slotTop = slot.getBoundingClientRect().top;
-        const sectionBottom = citySection.getBoundingClientRect().bottom;
-        const shouldStick = slotTop <= stickyTop && sectionBottom > stickyTop + 52;
+        const heroBottom = hero.getBoundingClientRect().bottom;
+        const shouldStick = slotTop <= stickyTop + 12 && heroBottom > stickyTop + 52;
 
         if (shouldStick) slot.style.setProperty("--sticky-register-top", `${stickyTop}px`);
         setStuck(shouldStick);
