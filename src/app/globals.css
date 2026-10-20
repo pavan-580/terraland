@@ -1462,10 +1462,68 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .admin-empty { background: var(--white); color: var(--ink); }
 .admin-success { color: #d7ebcd; background: rgba(99,143,83,.18); }
 
-.farmstay-nav-window { height: 34px; width: 104px; flex: 0 0 104px; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; padding: 0 12px; }
-.farmstay-nav-roll { position: relative; width: 100%; height: 1.2em; overflow: visible; line-height: 1.2; }
-.main-nav .farmstay-nav-link { position: absolute; inset: 0; display: block; width: 100%; height: 1.2em; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: center; cursor: pointer; }
-.farmstay-nav-label { position: absolute; inset: 0; display: block; text-align: center; white-space: nowrap; animation: farmstay-label-enter 380ms ease-out both; }
+.farmstay-nav-window {
+  height: auto !important;
+  min-height: 0 !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.farmstay-nav-roll {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  line-height: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.main-nav .farmstay-nav-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  width: auto !important;
+  min-width: 86px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 6px 11px !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: inherit !important;
+  font: inherit !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: normal !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  transition: color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.farmstay-nav-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+  animation: farmstay-label-enter 380ms ease-out both;
+}
 .farmstay-nav-link:hover { background: transparent !important; color: white !important; }
 @keyframes farmstay-label-enter { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
@@ -1919,7 +1977,6 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .site-header .main-nav a, 
   .site-header .farmstay-nav-link,
   .site-header .services-nav-trigger,
-  .site-header .farmstay-nav-window,
   .site-header .header-actions .sign-in-link,
   .site-header .header-actions .logout-button,
   .site-header .header-actions .saved-link { 
@@ -1943,7 +2000,8 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .site-header .main-nav a:focus-visible,
   .site-header .services-nav-trigger:hover,
   .site-header .services-nav-trigger:focus-visible,
-  .site-header .farmstay-nav-window:hover,
+  .site-header .farmstay-nav-link:hover,
+  .site-header .farmstay-nav-link:focus-visible,
   .site-header .header-actions .sign-in-link:hover,
   .site-header .header-actions .account-name:hover,
   .site-header .header-actions .logout-button:hover,
@@ -1963,7 +2021,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 
   .site-header-hero .main-nav a:hover,
   .site-header-hero .services-nav-trigger:hover,
-  .site-header-hero .farmstay-nav-window:hover,
+  .site-header-hero .farmstay-nav-link:hover,
   .site-header-hero .header-actions .sign-in-link:hover,
   .site-header-hero .header-actions .logout-button:hover,
   .site-header-hero .header-actions .saved-link:hover {
