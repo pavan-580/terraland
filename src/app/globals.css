@@ -3380,6 +3380,18 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   gap: 12px !important;
   padding: 8px 18px !important;
 }
+.language-picker-drawer .language-picker-trigger.google-rainbow-pill {
+  border: 1px solid rgba(255,255,255,.2) !important;
+  background: rgba(255,255,255,.07) !important;
+  background-image: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+.language-picker-drawer .language-picker-trigger.google-rainbow-pill:hover {
+  border-color: rgba(255,255,255,.32) !important;
+  box-shadow: 0 3px 10px rgba(0,0,0,.16) !important;
+  transform: none !important;
+}
 .mobile-menu-section:has(.language-picker-drawer) {
   align-items: flex-start !important;
 }
