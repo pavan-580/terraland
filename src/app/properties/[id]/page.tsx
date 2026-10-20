@@ -216,7 +216,10 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 city: property.city,
                 price: property.price,
                 area: property.area,
-                unit: property.unit
+                unit: property.unit,
+                phone: property.phone,
+                owner: property.owner,
+                sellerContactsVisible: showSellerContacts,
               }}
             />
 
@@ -326,11 +329,6 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
               </div>
 
               <div className="sidebar-divider" />
-
-              <div className="inquiry-box-title">
-                <h3>Direct Plot Enquiry</h3>
-                <p>Request pricing clarification, title documentation, or schedule an in-person site visit with the founder.</p>
-              </div>
 
               <InquiryForm
                 propertyId={property.id}

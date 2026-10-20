@@ -1453,7 +1453,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .gallery-thumbnail:focus-visible { outline: 2px solid #c6dcba; outline-offset: 2px; }
 
 /* Keep listing media in a predictable frame and let visitors choose when to advance. */
-.detail-gallery { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.detail-gallery { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: start; gap: 10px; }
 .gallery-media-wrapper {
   height: auto;
   aspect-ratio: 16 / 9;
@@ -3464,17 +3464,9 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .gallery-thumbnail { scroll-snap-align: start; }
 .gallery-thumbnail-video-badge { flex-direction: column; gap: 2px; }
 .gallery-thumbnail-video-badge span { font-size: 9px; font-weight: 700; letter-spacing: .08em; }
-.gallery-swipe-hint { display: none; }
 @media (max-width: 700px) {
   .gallery-thumbnails { gap: 9px; padding: 3px 4px 9px; }
   .gallery-thumbnail { flex: 0 0 88px; height: 66px; touch-action: pan-x; }
-  .gallery-swipe-hint {
-    display: block;
-    margin: -5px 0 0;
-    color: rgba(226,234,222,.62);
-    font-size: 11px;
-    text-align: center;
-  }
 }
 
 /* Dedicated, image-free sign-in experience */
@@ -3886,6 +3878,51 @@ body { min-width: 320px; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+@media (max-width: 700px) {
+  .detail-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-bottom: calc(94px + env(safe-area-inset-bottom));
+  }
+  .detail-heading, .detail-heading-copy, .detail-layout-rich, .detail-main,
+  .detail-cards, .detail-sidebar, .sidebar-card { min-width: 0; max-width: 100%; }
+  .detail-heading h1, .detail-card-copy, .inquiry-box-title, .inquiry-box-title p { overflow-wrap: anywhere; }
+  .detail-sidebar .inquiry-box-title { display: none; }
+  .property-action-buttons {
+    position: fixed;
+    z-index: 55;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin: 0;
+    padding: 9px max(12px, env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    border-top: 1px solid rgba(223,232,222,.14);
+    background: rgba(11,20,15,.94);
+    box-shadow: 0 -8px 24px rgba(0,0,0,.24);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+  .property-action-buttons.is-modal-open { visibility: hidden; }
+  .property-action-buttons button, .property-action-buttons a {
+    min-width: 0;
+    min-height: 46px;
+    justify-content: center;
+    gap: 6px;
+    padding-inline: 7px;
+    font-size: 10px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+  }
+  .property-action-buttons svg { flex: 0 0 auto; width: 15px; height: 15px; }
+  .property-action-buttons .sticky-seller-phone { overflow: hidden; overflow-wrap: anywhere; }
+  body:has(.detail-page) .chat-widget { bottom: calc(76px + env(safe-area-inset-bottom)); }
 }
 
 /* Consistent rounded controls across the app. */

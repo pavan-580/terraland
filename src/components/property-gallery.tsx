@@ -369,10 +369,6 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
           })}
         </div>
       )}
-      {totalCount > 1 && (
-        <p className="gallery-swipe-hint" aria-hidden="true">Swipe to browse photos and video</p>
-      )}
-
       {/* Full-Screen Interactive Lightbox Viewer with Zoom & Download */}
       {viewerOpen && (
         <div
