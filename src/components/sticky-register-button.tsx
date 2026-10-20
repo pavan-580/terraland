@@ -31,12 +31,16 @@ export function StickyRegisterButton() {
 
         const slotTop = slot.getBoundingClientRect().top;
         const searchBottom = search.getBoundingClientRect().bottom;
+        const heroBottom = hero.getBoundingClientRect().bottom;
+        const buttonHeight = slot.firstElementChild?.getBoundingClientRect().height ?? 38;
         if (!stuckRef.current) {
           anchorYRef.current = slotTop + window.scrollY;
         }
         const anchorY = anchorYRef.current ?? slotTop + window.scrollY;
         const wasStuck = stuckRef.current;
-        const shouldStick = anchorY <= window.scrollY + searchBottom + 20;
+        const reachesSearch = anchorY <= window.scrollY + searchBottom + 20;
+        const staysWithinHero = heroBottom > searchBottom + buttonHeight + 12;
+        const shouldStick = reachesSearch && staysWithinHero;
 
         if (shouldStick) {
           const nextTop = wasStuck ? searchBottom + 12 : slotTop;
