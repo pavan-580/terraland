@@ -82,7 +82,11 @@ const info: Record<string, { title: string; kicker: string; intro: string; point
   "plot-loan-emi-calculator": { title: "Plot loan EMI calculator", kicker: "PLAN YOUR MONTHLY BUDGET", intro: "Estimate the monthly instalment for a plot loan. Adjust the amount, annual interest rate, and repayment period to compare scenarios; the result is an illustration, not a loan offer.", points: ["Enter the amount you expect to borrow, the lender’s quoted annual interest rate, and loan term.", "Compare monthly EMI, total interest, and total repayment before committing to a loan.", "Ask lenders whether they finance this land type and location. Plot and agricultural land criteria can differ from home loans.", "Confirm processing fees, margin money, rate changes, prepayment terms, and eligibility directly with the lender."], linkNote: "Actual offers and eligibility are determined by the lender." },
 };
 export async function generateMetadata({ params }: { params: Promise<{ service: string }> }): Promise<Metadata> {
-  const { service } = await params; return { title: info[service]?.title ?? "NILAY services" };
+  const { service } = await params;
+  const page = info[service];
+  if (!page) return { title: "NILAY services", robots: { index: false, follow: false } };
+  const description = page.intro.replace(/\s+/g, " ").trim().slice(0, 160);
+  return { title: page.title, description, alternates: { canonical: `/services/${encodeURIComponent(service)}` }, openGraph: { title: page.title, description, siteName: "NILAY", locale: "en_IN", type: "article" } };
 }
 export default async function ServicePage({ params }: { params: Promise<{ service: string }> }) {
   const { service } = await params, item = info[service];

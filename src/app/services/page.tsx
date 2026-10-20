@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { BackButton } from "@/components/back-button";
 
-export const metadata: Metadata = { title: "Land buyer services", description: "NILAY land-record, document due-diligence and property cost tools for buyers in Telangana and across India." };
+export const metadata: Metadata = { title: "Land buyer services", description: "NILAY land-record, document due-diligence and property cost tools for buyers in Telangana and across India.", alternates: { canonical: "/services" }, openGraph: { title: "Land buyer services", description: "Land-record, document due-diligence and property cost tools for buyers in Telangana." } };
 const services = [
   { href: "/services/dharani-title-check", icon: MapPinned, name: "Dharani / Bhu Bharati land-record check", text: "A practical checklist for checking Telangana land records on the current official portal." },
   { href: "/services/legal-verification", icon: Scale, name: "Legal verification guide", text: "Documents and questions to take to an independent property lawyer before you buy." },

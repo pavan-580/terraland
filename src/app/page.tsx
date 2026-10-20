@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowDownRight, ArrowUpRight, Check, MoveUpRight, ShieldCheck, MapPin, UserCheck } from "lucide-react";
 import { PropertyCard } from "@/components/property-card";
 import { PropertyTypePicker } from "@/components/property-type-picker";
@@ -10,6 +11,8 @@ import { db, getSiteSetting, publicPropertyFromRow } from "@/lib/db";
 import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
 
 const cityCards = [
   { name: "Hyderabad", image: "https://etimg.etb2bimg.com/thumb/msid-99644024%2Cwidth-1200%2Cheight-900%2Cresizemode-4/.jpg" },
@@ -45,9 +48,39 @@ export default async function Home() {
     ? publicPropertyFromRow(tickerPropertyRow, getSiteSetting("showSellerPhones") !== "false" && Boolean(user))
     : latestProperties[0];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        url: siteUrl,
+        name: "NILAY",
+        description: "Residential plots and land marketplace serving Telangana and Andhra Pradesh.",
+        inLanguage: ["en-IN", "te-IN", "hi-IN"],
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/search?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        name: "NILAY",
+        url: siteUrl,
+        description: "A property marketplace for residential plots and land, with owner listings and buyer enquiries.",
+        address: { "@type": "PostalAddress", addressLocality: "Hyderabad", addressRegion: "Telangana", addressCountry: "IN" },
+        areaServed: ["Telangana", "Andhra Pradesh"],
+        knowsAbout: ["Residential plots", "Land listings", "Telangana land records", "Property due diligence"],
+      },
+    ],
+  };
+
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
       <main>
         <section className="hero">
           <SiteHeader variant="hero" />
@@ -80,7 +113,7 @@ export default async function Home() {
                   <Link
                     className="hero-city-card"
                     key={city.name}
-                    href={`/search?q=${encodeURIComponent(city.name)}`}
+                    href={`/search?city=${encodeURIComponent(city.name)}`}
                     style={{
                       backgroundImage: cityCardBackground(city.image)
                     }}
@@ -115,7 +148,7 @@ export default async function Home() {
               <Link
                 className="city-photo-card"
                 key={city.name}
-                href={`/search?q=${encodeURIComponent(city.name)}`}
+                href={`/search?city=${encodeURIComponent(city.name)}`}
                 aria-label={`Explore plots in ${city.name}`}
                 style={{
                   backgroundImage: cityCardBackground(city.image)

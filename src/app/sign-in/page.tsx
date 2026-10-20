@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AuthPanel } from "@/components/auth-panel";
 
-export const metadata: Metadata = { title: "Your NILAY account" };
+export const metadata: Metadata = { title: "Your NILAY account", robots: { index: false, follow: false } };
 
 const googleErrors: Record<string, string> = {
   not_configured: "Google sign-in is awaiting GOOGLE_CLIENT_ID setup. You can also sign in directly below.",

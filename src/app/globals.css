@@ -4154,9 +4154,58 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
 .promotion-popup-details { margin-top: 4px; }
 .promotion-popup-cta { margin-top: 2px; padding-top: 11px; }
 .promotion-popup-close { top: max(22px, env(safe-area-inset-top)); right: max(22px, env(safe-area-inset-right)); }
+.results-header .results-page-title { margin: 7px 0 0; color: var(--ink); font: 400 27px/1.18 var(--serif); }
 @media (max-width: 520px) {
   .promotion-popup-link { max-height: min(94dvh, 820px); }
   .promotion-popup-image { height: clamp(150px, 36vh, 300px); }
   .promotion-popup-copy { padding: 12px 13px 14px; }
+  .results-header .results-page-title { font-size: 23px; }
+}
+@media (max-width: 1080px) {
+  .site-header .main-nav details.services-nav,
+  .site-header .main-nav details.services-nav[open] {
+    display: flex !important;
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .site-header .main-nav details.services-nav > summary.services-nav-trigger {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    flex: 0 0 auto !important;
+    justify-content: space-between !important;
+    padding: 11px 14px !important;
+  }
+  .site-header .main-nav details.services-nav > .services-nav-menu,
+  .site-header .main-nav details.services-nav[open] > .services-nav-menu {
+    position: static !important;
+    inset: auto !important;
+    display: grid !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 2px 0 6px !important;
+    padding: 6px 8px !important;
+    transform: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    border: 1px solid rgba(198,220,129,.18) !important;
+    border-radius: 9px !important;
+    background: rgba(0,0,0,.14) !important;
+    box-shadow: none !important;
+  }
+  .site-header .main-nav details.services-nav .services-nav-menu > a {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 38px !important;
+    padding: 9px 10px !important;
+  }
 }
 

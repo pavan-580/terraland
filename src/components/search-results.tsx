@@ -9,8 +9,8 @@ import { SiteHeader } from "@/components/site-header";
 import { BackButton } from "@/components/back-button";
 import { listingCategories, propertyTypes, rentalTypes, type ListingCategory, type Property } from "@/lib/market";
 
-export function SearchResults({ initial }: { initial: { q: string; city: string; type: string; category?: string; locality?: string } }) {
-  const [properties, setProperties] = useState<Property[]>([]);
+export function SearchResults({ initial, initialProperties = [] }: { initial: { q: string; city: string; type: string; category?: string; locality?: string }; initialProperties?: Property[] }) {
+  const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [q, setQ] = useState(initial.q);
   const [city, setCity] = useState(initial.city || "");
   const [locality, setLocality] = useState(initial.locality || "");
@@ -21,7 +21,7 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
   const [minArea, setMinArea] = useState("");
   const [maxArea, setMaxArea] = useState("");
   const [sort, setSort] = useState("recent");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState("");
@@ -240,7 +240,10 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
           <section className="results-main">
             <div className="results-header">
               <div>
-                <span className="eyebrow">MIYAPUR RESIDENTIAL PLOTS</span>
+                <span className="eyebrow">{(locality || city || "TELANGANA").toLocaleUpperCase()} {category === "rent" ? "LAND & RENTALS" : "RESIDENTIAL PLOTS"}</span>
+                <h1 className="results-page-title">
+                  {`Plots ${category === "rent" ? "for rent" : "for sale"}${locality || city ? ` in ${locality || city}` : " across Telangana"}`}
+                </h1>
                 <h2>
                   {loading
                     ? "Searching verified plots…"
