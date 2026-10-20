@@ -350,8 +350,8 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                 </label>
               </>
             ) : (
-              <label>
-                10-digit mobile number or email address
+              <label className="auth-floating-field">
+                <span className="auth-floating-label">10-digit mobile number or email address</span>
                 <input
                   name="identifier"
                   type="text"
@@ -364,8 +364,8 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
               </label>
             )}
 
-            <label>
-              Password
+            <label className="auth-floating-field">
+              <span className="auth-floating-label">Password</span>
               <span className="password-input-wrap">
                 <input
                   name="password"

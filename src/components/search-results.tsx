@@ -83,7 +83,7 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
             <BackButton className="search-back-link" fallbackHref="/" label="Back to home" />
             <button
               type="button"
-              className={`mobile-filter-toggle${hasSearched ? " is-compact" : ""}`}
+              className={`mobile-filter-toggle search-toolbar-filter${hasSearched ? " is-compact" : ""}`}
               aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
               aria-expanded={filtersOpen}
               aria-controls="search-filter-panel"

@@ -5,7 +5,7 @@ import type { Property } from "@/lib/market";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import Link from "next/link";
-import { ArrowUpRight, Download, Upload } from "lucide-react";
+import { ArrowUpRight, Download, Upload, Megaphone, Sparkles, Share2, Copy, Check, Eye, Users, Home, TrendingUp, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AdminDailySummary } from "@/components/admin/admin-daily-summary";
 import { AdminLeadsCrm } from "@/components/admin/admin-leads-crm";
@@ -93,7 +93,20 @@ type DashboardData = {
   memberActivity: MemberActivity[];
   siteActivity: SiteActivity[];
   registrationNotifications: RegistrationNotification[];
-  settings: { showSellerPhones: boolean; homeTickerText: string; homeTickerPropertyId: string; popupAdEnabled: boolean; popupAdPropertyId: string; popupAdKicker: string; popupAdTitle: string; popupAdDate: string; popupAdBody: string; popupAdImage: string; announcementEnabled: boolean; announcementText: string };
+  settings: {
+    showSellerPhones: boolean;
+    homeTickerText: string;
+    homeTickerPropertyId: string;
+    popupAdEnabled: boolean;
+    popupAdPropertyId: string;
+    popupAdKicker: string;
+    popupAdTitle: string;
+    popupAdDate: string;
+    popupAdBody: string;
+    popupAdImage: string;
+    announcementEnabled: boolean;
+    announcementText: string;
+  };
 };
 
 function formatAdminDate(value: string) {
@@ -126,42 +139,90 @@ function AdminListingMediaManager({ title, initialImages, initialVideos, disable
     setPreview(null);
   }
 
-  return <section className="admin-media-manager admin-wide" aria-label={`Photos and videos for ${title}`}>
-    <input type="hidden" name="images" value={JSON.stringify(images)} />
-    <input type="hidden" name="videos" value={JSON.stringify(videos)} />
-    <div className="admin-media-heading"><div><strong>Listing photos &amp; videos</strong><span>{images.length} photos · {videos.length} videos</span><small>Scroll sideways to browse. Tap media to preview; remove it, then save the listing.</small></div></div>
-    {images.length + videos.length ? <div className="admin-media-strip">
-      {images.map((src, index) => <article className="admin-media-tile" key={`photo-${src}-${index}`}>
-        <button type="button" className="admin-media-preview" onClick={() => setPreview({ type: "photo", src, index })} aria-label={`Preview photo ${index + 1}`}>
-          <img src={src} alt={`Listing photo ${index + 1}`} loading="lazy" />
-        </button>
-        <span>Photo {index + 1}</span>
-        <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia("photo", index)}>Remove photo</button>
-      </article>)}
-      {videos.map((src, index) => <article className="admin-media-tile" key={`video-${src}-${index}`}>
-        <button type="button" className="admin-media-preview" onClick={() => setPreview({ type: "video", src, index })} aria-label={`Play video ${index + 1}`}>
-          <video src={src} muted playsInline preload="metadata" />
-          <span className="admin-media-play" aria-hidden="true">▶</span>
-        </button>
-        <span>Video {index + 1}</span>
-        <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia("video", index)}>Remove video</button>
-      </article>)}
-    </div> : <p className="admin-media-empty">This listing has no photos or videos.</p>}
-    {preview && <div className="admin-media-lightbox" role="dialog" aria-modal="true" aria-label={`${preview.type === "photo" ? "Photo" : "Video"} preview`} onClick={() => setPreview(null)}>
-      <div className="admin-media-lightbox-content" onClick={(event) => event.stopPropagation()}>
-        <div className="admin-media-lightbox-heading"><strong>{title} · {preview.type} {preview.index + 1}</strong><button type="button" aria-label="Close preview" onClick={() => setPreview(null)}>×</button></div>
-        {preview.type === "photo" ? <img className="admin-media-large-image" src={preview.src} alt={`${title} photo ${preview.index + 1}`} /> : <video className="admin-media-large-video" src={preview.src} controls playsInline autoPlay />}
-        <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia(preview.type, preview.index)}>Remove this {preview.type}</button>
+  return (
+    <section className="admin-media-manager admin-wide" aria-label={`Photos and videos for ${title}`}>
+      <input type="hidden" name="images" value={JSON.stringify(images)} />
+      <input type="hidden" name="videos" value={JSON.stringify(videos)} />
+      <div className="admin-media-heading">
+        <div>
+          <strong>Listing photos &amp; videos</strong>
+          <span>{images.length} photos · {videos.length} videos</span>
+          <small>Scroll sideways to browse. Tap media to preview; remove it, then save the listing.</small>
+        </div>
       </div>
-    </div>}
-  </section>;
+      {images.length + videos.length ? (
+        <div className="admin-media-strip">
+          {images.map((src, index) => (
+            <article className="admin-media-tile" key={`photo-${src}-${index}`}>
+              <button type="button" className="admin-media-preview" onClick={() => setPreview({ type: "photo", src, index })} aria-label={`Preview photo ${index + 1}`}>
+                <img src={src} alt={`Listing photo ${index + 1}`} loading="lazy" />
+              </button>
+              <span>Photo {index + 1}</span>
+              <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia("photo", index)}>Remove photo</button>
+            </article>
+          ))}
+          {videos.map((src, index) => (
+            <article className="admin-media-tile" key={`video-${src}-${index}`}>
+              <button type="button" className="admin-media-preview" onClick={() => setPreview({ type: "video", src, index })} aria-label={`Play video ${index + 1}`}>
+                <video src={src} muted playsInline preload="metadata" />
+                <span className="admin-media-play" aria-hidden="true">▶</span>
+              </button>
+              <span>Video {index + 1}</span>
+              <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia("video", index)}>Remove video</button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="admin-media-empty">This listing has no photos or videos.</p>
+      )}
+      {preview && (
+        <div className="admin-media-lightbox" role="dialog" aria-modal="true" aria-label={`${preview.type === "photo" ? "Photo" : "Video"} preview`} onClick={() => setPreview(null)}>
+          <div className="admin-media-lightbox-content" onClick={(event) => event.stopPropagation()}>
+            <div className="admin-media-lightbox-heading">
+              <strong>{title} · {preview.type} {preview.index + 1}</strong>
+              <button type="button" aria-label="Close preview" onClick={() => setPreview(null)}>×</button>
+            </div>
+            {preview.type === "photo" ? (
+              <img className="admin-media-large-image" src={preview.src} alt={`${title} photo ${preview.index + 1}`} />
+            ) : (
+              <video className="admin-media-large-video" src={preview.src} controls playsInline autoPlay />
+            )}
+            <button type="button" className="admin-media-remove" disabled={disabled} onClick={() => removeMedia(preview.type, preview.index)}>Remove this {preview.type}</button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
-
 
 export function AdminDashboard() {
   const router = useRouter();
-  const [data, setData] = useState<DashboardData>({ users: [], properties: [], inquiries: [], inquiryNotifications: [], reviews: [], phoneClicks: [], memberActivity: [], siteActivity: [], registrationNotifications: [], settings: { showSellerPhones: true, homeTickerText: "New verified plots are added after owner and site checks.", homeTickerPropertyId: "", popupAdEnabled: false, popupAdPropertyId: "", popupAdKicker: "IMPORTANT ANNOUNCEMENT", popupAdTitle: "", popupAdDate: "", popupAdBody: "", popupAdImage: "", announcementEnabled: false, announcementText: "" } });
-  const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity" | "ads">("leads");
+  const [data, setData] = useState<DashboardData>({
+    users: [],
+    properties: [],
+    inquiries: [],
+    inquiryNotifications: [],
+    reviews: [],
+    phoneClicks: [],
+    memberActivity: [],
+    siteActivity: [],
+    registrationNotifications: [],
+    settings: {
+      showSellerPhones: true,
+      homeTickerText: "New verified plots are added after owner and site checks.",
+      homeTickerPropertyId: "",
+      popupAdEnabled: false,
+      popupAdPropertyId: "",
+      popupAdKicker: "IMPORTANT ANNOUNCEMENT",
+      popupAdTitle: "",
+      popupAdDate: "",
+      popupAdBody: "",
+      popupAdImage: "",
+      announcementEnabled: false,
+      announcementText: "",
+    },
+  });
+  const [section, setSection] = useState<"leads" | "properties" | "requirements" | "visits" | "matches" | "packages" | "users" | "inquiries" | "reviews" | "phoneClicks" | "activity" | "ads" | "rolling">("leads");
   const [profileFocusId, setProfileFocusId] = useState("");
   const [listingTab, setListingTab] = useState<"sale" | "rent" | "hidden" | "pending">("sale");
   const listingsRef = useRef<HTMLDivElement>(null);
@@ -191,6 +252,79 @@ export function AdminDashboard() {
   const [backupError, setBackupError] = useState("");
   const [backupMessage, setBackupMessage] = useState("");
   const [pendingDelete, setPendingDelete] = useState<{ type: "user" | "property" | "inquiry" | "review"; id: string } | null>(null);
+
+  // Quick Promotion & Ad Helpers
+  const [selectedPromoPlotId, setSelectedPromoPlotId] = useState("");
+  const [copiedPromo, setCopiedPromo] = useState(false);
+  const [showLivePopupModal, setShowLivePopupModal] = useState(false);
+
+  const selectedPromoPlot = data.properties.find((p) => p.id === (selectedPromoPlotId || popupListingId)) ?? data.properties[0];
+
+  function autoFillPopupFromPlot(plotId: string) {
+    const plot = data.properties.find((p) => p.id === plotId);
+    if (!plot) return;
+    setPopupListingId(plot.id);
+    setPopupTitle(plot.title);
+    const priceFormatted = Number(plot.price) >= 10000000
+      ? `₹${(Number(plot.price) / 10000000).toFixed(2)} Cr`
+      : Number(plot.price) >= 100000
+      ? `₹${(Number(plot.price) / 100000).toFixed(1)} Lakhs`
+      : `₹${Number(plot.price).toLocaleString("en-IN")}`;
+    setPopupBody(`${[plot.locality, plot.city].filter(Boolean).join(", ")} · ${priceFormatted} · ${plot.area} ${plot.unit}. Clear title plot verified by NILAY.`);
+    if (plot.image) setPopupImage(plot.image);
+    setPopupDate("Verified Listing · Limited Period");
+  }
+
+  function handleSelectPopupPlot(plotId: string) {
+    setPopupListingId(plotId);
+    const found = data.properties.find((p) => p.id === plotId);
+    if (found) {
+      if (!popupTitle) setPopupTitle(found.title);
+      if (!popupBody) setPopupBody(`${[found.locality, found.city].filter(Boolean).join(", ")} · ₹${Number(found.price).toLocaleString("en-IN")} · ${found.area} ${found.unit}. Verified clear title plot.`);
+      if (!popupImage && found.image) setPopupImage(found.image);
+    }
+  }
+
+  function generateWhatsAppText(plot?: Property) {
+    if (!plot) return "";
+    const priceFormatted = Number(plot.price) >= 10000000
+      ? `₹${(Number(plot.price) / 10000000).toFixed(2)} Cr`
+      : Number(plot.price) >= 100000
+      ? `₹${(Number(plot.price) / 100000).toFixed(1)} Lakhs`
+      : `₹${Number(plot.price).toLocaleString("en-IN")}`;
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://nkart.store";
+    const link = `${siteUrl}/properties/${encodeURIComponent(plot.id)}`;
+
+    return `🏡 *EXCLUSIVE PLOT FOR SALE - ${plot.locality?.toUpperCase() || "HYDERABAD"}, ${plot.city?.toUpperCase() || "TELANGANA"}*\n\n` +
+      `🏷️ *Project:* ${plot.title}\n` +
+      `💰 *Price:* ${priceFormatted} (${plot.listingCategory === "rent" ? "Rent" : "Total"})\n` +
+      `📐 *Size:* ${plot.area} ${plot.unit}\n` +
+      (plot.approvals ? `✅ *Approvals:* ${plot.approvals}\n` : "") +
+      (plot.facing ? `🧭 *Facing:* ${plot.facing}\n` : "") +
+      (plot.roadWidth ? `🛣️ *Road Width:* ${plot.roadWidth}\n` : "") +
+      `✨ 100% Clear Title Documentation & Ready for Registration\n\n` +
+      `📸 *View Full Photos, Video & Details:*\n${link}\n\n` +
+      `📞 *Direct Site Visits & Negotiation:* 8074399963\n` +
+      `🌐 *NILAY Real Estate Marketplace*`;
+  }
+
+  async function copyWhatsAppAd() {
+    const text = generateWhatsAppText(selectedPromoPlot);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedPromo(true);
+      window.setTimeout(() => setCopiedPromo(false), 2500);
+    } catch {
+      /* fallback */
+    }
+  }
+
+  function shareWhatsAppAd() {
+    const text = generateWhatsAppText(selectedPromoPlot);
+    if (!text) return;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }
 
   function reviewPendingListings() {
     setSection("properties");
@@ -233,6 +367,15 @@ export function AdminDashboard() {
   useEffect(() => {
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "ads" || tab === "rolling" || tab === "leads" || tab === "properties") {
+      setSection(tab);
+    }
   }, []);
 
   useEffect(() => {
@@ -517,220 +660,982 @@ export function AdminDashboard() {
     }
   }
 
-  return <section className="admin-content">
-    <AdminDailySummary onSelectSection={(s) => setSection(s)} />
-    {pendingDelete && <ConfirmDialog title="Delete this record?" description="This action cannot be undone. The selected record will be permanently deleted." confirmLabel="Delete permanently" error={error} busy={busyId === pendingDelete.id} onCancel={() => setPendingDelete(null)} onConfirm={() => void confirmDelete()} />}
-    <div className="admin-setting-card">
-      <div><strong>Site-wide seller contact visibility</strong><p>This overall switch overrides every listing. When it is on, each listing&apos;s phone visibility switch controls whether its number appears. When it is off, seller contact details are hidden across the website and enquiries go to NILAY.</p></div>
-      <button type="button" className={`admin-setting-toggle${data.settings.showSellerPhones ? " is-on" : ""}`} aria-pressed={data.settings.showSellerPhones} disabled={savingPhoneSetting} onClick={() => void toggleSellerPhones()}>
-        <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
-      </button>
-    </div>
-    <section className="admin-home-ticker-setting" aria-labelledby="admin-home-ticker-title">
-      <div><span className="eyebrow">HOMEPAGE FEATURE</span><h2 id="admin-home-ticker-title">New listing banner</h2><p>Choose a published listing image and edit the scrolling message shown on the homepage. Leave the listing unselected to show the newest published sale listing automatically.</p></div>
-      <label>Scrolling message<input value={tickerText} maxLength={180} onChange={(event) => setTickerText(event.target.value)} placeholder="New verified plots are added after owner and site checks." /></label>
-      <label>Listing image<select value={tickerPropertyId} onChange={(event) => setTickerPropertyId(event.target.value)}><option value="">Newest published sale listing</option>{data.properties.filter((property) => property.status === "published" && property.listingCategory === "sale").map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}</select></label>
-      {(() => { const featured = data.properties.find((property) => property.id === tickerPropertyId) ?? data.properties.filter((property) => property.status === "published" && property.listingCategory === "sale").sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0]; return featured?.image ? <div className="admin-home-ticker-preview"><img src={featured.image} alt={`Homepage banner preview for ${featured.title}`} /><span>Image preview · {featured.title}</span></div> : null; })()}
-      <button className="button button-dark" type="button" disabled={savingTicker} onClick={() => void saveHomeTicker()}>{savingTicker ? "Saving…" : "Save homepage banner"}</button>
-    </section>
-    <section className="admin-backup-card" aria-labelledby="admin-backup-title">
-      {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
-      {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}
-      <div className="admin-backup-copy"><span className="eyebrow">DATA PROTECTION</span><h2 id="admin-backup-title">Site backup</h2><p>Stream a portable copy of all site data and listing photos/videos to your device. Upload the completed .gz file to restore it.</p></div>
-      <div className="admin-backup-actions">
-        <input ref={backupInputRef} className="admin-backup-file" type="file" accept=".gz,.json,.terraland-backup,application/gzip,application/json" aria-label="Choose a Terraland backup file" disabled={backupBusy} onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])} />
-        <button className="admin-backup-button admin-backup-upload" type="button" disabled={backupBusy} onClick={() => backupInputRef.current?.click()}><Upload size={16} aria-hidden="true" />{backupBusy ? "Working…" : "Upload backup"}</button>
-        <button className="admin-backup-button admin-backup-download" type="button" disabled={backupBusy} onClick={() => void downloadBackup()}><Download size={16} aria-hidden="true" />Download backup</button>
+  return (
+    <section className="admin-content">
+      {/* Quick Action Navigation Bar */}
+      <div className="admin-quick-nav-bar" aria-label="Admin Navigation Actions">
+        <button
+          type="button"
+          className={`admin-nav-pill ${section === "ads" ? "is-active" : ""}`}
+          onClick={() => setSection("ads")}
+        >
+          <Megaphone size={15} />
+          <span>Ads &amp; Promotion</span>
+          <span className={`admin-status-dot ${data.settings.popupAdEnabled ? "is-on" : ""}`} />
+        </button>
+        <button
+          type="button"
+          className={`admin-nav-pill ${section === "rolling" ? "is-active" : ""}`}
+          onClick={() => setSection("rolling")}
+        >
+          <Sparkles size={15} />
+          <span>Rolling Tickers</span>
+          <span className={`admin-status-dot ${data.settings.announcementEnabled ? "is-on" : ""}`} />
+        </button>
+        <button
+          type="button"
+          className={`admin-nav-pill ${section === "leads" ? "is-active" : ""}`}
+          onClick={() => setSection("leads")}
+        >
+          <Users size={15} />
+          <span>Leads CRM</span>
+        </button>
+        <button
+          type="button"
+          className={`admin-nav-pill ${section === "properties" ? "is-active" : ""}`}
+          onClick={() => setSection("properties")}
+        >
+          <Home size={15} />
+          <span>Plots &amp; Listings ({data.properties.length})</span>
+        </button>
+        <Link href="/admin/analytics" className="admin-nav-pill">
+          <TrendingUp size={15} />
+          <span>Visitor Analytics</span>
+          <span aria-hidden="true">↗</span>
+        </Link>
       </div>
-    </section>
-    {data.registrationNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
-      <div><strong>Registration emails are queued</strong><p>New accounts can sign in. Configure a Resend API key and verified sender to deliver notices to pavansai580@gmail.com.</p></div>
-      <button className="button button-dark" type="button" disabled={retryingEmail} onClick={() => void retryRegistrationEmails()}>{retryingEmail ? "Retrying…" : "Retry queued emails"}</button>
-    </div>}
-    {data.inquiryNotifications.some((notice) => notice.status === "pending") && <div className="admin-email-alert">
-      <div><strong>Enquiry emails are queued</strong><p>Configure the Resend sender and API key to deliver saved buyer enquiries to pavansai580@gmail.com.</p></div>
-      <button className="button button-dark" type="button" disabled={retryingInquiryEmail} onClick={() => void retryInquiryEmails()}>{retryingInquiryEmail ? "Retrying…" : "Retry enquiry emails"}</button>
-    </div>}
-    {data.properties.some((property) => property.deleteRequestedAt) && <div className="admin-email-alert">
-      <div><strong>{data.properties.filter((property) => property.deleteRequestedAt).length} listing deletion request(s) need your approval</strong><p>Requested listings stay online until you approve deletion from the listings panel.</p></div>
-      <button className="button button-dark" type="button" onClick={reviewPendingListings}>Review listings</button>
-    </div>}
-    <Link className="admin-analytics-link" href="/admin/analytics"><span><span className="eyebrow">VISITOR ANALYTICS</span><strong>Daily and monthly visitor graphs</strong><small>View clear traffic summaries and manage recorded analytics.</small></span><span aria-hidden="true">↗</span></Link>
-    <div className="admin-stats">
-      <button className={section === "leads" ? "is-active" : ""} onClick={() => setSection("leads")}><span>LEADS CRM</span><strong>CRM</strong></button>
-      <button className={section === "requirements" ? "is-active" : ""} onClick={() => setSection("requirements")}><span>BUYER REQS</span><strong>REQS</strong></button>
-      <button className={section === "visits" ? "is-active" : ""} onClick={() => setSection("visits")}><span>SITE VISITS</span><strong>VISITS</strong></button>
-      <button className={section === "matches" ? "is-active" : ""} onClick={() => setSection("matches")}><span>MATCHMAKER</span><strong>MATCH</strong></button>
-      <button className={section === "packages" ? "is-active" : ""} onClick={() => setSection("packages")}><span>PACKAGES</span><strong>FEES</strong></button>
-      <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}><span>LISTINGS</span><strong>{data.properties.length}</strong></button>
-      <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}><span>MEMBERS</span><strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong></button>
-      <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}><span>ENQUIRIES</span><strong>{data.inquiries.length}</strong></button>
-      <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}><span>REVIEWS</span><strong>{data.reviews.length}</strong></button>
-      <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}><span>PHONE & WHATSAPP</span><strong>{data.phoneClicks.length}</strong></button>
-      <button className={section === "activity" ? "is-active" : ""} onClick={() => setSection("activity")}><span>ALL ACTIVITY</span><strong>{data.siteActivity.length}</strong></button>
-      <button className={section === "ads" ? "is-active" : ""} onClick={() => setSection("ads")}><span>ADS &amp; POPUPS</span><strong>{data.settings.popupAdEnabled ? "ON" : "OFF"}</strong></button>
-    </div>
-    {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
-    {message && <div className="admin-success" role="status">{message}</div>}
-    {loading ? <p className="admin-empty">Loading site records…</p> : <>
-      {section === "leads" && <AdminLeadsCrm />}
-      {section === "requirements" && <AdminRequirementsView />}
-      {section === "visits" && <AdminSiteVisitsView />}
-      {section === "matches" && <AdminMatchesView />}
-      {section === "packages" && <AdminPackagesView />}
-      {section === "ads" && <div className="admin-promotion-controls">
-      <section className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
-        <div><span className="eyebrow">SITE PROMOTION</span><h2 id="admin-ad-manager-title">Listing popup</h2><p>Visitors see this featured plot after five seconds. Tapping anywhere on the popup opens the listing; the close button dismisses it. It appears once per browser tab session.</p></div>
-        <label className="admin-ad-toggle"><input type="checkbox" checked={popupEnabled} onChange={(event) => setPopupEnabled(event.target.checked)} />Enable the five-second listing popup</label>
-        <label>Published plot to feature<select value={popupListingId} onChange={(event) => setPopupListingId(event.target.value)}><option value="">Select a published plot</option>{data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === "sale").map((property) => <option key={property.id} value={property.id}>{property.title}</option>)}</select></label>
-        <label>Popup image URL<input value={popupImage} onChange={(event) => setPopupImage(event.target.value)} maxLength={1000} placeholder="Leave blank to use the selected plot photo" /></label>
-        {(() => { const featured = data.properties.find((property) => property.id === popupListingId); const image = popupImage || featured?.image; return image ? <div className="admin-home-ticker-preview"><img src={image} alt="Popup poster preview" /><span>Popup poster preview</span></div> : null; })()}
-        <label>Top label<input value={popupKicker} onChange={(event) => setPopupKicker(event.target.value)} maxLength={80} placeholder="IMPORTANT ANNOUNCEMENT" /></label>
-        <label>Announcement heading<input value={popupTitle} onChange={(event) => setPopupTitle(event.target.value)} maxLength={140} placeholder="Defaults to the selected plot title" /></label>
-        <label>Date or short note<input value={popupDate} onChange={(event) => setPopupDate(event.target.value)} maxLength={80} placeholder="Optional" /></label>
-        <label>Announcement details<textarea value={popupBody} onChange={(event) => setPopupBody(event.target.value)} maxLength={700} rows={4} placeholder="Write the announcement visitors should see." /></label>
-        <button className="button button-dark" type="button" disabled={savingPopup} onClick={() => void savePopupAd()}>{savingPopup ? "Saving…" : "Save ads & popup settings"}</button>
-      </section>
-      <section className="admin-ad-manager" aria-labelledby="admin-announcement-title">
-        <div><span className="eyebrow">SITEWIDE MESSAGE</span><h2 id="admin-announcement-title">Scrolling announcement</h2><p>This theme-colored ticker runs above the site navigation on Explore, Farmhouse, and the other public pages. Edit or pause it here.</p></div>
-        <label className="admin-ad-toggle"><input type="checkbox" checked={announcementEnabled} onChange={(event) => setAnnouncementEnabled(event.target.checked)} />Show scrolling announcement</label>
-        <label>Announcement text<input value={announcementText} onChange={(event) => setAnnouncementText(event.target.value)} maxLength={240} placeholder="Latest update: …" /></label>
-        <button className="button button-dark" type="button" disabled={savingAnnouncement} onClick={() => void saveAnnouncementTicker()}>{savingAnnouncement ? "Saving…" : "Save announcement ticker"}</button>
-      </section>
-      </div>}
-      {section === "properties" && <>
-        <div className="listing-admin-tabs">
-          <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
-            {([["sale", "For sale"], ["rent", "For rent"]] as const).map(([tab, label]) => {
-              const count = data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === tab).length;
-              return <button key={tab} type="button" role="tab" aria-selected={listingTab === tab} className={listingTab === tab ? "is-active" : ""} onClick={() => setListingTab(tab)}>{label} <span>{count}</span></button>;
-            })}
+
+      <AdminDailySummary onSelectSection={(s) => setSection(s)} />
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title="Delete this record?"
+          description="This action cannot be undone. The selected record will be permanently deleted."
+          confirmLabel="Delete permanently"
+          error={error}
+          busy={busyId === pendingDelete.id}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={() => void confirmDelete()}
+        />
+      )}
+
+      {/* Live Full-Screen Popup Test Modal */}
+      {showLivePopupModal && (
+        <div className="promotion-popup" role="dialog" aria-modal="true" aria-label="Popup Ad Live Test" style={{ zIndex: 99999 }}>
+          <div className="promotion-popup-link" style={{ pointerEvents: "auto" }}>
+            <article className="promotion-popup-card">
+              <div className="promotion-popup-tabs">
+                <span>{popupKicker || "IMPORTANT ANNOUNCEMENT"}</span>
+                <span>{popupDate || "Verified listing"}</span>
+              </div>
+              <img
+                className="promotion-popup-image"
+                src={popupImage || (data.properties.find((p) => p.id === popupListingId)?.image) || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80"}
+                alt="Test popup"
+              />
+              <div className="promotion-popup-copy">
+                <span className="eyebrow">{popupKicker || "IMPORTANT ANNOUNCEMENT"}</span>
+                {popupDate && <span className="promotion-popup-date">{popupDate}</span>}
+                <h2>{popupTitle || "Featured Property Announcement"}</h2>
+                <p className="promotion-popup-body">{popupBody || "Announcement details will appear here."}</p>
+                <div className="promotion-popup-details">
+                  <strong>
+                    {(() => {
+                      const p = data.properties.find((prop) => prop.id === popupListingId);
+                      return p ? (Number(p.price) >= 10000000 ? `₹${(Number(p.price) / 10000000).toFixed(2)} Cr` : `₹${(Number(p.price) / 100000).toFixed(1)} Lakhs`) : "₹ Special Price";
+                    })()}
+                  </strong>
+                  <span>
+                    {(() => {
+                      const p = data.properties.find((prop) => prop.id === popupListingId);
+                      return p ? [p.locality, p.city].filter(Boolean).join(" · ") : "Telangana";
+                    })()}
+                  </span>
+                </div>
+                <span className="promotion-popup-cta">View listing ↗</span>
+              </div>
+            </article>
           </div>
-          <button type="button" className={listingTab === "hidden" ? "hidden-is-active" : ""} aria-pressed={listingTab === "hidden"} onClick={() => setListingTab("hidden")}>Hidden listings <span>{data.properties.filter((property) => property.status === "hidden").length}</span></button>
-          <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending review <span>{data.properties.filter((property) => property.status === "pending" || property.deleteRequestedAt).length}</span></button>
+          <button type="button" className="promotion-popup-close" aria-label="Close test popup" onClick={() => setShowLivePopupModal(false)}>
+            <X size={20} />
+          </button>
         </div>
-        <div className="admin-record-list" ref={listingsRef}>{data.properties.filter((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? property.status === "pending" || Boolean(property.deleteRequestedAt) : property.status === "published" && (property.listingCategory ?? "sale") === listingTab).map((property) =>
-        <details className="admin-listing-details" key={property.id} open={Boolean((property.deleteRequestedAt || property.status === "pending") && listingTab === "pending")}>
-        <summary className="admin-listing-summary"><span><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : property.status === "pending" ? "NEW LISTING · PENDING REVIEW" : property.status === "hidden" ? "HIDDEN LISTING" : property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}</span><strong>{property.title}</strong><span className="admin-listing-meta">{property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}</span><span className="admin-listing-meta">Submitted {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span></span><span className="admin-listing-open">Open details</span></summary>
-        {property.status === "published" && <Link className="admin-listing-page-arrow" href={`/properties/${encodeURIComponent(property.id)}`} target="_blank" rel="noreferrer" aria-label={`Open ${property.title} listing page`} title="Open listing page"><ArrowUpRight size={18} aria-hidden="true" /></Link>}
-        <form className="admin-record" onSubmit={(event) => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          void update("property", property.id, {
-            title: form.get("title"), type: form.get("type"), city: form.get("city"), locality: form.get("locality"),
-            owner: form.get("owner"), phone: form.get("phone"), price: form.get("price"), area: form.get("area"),
-            unit: form.get("unit"), badge: form.get("badge"), description: form.get("description"),
-            listingCategory: form.get("listingCategory"), pricePeriod: form.get("pricePeriod"),
-            availability: form.get("availability"), guestCapacity: form.get("guestCapacity"),
-            verified: form.get("verified") === "on", status: property.status ?? "published",
-            images: readMediaArray(form.get("images")), videos: readMediaArray(form.get("videos")),
-            facing: form.get("facing"), approvals: form.get("approvals"),
-            loanAvailable: form.get("loanAvailable"), registrationAvailable: form.get("registrationAvailable"),
-            renovation: form.get("renovation"), cornerPlot: form.get("cornerPlot"), roadWidth: form.get("roadWidth"),
-            surveyNumber: form.get("surveyNumber"), soilType: form.get("soilType"), clearTitle: form.get("clearTitle"),
-            amenities: String(form.get("amenities") ?? "").split(/\r?\n|,/).map((amenity) => amenity.trim()).filter(Boolean),
-            address: form.get("address"), landmark: form.get("landmark"), mapUrl: form.get("mapUrl"),
-          });
-        }}>
-          <div className="admin-record-top"><div><span className="eyebrow">{property.deleteRequestedAt ? "DELETION REQUEST · AWAITING YOUR APPROVAL · " : "LISTING · "}{property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type} · {property.id.slice(0, 8)}</span><strong translate="no">{property.title}</strong></div><div className="admin-record-actions">{property.deleteRequestedAt && <button type="button" className="text-link" disabled={busyId === property.id} onClick={() => void keepListing(property.id)}>Keep listing</button>}<button type="button" className="admin-delete" disabled={busyId === property.id} onClick={() => void remove("property", property.id)}>{property.deleteRequestedAt ? "Approve & delete" : "Delete listing"}</button></div></div>
-          {property.sellerAuthority && <p className="admin-listing-meta">Seller: {property.sellerAuthority === "owner" ? "Owner" : "Authorised representative"} · Publish permission {property.publicationConsentAt ? `recorded ${formatAdminDate(property.publicationConsentAt)}` : "not recorded"} · Contact permission {property.contactConsentAt ? `recorded ${formatAdminDate(property.contactConsentAt)}` : "not recorded"}</p>}
-          <div className="admin-form-grid">
-            <label>Title<input name="title" required defaultValue={property.title} /></label>
-            <ListingClassificationFields category={property.listingCategory ?? "sale"} type={property.type} pricePeriod={property.pricePeriod ?? "total"}
-              categoryFields={(category) => category === "rent" ? <>
-                <label className="admin-wide">Availability / rental terms<input name="availability" maxLength={240} defaultValue={property.availability ?? ""} /></label>
-                <label>Guest capacity<input name="guestCapacity" type="number" min="1" max="1000" step="1" defaultValue={property.guestCapacity ?? ""} /></label>
-              </> : <>
-                <label>Facing<input name="facing" maxLength={40} defaultValue={property.facing ?? ""} /></label>
-                <label>Approvals<input name="approvals" maxLength={120} defaultValue={property.approvals ?? ""} /></label>
-                <label>Road width<input name="roadWidth" maxLength={40} defaultValue={property.roadWidth ?? ""} /></label>
-                <label>Survey number<input name="surveyNumber" maxLength={80} defaultValue={property.surveyNumber ?? ""} /></label>
-                <label>Soil type<input name="soilType" maxLength={80} defaultValue={property.soilType ?? ""} /></label>
-                <label>Renovation / condition<input name="renovation" maxLength={120} defaultValue={property.renovation ?? ""} /></label>
-                <label>Loan available<select name="loanAvailable" defaultValue={property.loanAvailable ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-                <label>Registration available<select name="registrationAvailable" defaultValue={property.registrationAvailable ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-                <label>Corner plot<select name="cornerPlot" defaultValue={property.cornerPlot ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-                <label>Clear title<select name="clearTitle" defaultValue={property.clearTitle ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
-              </>}
-            />
-            <label>City / state<input name="city" required defaultValue={property.city} /></label>
-            <label>Locality<input name="locality" required defaultValue={property.locality} /></label>
-            <label>Owner name<input name="owner" required defaultValue={property.owner} /></label>
-            <label>Phone<input name="phone" required defaultValue={property.phone} /></label>
-            <label>Price or rate (₹)<input name="price" type="number" min="1" required defaultValue={property.price} /></label>
-            <label>Area<input name="area" type="text" inputMode="decimal" maxLength={80} required defaultValue={property.area} /></label>
-            <label>Area unit<input name="unit" required defaultValue={property.unit} /></label>
-            <label className="admin-wide">Amenities (one per line)<textarea name="amenities" rows={2} defaultValue={(property.amenities ?? []).join("\n")} /></label>
-            <label className="admin-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
-            <label className="admin-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
-            <label className="admin-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
-            <label>Badge<input name="badge" required defaultValue={property.badge} /></label>
-            <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status !== "published")}>{property.status === "pending" ? "Approve and publish listing" : property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
-            <button type="button" className="admin-visibility-button" aria-pressed={property.showPhone !== false} disabled={busyId === property.id} onClick={() => void toggleListingPhoneVisibility(property.id, property.showPhone === false)}>{property.showPhone === false ? "Show phone on this listing" : "Hide phone on this listing"}</button>
-            <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
-            <AdminListingMediaManager title={property.title} initialImages={property.images?.length ? property.images : property.image ? [property.image] : []} initialVideos={property.videos ?? []} disabled={busyId === property.id} />
-            <label className="admin-wide">Description<textarea name="description" rows={3} required defaultValue={property.description} /></label>
+      )}
+
+      <div className="admin-setting-card">
+        <div>
+          <strong>Site-wide seller contact visibility</strong>
+          <p>This overall switch overrides every listing. When it is on, each listing&apos;s phone visibility switch controls whether its number appears. When it is off, seller contact details are hidden across the website and enquiries go to NILAY.</p>
+        </div>
+        <button
+          type="button"
+          className={`admin-setting-toggle${data.settings.showSellerPhones ? " is-on" : ""}`}
+          aria-pressed={data.settings.showSellerPhones}
+          disabled={savingPhoneSetting}
+          onClick={() => void toggleSellerPhones()}
+        >
+          <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
+        </button>
+      </div>
+
+      <section className="admin-backup-card" aria-labelledby="admin-backup-title">
+        {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
+        {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}
+        <div className="admin-backup-copy">
+          <span className="eyebrow">DATA PROTECTION</span>
+          <h2 id="admin-backup-title">Site backup</h2>
+          <p>Stream a portable copy of all site data and listing photos/videos to your device. Upload the completed .gz file to restore it.</p>
+        </div>
+        <div className="admin-backup-actions">
+          <input
+            ref={backupInputRef}
+            className="admin-backup-file"
+            type="file"
+            accept=".gz,.json,.terraland-backup,application/gzip,application/json"
+            aria-label="Choose a Terraland backup file"
+            disabled={backupBusy}
+            onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])}
+          />
+          <button className="admin-backup-button admin-backup-upload" type="button" disabled={backupBusy} onClick={() => backupInputRef.current?.click()}>
+            <Upload size={16} aria-hidden="true" />{backupBusy ? "Working…" : "Upload backup"}
+          </button>
+          <button className="admin-backup-button admin-backup-download" type="button" disabled={backupBusy} onClick={() => void downloadBackup()}>
+            <Download size={16} aria-hidden="true" />Download backup
+          </button>
+        </div>
+      </section>
+
+      {data.registrationNotifications.some((notice) => notice.status === "pending") && (
+        <div className="admin-email-alert">
+          <div>
+            <strong>Registration emails are queued</strong>
+            <p>New accounts can sign in. Configure a Resend API key and verified sender to deliver notices to pavansai580@gmail.com.</p>
           </div>
-          <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>
-        </form>
-        </details>
-      )}{!data.properties.some((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? property.status === "pending" || Boolean(property.deleteRequestedAt) : property.status === "published" && (property.listingCategory ?? "sale") === listingTab) && <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listings or deletion requests are waiting for review." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>}</div>
-      </>}
-      {section === "users" && <div className="admin-record-list">{data.users.filter((user) => user.email !== "pavansai580@gmail.com" || user.id === profileFocusId).map((user) =>
-        <form className={`admin-record admin-user-record${user.id === profileFocusId ? " is-profile-focus" : ""}`} data-admin-user-id={user.id} key={user.id} onSubmit={(event) => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          void update("user", user.id, { name: form.get("name"), email: form.get("email") });
-        }}>
-          <div className="admin-record-top"><div><span className="eyebrow">{user.listingCount} LISTINGS · ACCOUNT CREATED {formatAdminDate(user.createdAt)}</span><strong>{user.name}</strong><span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span></div>{user.email !== "pavansai580@gmail.com" && <button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button>}</div>
-          <div className="admin-form-grid"><label>Name<input name="name" required defaultValue={user.name} /></label><label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label></div>
-          <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
-          <details className="member-activity" open={user.id === profileFocusId}>
-            <summary>Full activity log · {activityForUser(user.id).length} events</summary>
-            {activityForUser(user.id).length ? <ol>{activityForUser(user.id).map((activity) => <li key={activity.id}>
-              <time dateTime={activity.createdAt}>{formatAdminDate(activity.createdAt)}</time>
-              <strong>{activity.action}</strong>
-              {(activity.propertyTitle || activity.details) && <span>{[activity.propertyTitle, activity.details].filter(Boolean).join(" · ")}</span>}
-            </li>)}</ol> : <p>No activity recorded for this member yet.</p>}
-          </details>
-        </form>
-      )}</div>}
-      {section === "inquiries" && <div className="admin-record-list">{data.inquiries.map((inquiry) =>
-        <article className="admin-record admin-inquiry" key={inquiry.id}>
-          <div className="admin-record-top"><div><span className="eyebrow">{inquiry.email ? "ACCOUNT ENQUIRY" : "LEGACY ENQUIRY"}{inquiry.emailStatus ? ` · EMAIL ${inquiry.emailStatus.toUpperCase()}` : ""} · {formatAdminDate(inquiry.createdAt)}</span><strong>{inquiry.propertyTitle}</strong></div><button type="button" className="admin-delete" disabled={busyId === inquiry.id} onClick={() => void remove("inquiry", inquiry.id)}>Delete</button></div>
-          <div className="admin-inquiry-contact"><strong>{inquiry.name}</strong>{inquiry.email ? <a href={`mailto:${inquiry.email}`}>{inquiry.email}</a> : <span>Email not available</span>}{inquiry.phone && <a href={`tel:${inquiry.phone}`}>{inquiry.phone}</a>}<span>{inquiry.userId ? "Account linked" : inquiry.email ? "Account removed; contact snapshot retained" : "Submitted before account sign-in was required"}</span></div>
-          <p>{inquiry.message}</p>
-        </article>
-      )}</div>}
-      {section === "reviews" && <div className="admin-record-list">{data.reviews.length ? data.reviews.map((review) =>
-        <article className="admin-record admin-review" key={review.id}>
-          <div className="admin-record-top"><div><span className="eyebrow">{review.reviewerName} · {review.rating}/5 · {formatAdminDate(review.updatedAt ?? review.createdAt)}</span><strong>{review.propertyTitle}</strong></div><button type="button" className="admin-delete" disabled={busyId === review.id} onClick={() => void remove("review", review.id)}>Delete review</button></div>
-          <p>{review.comment}</p>
-        </article>
-      ) : <p className="admin-empty">No reviews have been posted yet.</p>}</div>}
-      {section === "phoneClicks" && <div className="admin-record-list">{data.phoneClicks.length ? data.phoneClicks.map((click) =>
-        <article className="admin-record admin-phone-click" key={click.id}>
-          <div className="admin-record-top"><div><span className="eyebrow">{formatAdminDate(click.createdAt)} · {click.contactMethod === "whatsapp" ? "WHATSAPP TO 8074399963" : "PHONE NUMBER CLICK"} · {click.userId ? "SIGNED-IN USER" : "GUEST VISITOR"}</span><strong>{click.propertyTitle}</strong></div><Link className="text-link" href={`/properties/${encodeURIComponent(click.propertyId)}`} target="_blank">View listing</Link></div>
-          <div className="admin-inquiry-contact"><span>Visitor: {click.visitorProfileId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.visitorProfileId!)}>{click.userName || "View visitor profile"}</button> : <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong>}</span>{click.userPhone && <span>Phone: {click.userPhone}</span>}<span>Seller: {click.sellerId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.sellerId!)}>{click.sellerName}</button> : <strong>{click.sellerName}</strong>}</span></div>
-        </article>
-      ) : <p className="admin-empty">No seller phone clicks have been recorded yet.</p>}</div>}
-      {section === "activity" && <>
-        <div className="admin-site-activity-heading"><div><span className="eyebrow">USER JOURNEY</span><h2>All site activity · newest first</h2><p>Page views and actions from members and guest visitors.</p></div><button type="button" className="button button-outline" onClick={() => void load()}>Refresh log</button></div>
-        <div className="admin-record-list admin-site-activity-list">{data.siteActivity.length ? data.siteActivity.map((activity) =>
-        <article className="admin-record admin-site-activity" key={activity.id}>
-          <time dateTime={activity.createdAt}>{formatAdminDate(activity.createdAt)}</time>
-          <div className="admin-site-activity-actor">{activity.userId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(activity.userId!)}>{activity.actorName || "Member profile"}</button> : <strong>{activity.actorName || `Guest ${activity.visitorId.slice(0, 8)}`}</strong>}{!activity.userId && activity.visitorId && <small>Visitor ID {activity.visitorId.slice(0, 8)}</small>}</div>
-          <div className="admin-site-activity-content"><strong>{activity.action}</strong>{activity.details && <span>{activity.details}</span>}{activity.propertyTitle && activity.propertyId && <Link href={`/properties/${encodeURIComponent(activity.propertyId)}`} target="_blank">{activity.propertyTitle}</Link>}</div>
-        </article>
-      ) : <p className="admin-empty">No activity recorded yet.</p>}</div>
-      </>}
-      {section === "users" && <section className="admin-record-list admin-notifications">
-        <h2>Registration email delivery</h2>
-        {data.registrationNotifications.length ? data.registrationNotifications.map((notice) => <article className="admin-record" key={notice.id}>
-          <div className="admin-record-top"><div><span className="eyebrow">{notice.status === "sent" ? `SENT ${notice.sentAt ? new Date(notice.sentAt).toLocaleString() : ""}` : "QUEUED"}</span><strong>{notice.name}</strong></div><span>{notice.email}</span></div>
-          {notice.status === "pending" && <p>Attempts: {notice.attempts}. {notice.lastError ?? "Waiting for mail configuration."}</p>}
-        </article>) : <p className="admin-empty">No registration notifications yet.</p>}
-      </section>}
-    </>}
-  </section>;
+          <button className="button button-dark" type="button" disabled={retryingEmail} onClick={() => void retryRegistrationEmails()}>{retryingEmail ? "Retrying…" : "Retry queued emails"}</button>
+        </div>
+      )}
+
+      {data.inquiryNotifications.some((notice) => notice.status === "pending") && (
+        <div className="admin-email-alert">
+          <div>
+            <strong>Enquiry emails are queued</strong>
+            <p>Configure the Resend sender and API key to deliver saved buyer enquiries to pavansai580@gmail.com.</p>
+          </div>
+          <button className="button button-dark" type="button" disabled={retryingInquiryEmail} onClick={() => void retryInquiryEmails()}>{retryingInquiryEmail ? "Retrying…" : "Retry enquiry emails"}</button>
+        </div>
+      )}
+
+      {data.properties.some((property) => property.deleteRequestedAt) && (
+        <div className="admin-email-alert">
+          <div>
+            <strong>{data.properties.filter((property) => property.deleteRequestedAt).length} listing deletion request(s) need your approval</strong>
+            <p>Requested listings stay online until you approve deletion from the listings panel.</p>
+          </div>
+          <button className="button button-dark" type="button" onClick={reviewPendingListings}>Review listings</button>
+        </div>
+      )}
+
+      <Link className="admin-analytics-link" href="/admin/analytics">
+        <span>
+          <span className="eyebrow">VISITOR ANALYTICS</span>
+          <strong>Daily and monthly visitor graphs</strong>
+          <small>View clear traffic summaries and manage recorded analytics.</small>
+        </span>
+        <span aria-hidden="true">↗</span>
+      </Link>
+
+      {/* Main Section Navigation Bar */}
+      <div className="admin-stats">
+        <button className={section === "ads" ? "is-active" : ""} onClick={() => setSection("ads")}>
+          <span>ADS &amp; PROMO</span>
+          <strong>{data.settings.popupAdEnabled ? "ACTIVE" : "PAUSED"}</strong>
+        </button>
+        <button className={section === "rolling" ? "is-active" : ""} onClick={() => setSection("rolling")}>
+          <span>ROLLING TICKERS</span>
+          <strong>{data.settings.announcementEnabled ? "ROLLING" : "OFF"}</strong>
+        </button>
+        <button className={section === "leads" ? "is-active" : ""} onClick={() => setSection("leads")}>
+          <span>LEADS CRM</span>
+          <strong>CRM</strong>
+        </button>
+        <button className={section === "requirements" ? "is-active" : ""} onClick={() => setSection("requirements")}>
+          <span>BUYER REQS</span>
+          <strong>REQS</strong>
+        </button>
+        <button className={section === "visits" ? "is-active" : ""} onClick={() => setSection("visits")}>
+          <span>SITE VISITS</span>
+          <strong>VISITS</strong>
+        </button>
+        <button className={section === "matches" ? "is-active" : ""} onClick={() => setSection("matches")}>
+          <span>MATCHMAKER</span>
+          <strong>MATCH</strong>
+        </button>
+        <button className={section === "packages" ? "is-active" : ""} onClick={() => setSection("packages")}>
+          <span>PACKAGES</span>
+          <strong>FEES</strong>
+        </button>
+        <button className={section === "properties" ? "is-active" : ""} onClick={() => setSection("properties")}>
+          <span>LISTINGS</span>
+          <strong>{data.properties.length}</strong>
+        </button>
+        <button className={section === "users" ? "is-active" : ""} onClick={() => setSection("users")}>
+          <span>MEMBERS</span>
+          <strong>{data.users.filter((user) => user.email !== "pavansai580@gmail.com").length}</strong>
+        </button>
+        <button className={section === "inquiries" ? "is-active" : ""} onClick={() => setSection("inquiries")}>
+          <span>ENQUIRIES</span>
+          <strong>{data.inquiries.length}</strong>
+        </button>
+        <button className={section === "reviews" ? "is-active" : ""} onClick={() => setSection("reviews")}>
+          <span>REVIEWS</span>
+          <strong>{data.reviews.length}</strong>
+        </button>
+        <button className={section === "phoneClicks" ? "is-active" : ""} onClick={() => setSection("phoneClicks")}>
+          <span>PHONE &amp; WHATSAPP</span>
+          <strong>{data.phoneClicks.length}</strong>
+        </button>
+        <button className={section === "activity" ? "is-active" : ""} onClick={() => setSection("activity")}>
+          <span>ALL ACTIVITY</span>
+          <strong>{data.siteActivity.length}</strong>
+        </button>
+      </div>
+
+      {error && !pendingDelete && <div className="form-error" role="alert">{error}</div>}
+      {message && <div className="admin-success" role="status">{message}</div>}
+
+      {loading ? (
+        <p className="admin-empty">Loading site records…</p>
+      ) : (
+        <>
+          {section === "leads" && <AdminLeadsCrm />}
+          {section === "requirements" && <AdminRequirementsView />}
+          {section === "visits" && <AdminSiteVisitsView />}
+          {section === "matches" && <AdminMatchesView />}
+          {section === "packages" && <AdminPackagesView />}
+
+          {/* ADS & PROMOTION CONTROL CENTER */}
+          {section === "ads" && (
+            <div className="admin-promotion-controls">
+              {/* 5-Second Modal Popup Ad */}
+              <section className="admin-ad-manager" aria-labelledby="admin-ad-manager-title">
+                <div className="admin-section-header">
+                  <span className="eyebrow">SITE PROMOTION</span>
+                  <h2 id="admin-ad-manager-title">5-Second Modal Popup Ad</h2>
+                  <p>
+                    Visitors see this interactive announcement card 5 seconds after landing on the site. Perfect for spotlighting a featured plot or hot promotion. Tapping opens the listing; it appears once per session.
+                  </p>
+                </div>
+
+                <div className="admin-card-inner">
+                  <label className="admin-ad-toggle">
+                    <input
+                      type="checkbox"
+                      checked={popupEnabled}
+                      onChange={(event) => setPopupEnabled(event.target.checked)}
+                    />
+                    <strong>Enable the 5-second listing popup</strong>
+                  </label>
+
+                  <div className="admin-field-group">
+                    <label>
+                      Published plot to feature
+                      <select
+                        value={popupListingId}
+                        onChange={(event) => handleSelectPopupPlot(event.target.value)}
+                      >
+                        <option value="">Select a published plot</option>
+                        {data.properties
+                          .filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === "sale")
+                          .map((property) => (
+                            <option key={property.id} value={property.id}>
+                              {property.title} · {property.locality} (₹{Number(property.price).toLocaleString("en-IN")})
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    {popupListingId && (
+                      <button
+                        type="button"
+                        className="admin-helper-btn"
+                        onClick={() => autoFillPopupFromPlot(popupListingId)}
+                      >
+                        ⚡ Auto-fill heading &amp; details from this plot
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="admin-field-group">
+                    <label>
+                      Top Badge / Kicker Label
+                      <input
+                        value={popupKicker}
+                        onChange={(event) => setPopupKicker(event.target.value)}
+                        maxLength={80}
+                        placeholder="🔥 EXCLUSIVE OPPORTUNITY"
+                      />
+                    </label>
+                    <div className="admin-preset-row">
+                      <span className="admin-preset-label">Quick presets:</span>
+                      {["🔥 HOT DEAL", "⚡ SPOTLIGHT PLOT", "HMDA APPROVED", "PRICE DROP", "EXCLUSIVE LAUNCH", "PRIME LOCATION"].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className="admin-preset-btn"
+                          onClick={() => setPopupKicker(preset)}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <label>
+                    Announcement heading
+                    <input
+                      value={popupTitle}
+                      onChange={(event) => setPopupTitle(event.target.value)}
+                      maxLength={140}
+                      placeholder="Defaults to the selected plot title"
+                    />
+                  </label>
+
+                  <label>
+                    Date, Subtitle or Urgency note
+                    <input
+                      value={popupDate}
+                      onChange={(event) => setPopupDate(event.target.value)}
+                      maxLength={80}
+                      placeholder="e.g. Valid till Sunday · Spot Booking Available"
+                    />
+                  </label>
+
+                  <label>
+                    Custom popup image URL (optional)
+                    <input
+                      value={popupImage}
+                      onChange={(event) => setPopupImage(event.target.value)}
+                      maxLength={1000}
+                      placeholder="Leave blank to use the selected plot photo"
+                    />
+                  </label>
+
+                  <label>
+                    Announcement details / pitch
+                    <textarea
+                      value={popupBody}
+                      onChange={(event) => setPopupBody(event.target.value)}
+                      maxLength={700}
+                      rows={4}
+                      placeholder="Write the announcement visitors should see."
+                    />
+                  </label>
+
+                  {/* Live Visual Card Preview */}
+                  <div className="admin-preview-container">
+                    <div className="admin-preview-top">
+                      <span className="eyebrow">LIVE INTERACTIVE PREVIEW</span>
+                      <button
+                        type="button"
+                        className="admin-test-preview-btn"
+                        onClick={() => setShowLivePopupModal(true)}
+                      >
+                        <Eye size={14} /> Test Full-Screen Modal
+                      </button>
+                    </div>
+                    <div className="admin-live-ad-card">
+                      <div className="admin-live-ad-image-wrap">
+                        <img
+                          src={popupImage || (data.properties.find((p) => p.id === popupListingId)?.image) || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80"}
+                          alt="Ad Preview"
+                        />
+                        <span className="admin-live-ad-kicker">{popupKicker || "ANNOUNCEMENT"}</span>
+                      </div>
+                      <div className="admin-live-ad-body">
+                        <div className="admin-live-ad-title-row">
+                          <h4>{popupTitle || "Featured Property Title"}</h4>
+                          {popupDate && <span className="admin-live-ad-date">{popupDate}</span>}
+                        </div>
+                        <p>{popupBody || "Promotional description and highlights will display here."}</p>
+                        <div className="admin-live-ad-footer">
+                          <span className="admin-live-ad-price">
+                            {(() => {
+                              const p = data.properties.find((prop) => prop.id === popupListingId);
+                              return p ? (Number(p.price) >= 10000000 ? `₹${(Number(p.price) / 10000000).toFixed(2)} Cr` : `₹${(Number(p.price) / 100000).toFixed(1)} Lakhs`) : "₹ Special Price";
+                            })()}
+                          </span>
+                          <span className="admin-live-ad-cta">View Listing ↗</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="admin-action-row">
+                    <button
+                      className="button button-dark"
+                      type="button"
+                      disabled={savingPopup}
+                      onClick={() => void savePopupAd()}
+                    >
+                      {savingPopup ? "Saving…" : "Save Ads & Popup Settings"}
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              {/* WhatsApp & Social Media Ad Campaign Generator */}
+              <section className="admin-ad-manager" aria-labelledby="admin-whatsapp-title">
+                <div className="admin-section-header">
+                  <span className="eyebrow">BROADCAST MARKETING</span>
+                  <h2 id="admin-whatsapp-title">WhatsApp &amp; Social Media Campaign Generator</h2>
+                  <p>
+                    Instantly generate high-converting promotional ad copy for any plot. Ready to copy or send directly to WhatsApp buyer groups and statuses.
+                  </p>
+                </div>
+
+                <div className="admin-card-inner">
+                  <label>
+                    Select listing to promote
+                    <select
+                      value={selectedPromoPlotId || (selectedPromoPlot?.id ?? "")}
+                      onChange={(event) => setSelectedPromoPlotId(event.target.value)}
+                    >
+                      {data.properties
+                        .filter((p) => p.status === "published")
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.title} · {p.locality} (₹{Number(p.price).toLocaleString("en-IN")})
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+
+                  {selectedPromoPlot && (
+                    <div className="admin-whatsapp-box">
+                      <div className="admin-whatsapp-header">
+                        <span>Generated Campaign Message</span>
+                        <div className="admin-whatsapp-actions">
+                          <button
+                            type="button"
+                            className="admin-btn-secondary"
+                            onClick={() => void copyWhatsAppAd()}
+                          >
+                            {copiedPromo ? <Check size={14} color="#4ade80" /> : <Copy size={14} />}
+                            {copiedPromo ? "Copied!" : "Copy Ad Text"}
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn-whatsapp"
+                            onClick={shareWhatsAppAd}
+                          >
+                            <Share2 size={14} /> Open in WhatsApp
+                          </button>
+                        </div>
+                      </div>
+                      <pre className="admin-whatsapp-preview">
+                        {generateWhatsAppText(selectedPromoPlot)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ROLLING ANNOUNCEMENTS & TICKERS CONTROL CENTER */}
+          {section === "rolling" && (
+            <div className="admin-promotion-controls">
+              {/* Sitewide Scrolling Top Marquee Ticker */}
+              <section className="admin-ad-manager" aria-labelledby="admin-announcement-title">
+                <div className="admin-section-header">
+                  <span className="eyebrow">GLOBAL HEADER MARQUEE</span>
+                  <h2 id="admin-announcement-title">Sitewide Scrolling Announcement</h2>
+                  <p>
+                    Runs a dynamic, high-visibility marquee ticker across all public pages (Home, Search, Farmhouse, Services). Perfect for spot discounts, regulatory updates, or festive announcements.
+                  </p>
+                </div>
+
+                <div className="admin-card-inner">
+                  <label className="admin-ad-toggle">
+                    <input
+                      type="checkbox"
+                      checked={announcementEnabled}
+                      onChange={(event) => setAnnouncementEnabled(event.target.checked)}
+                    />
+                    <strong>Show scrolling announcement ticker across the website</strong>
+                  </label>
+
+                  <div className="admin-field-group">
+                    <label>
+                      Announcement message ({announcementText.length}/240 chars)
+                      <input
+                        value={announcementText}
+                        onChange={(event) => setAnnouncementText(event.target.value)}
+                        maxLength={240}
+                        placeholder="⚡ Spot booking discounts available this week! Call 8074399963 to arrange your site visit."
+                      />
+                    </label>
+                    <div className="admin-preset-row">
+                      <span className="admin-preset-label">1-Click marketing presets:</span>
+                      {[
+                        "⚡ Spot booking discounts available this week! Call 8074399963 to arrange your site visit.",
+                        "🔥 Verified HMDA & RERA approved residential plots in Miyapur & Bachupally corridors now live.",
+                        "📢 Looking for customized plot sizes? Register your buyer requirements for offline private inventory.",
+                        "✨ 0% Brokerage on direct verified owner plots across Hyderabad & Telangana.",
+                      ].map((preset, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          className="admin-preset-btn"
+                          onClick={() => setAnnouncementText(preset)}
+                        >
+                          Preset {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Live Animated Marquee Preview */}
+                  <div className="admin-preview-container">
+                    <span className="eyebrow">LIVE MARQUEE PREVIEW</span>
+                    <div className="site-announcement-ticker" style={{ borderRadius: 10, marginTop: 8 }}>
+                      <span className="site-announcement-label">
+                        <span aria-hidden="true">⚡</span> LATEST UPDATES
+                      </span>
+                      <div className="site-announcement-window">
+                        <div className="site-announcement-track">
+                          <span>{announcementText || "Enter your announcement message above to see it roll live across the website..."}</span>
+                          <span aria-hidden="true">{announcementText || "Enter your announcement message above to see it roll live across the website..."}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="admin-action-row">
+                    <button
+                      className="button button-dark"
+                      type="button"
+                      disabled={savingAnnouncement}
+                      onClick={() => void saveAnnouncementTicker()}
+                    >
+                      {savingAnnouncement ? "Saving…" : "Save Scrolling Announcement"}
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              {/* Homepage Hero Rolling Listing Banner */}
+              <section className="admin-ad-manager" aria-labelledby="admin-home-ticker-title">
+                <div className="admin-section-header">
+                  <span className="eyebrow">HOMEPAGE HERO FEATURE</span>
+                  <h2 id="admin-home-ticker-title">Homepage Rolling Listing Banner</h2>
+                  <p>
+                    Customizes the luxury rolling card located beneath the hero search on the homepage. Highlights a featured plot with an interactive rolling ticker and direct link.
+                  </p>
+                </div>
+
+                <div className="admin-card-inner">
+                  <label>
+                    Rolling ticker message ({tickerText.length}/180 chars)
+                    <input
+                      value={tickerText}
+                      maxLength={180}
+                      onChange={(event) => setTickerText(event.target.value)}
+                      placeholder="New verified plots are added after owner and site checks."
+                    />
+                  </label>
+
+                  <label>
+                    Plot image &amp; link to feature
+                    <select
+                      value={tickerPropertyId}
+                      onChange={(event) => setTickerPropertyId(event.target.value)}
+                    >
+                      <option value="">Newest published sale listing (Automatic)</option>
+                      {data.properties
+                        .filter((property) => property.status === "published" && property.listingCategory === "sale")
+                        .map((property) => (
+                          <option key={property.id} value={property.id}>
+                            {property.title} · {property.locality}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+
+                  {(() => {
+                    const featured = data.properties.find((p) => p.id === tickerPropertyId) ?? data.properties.filter((p) => p.status === "published" && p.listingCategory === "sale").sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0];
+                    return featured?.image ? (
+                      <div className="admin-home-ticker-preview" style={{ padding: "12px", background: "rgba(255,255,255,.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,.08)" }}>
+                        <img src={featured.image} alt={featured.title} style={{ width: 110, height: 75, borderRadius: 8, objectFit: "cover" }} />
+                        <div style={{ display: "grid", gap: 4 }}>
+                          <span className="eyebrow">FEATURED PREVIEW</span>
+                          <strong style={{ color: "var(--ink)", fontSize: 13 }}>{featured.title}</strong>
+                          <span style={{ color: "var(--lime)", fontSize: 11 }}>₹{Number(featured.price).toLocaleString("en-IN")} · {featured.locality}, {featured.city}</span>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+
+                  <div className="admin-action-row">
+                    <button
+                      className="button button-dark"
+                      type="button"
+                      disabled={savingTicker}
+                      onClick={() => void saveHomeTicker()}
+                    >
+                      {savingTicker ? "Saving…" : "Save Homepage Banner"}
+                    </button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {section === "properties" && (
+            <>
+              <div className="listing-admin-tabs">
+                <div className="listing-admin-segment" role="tablist" aria-label="Listing type">
+                  {([["sale", "For sale"], ["rent", "For rent"]] as const).map(([tab, label]) => {
+                    const count = data.properties.filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === tab).length;
+                    return (
+                      <button key={tab} type="button" role="tab" aria-selected={listingTab === tab} className={listingTab === tab ? "is-active" : ""} onClick={() => setListingTab(tab)}>
+                        {label} <span>{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" className={listingTab === "hidden" ? "hidden-is-active" : ""} aria-pressed={listingTab === "hidden"} onClick={() => setListingTab("hidden")}>Hidden listings <span>{data.properties.filter((property) => property.status === "hidden").length}</span></button>
+                <button type="button" className={listingTab === "pending" ? "pending-is-active" : ""} aria-pressed={listingTab === "pending"} onClick={() => setListingTab("pending")}>Pending review <span>{data.properties.filter((property) => property.status === "pending" || property.deleteRequestedAt).length}</span></button>
+              </div>
+
+              <div className="admin-record-list" ref={listingsRef}>
+                {data.properties
+                  .filter((property) =>
+                    listingTab === "hidden"
+                      ? property.status === "hidden"
+                      : listingTab === "pending"
+                      ? property.status === "pending" || Boolean(property.deleteRequestedAt)
+                      : property.status === "published" && (property.listingCategory ?? "sale") === listingTab
+                  )
+                  .map((property) => (
+                    <details className="admin-listing-details" key={property.id} open={Boolean((property.deleteRequestedAt || property.status === "pending") && listingTab === "pending")}>
+                      <summary className="admin-listing-summary">
+                        <span>
+                          <span className="eyebrow">
+                            {property.deleteRequestedAt ? "DELETION REQUEST AWAITING APPROVAL" : property.status === "pending" ? "NEW LISTING · PENDING REVIEW" : property.status === "hidden" ? "HIDDEN LISTING" : property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type}
+                          </span>
+                          <strong>{property.title}</strong>
+                          <span className="admin-listing-meta">
+                            {property.city} · {property.locality} · ₹{Number(property.price).toLocaleString("en-IN")} · {property.area} {property.unit}
+                          </span>
+                          <span className="admin-listing-meta">Submitted {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span>
+                        </span>
+                        <span className="admin-listing-open">Open details</span>
+                      </summary>
+                      {property.status === "published" && (
+                        <Link className="admin-listing-page-arrow" href={`/properties/${encodeURIComponent(property.id)}`} target="_blank" rel="noreferrer" aria-label={`Open ${property.title} listing page`} title="Open listing page">
+                          <ArrowUpRight size={18} aria-hidden="true" />
+                        </Link>
+                      )}
+                      <form
+                        className="admin-record"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          const form = new FormData(event.currentTarget);
+                          void update("property", property.id, {
+                            title: form.get("title"),
+                            type: form.get("type"),
+                            city: form.get("city"),
+                            locality: form.get("locality"),
+                            owner: form.get("owner"),
+                            phone: form.get("phone"),
+                            price: form.get("price"),
+                            area: form.get("area"),
+                            unit: form.get("unit"),
+                            badge: form.get("badge"),
+                            description: form.get("description"),
+                            listingCategory: form.get("listingCategory"),
+                            pricePeriod: form.get("pricePeriod"),
+                            availability: form.get("availability"),
+                            guestCapacity: form.get("guestCapacity"),
+                            verified: form.get("verified") === "on",
+                            status: property.status ?? "published",
+                            images: readMediaArray(form.get("images")),
+                            videos: readMediaArray(form.get("videos")),
+                            facing: form.get("facing"),
+                            approvals: form.get("approvals"),
+                            loanAvailable: form.get("loanAvailable"),
+                            registrationAvailable: form.get("registrationAvailable"),
+                            renovation: form.get("renovation"),
+                            cornerPlot: form.get("cornerPlot"),
+                            roadWidth: form.get("roadWidth"),
+                            surveyNumber: form.get("surveyNumber"),
+                            soilType: form.get("soilType"),
+                            clearTitle: form.get("clearTitle"),
+                            amenities: String(form.get("amenities") ?? "")
+                              .split(/\r?\n|,/)
+                              .map((amenity) => amenity.trim())
+                              .filter(Boolean),
+                            address: form.get("address"),
+                            landmark: form.get("landmark"),
+                            mapUrl: form.get("mapUrl"),
+                          });
+                        }}
+                      >
+                        <div className="admin-record-top">
+                          <div>
+                            <span className="eyebrow">
+                              {property.deleteRequestedAt ? "DELETION REQUEST · AWAITING YOUR APPROVAL · " : "LISTING · "}
+                              {property.listingCategory === "rent" ? "FOR RENT" : "FOR SALE"} · {property.type} · {property.id.slice(0, 8)}
+                            </span>
+                            <strong translate="no">{property.title}</strong>
+                          </div>
+                          <div className="admin-record-actions">
+                            {property.deleteRequestedAt && (
+                              <button type="button" className="text-link" disabled={busyId === property.id} onClick={() => void keepListing(property.id)}>
+                                Keep listing
+                              </button>
+                            )}
+                            <button type="button" className="admin-delete" disabled={busyId === property.id} onClick={() => void remove("property", property.id)}>
+                              {property.deleteRequestedAt ? "Approve & delete" : "Delete listing"}
+                            </button>
+                          </div>
+                        </div>
+                        {property.sellerAuthority && (
+                          <p className="admin-listing-meta">
+                            Seller: {property.sellerAuthority === "owner" ? "Owner" : "Authorised representative"} · Publish permission {property.publicationConsentAt ? `recorded ${formatAdminDate(property.publicationConsentAt)}` : "not recorded"} · Contact permission {property.contactConsentAt ? `recorded ${formatAdminDate(property.contactConsentAt)}` : "not recorded"}
+                          </p>
+                        )}
+                        <div className="admin-form-grid">
+                          <label>Title<input name="title" required defaultValue={property.title} /></label>
+                          <ListingClassificationFields
+                            category={property.listingCategory ?? "sale"}
+                            type={property.type}
+                            pricePeriod={property.pricePeriod ?? "total"}
+                            categoryFields={(category) =>
+                              category === "rent" ? (
+                                <>
+                                  <label className="admin-wide">Availability / rental terms<input name="availability" maxLength={240} defaultValue={property.availability ?? ""} /></label>
+                                  <label>Guest capacity<input name="guestCapacity" type="number" min="1" max="1000" step="1" defaultValue={property.guestCapacity ?? ""} /></label>
+                                </>
+                              ) : (
+                                <>
+                                  <label>Facing<input name="facing" maxLength={40} defaultValue={property.facing ?? ""} /></label>
+                                  <label>Approvals<input name="approvals" maxLength={120} defaultValue={property.approvals ?? ""} /></label>
+                                  <label>Road width<input name="roadWidth" maxLength={40} defaultValue={property.roadWidth ?? ""} /></label>
+                                  <label>Survey number<input name="surveyNumber" maxLength={80} defaultValue={property.surveyNumber ?? ""} /></label>
+                                  <label>Soil type<input name="soilType" maxLength={80} defaultValue={property.soilType ?? ""} /></label>
+                                  <label>Renovation / condition<input name="renovation" maxLength={120} defaultValue={property.renovation ?? ""} /></label>
+                                  <label>Loan available<select name="loanAvailable" defaultValue={property.loanAvailable ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                                  <label>Registration available<select name="registrationAvailable" defaultValue={property.registrationAvailable ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                                  <label>Corner plot<select name="cornerPlot" defaultValue={property.cornerPlot ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                                  <label>Clear title<select name="clearTitle" defaultValue={property.clearTitle ?? ""}><option value="">Not specified</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+                                </>
+                              )
+                            }
+                          />
+                          <label>City / state<input name="city" required defaultValue={property.city} /></label>
+                          <label>Locality<input name="locality" required defaultValue={property.locality} /></label>
+                          <label>Owner name<input name="owner" required defaultValue={property.owner} /></label>
+                          <label>Phone<input name="phone" required defaultValue={property.phone} /></label>
+                          <label>Price or rate (₹)<input name="price" type="number" min="1" required defaultValue={property.price} /></label>
+                          <label>Area<input name="area" type="text" inputMode="decimal" maxLength={80} required defaultValue={property.area} /></label>
+                          <label>Area unit<input name="unit" required defaultValue={property.unit} /></label>
+                          <label className="admin-wide">Amenities (one per line)<textarea name="amenities" rows={2} defaultValue={(property.amenities ?? []).join("\n")} /></label>
+                          <label className="admin-wide">Property address<input name="address" maxLength={240} defaultValue={property.address ?? ""} /></label>
+                          <label className="admin-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
+                          <label className="admin-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
+                          <label>Badge<input name="badge" required defaultValue={property.badge} /></label>
+                          <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status !== "published")}>{property.status === "pending" ? "Approve and publish listing" : property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
+                          <button type="button" className="admin-visibility-button" aria-pressed={property.showPhone !== false} disabled={busyId === property.id} onClick={() => void toggleListingPhoneVisibility(property.id, property.showPhone === false)}>{property.showPhone === false ? "Show phone on this listing" : "Hide phone on this listing"}</button>
+                          <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
+                          <AdminListingMediaManager title={property.title} initialImages={property.images?.length ? property.images : property.image ? [property.image] : []} initialVideos={property.videos ?? []} disabled={busyId === property.id} />
+                          <label className="admin-wide">Description<textarea name="description" rows={3} required defaultValue={property.description} /></label>
+                        </div>
+                        <button className="button button-dark admin-save" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save listing"}</button>
+                      </form>
+                    </details>
+                  ))}
+                {!data.properties.some((property) => listingTab === "hidden" ? property.status === "hidden" : listingTab === "pending" ? property.status === "pending" || Boolean(property.deleteRequestedAt) : property.status === "published" && (property.listingCategory ?? "sale") === listingTab) && (
+                  <p className="admin-empty">{listingTab === "hidden" ? "There are no hidden listings." : listingTab === "pending" ? "No listings or deletion requests are waiting for review." : `No visible ${listingTab === "sale" ? "sale" : "rental"} listings yet.`}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {section === "users" && (
+            <div className="admin-record-list">
+              {data.users.filter((user) => user.email !== "pavansai580@gmail.com" || user.id === profileFocusId).map((user) => (
+                <form className={`admin-record admin-user-record${user.id === profileFocusId ? " is-profile-focus" : ""}`} data-admin-user-id={user.id} key={user.id} onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  void update("user", user.id, { name: form.get("name"), email: form.get("email") });
+                }}>
+                  <div className="admin-record-top">
+                    <div>
+                      <span className="eyebrow">{user.listingCount} LISTINGS · ACCOUNT CREATED {formatAdminDate(user.createdAt)}</span>
+                      <strong>{user.name}</strong>
+                      <span>{user.phone ? <a href={`tel:${user.phone}`}>{user.phone}</a> : "Phone number not added"}</span>
+                    </div>
+                    {user.email !== "pavansai580@gmail.com" && (
+                      <button type="button" className="admin-delete" disabled={busyId === user.id} onClick={() => void remove("user", user.id)}>Delete account</button>
+                    )}
+                  </div>
+                  <div className="admin-form-grid">
+                    <label>Name<input name="name" required defaultValue={user.name} /></label>
+                    <label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label>
+                  </div>
+                  <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
+                  <details className="member-activity" open={user.id === profileFocusId}>
+                    <summary>Full activity log · {activityForUser(user.id).length} events</summary>
+                    {activityForUser(user.id).length ? (
+                      <ol>
+                        {activityForUser(user.id).map((activity) => (
+                          <li key={activity.id}>
+                            <time dateTime={activity.createdAt}>{formatAdminDate(activity.createdAt)}</time>
+                            <strong>{activity.action}</strong>
+                            {(activity.propertyTitle || activity.details) && <span>{[activity.propertyTitle, activity.details].filter(Boolean).join(" · ")}</span>}
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p>No activity recorded for this member yet.</p>
+                    )}
+                  </details>
+                </form>
+              ))}
+            </div>
+          )}
+
+          {section === "inquiries" && (
+            <div className="admin-record-list">
+              {data.inquiries.map((inquiry) => (
+                <article className="admin-record admin-inquiry" key={inquiry.id}>
+                  <div className="admin-record-top">
+                    <div>
+                      <span className="eyebrow">
+                        {inquiry.email ? "ACCOUNT ENQUIRY" : "LEGACY ENQUIRY"}
+                        {inquiry.emailStatus ? ` · EMAIL ${inquiry.emailStatus.toUpperCase()}` : ""} · {formatAdminDate(inquiry.createdAt)}
+                      </span>
+                      <strong>{inquiry.propertyTitle}</strong>
+                    </div>
+                    <button type="button" className="admin-delete" disabled={busyId === inquiry.id} onClick={() => void remove("inquiry", inquiry.id)}>Delete</button>
+                  </div>
+                  <div className="admin-inquiry-contact">
+                    <strong>{inquiry.name}</strong>
+                    {inquiry.email ? <a href={`mailto:${inquiry.email}`}>{inquiry.email}</a> : <span>Email not available</span>}
+                    {inquiry.phone && <a href={`tel:${inquiry.phone}`}>{inquiry.phone}</a>}
+                    <span>{inquiry.userId ? "Account linked" : inquiry.email ? "Account removed; contact snapshot retained" : "Submitted before account sign-in was required"}</span>
+                  </div>
+                  <p>{inquiry.message}</p>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {section === "reviews" && (
+            <div className="admin-record-list">
+              {data.reviews.length ? (
+                data.reviews.map((review) => (
+                  <article className="admin-record admin-review" key={review.id}>
+                    <div className="admin-record-top">
+                      <div>
+                        <span className="eyebrow">{review.reviewerName} · {review.rating}/5 · {formatAdminDate(review.updatedAt ?? review.createdAt)}</span>
+                        <strong>{review.propertyTitle}</strong>
+                      </div>
+                      <button type="button" className="admin-delete" disabled={busyId === review.id} onClick={() => void remove("review", review.id)}>Delete review</button>
+                    </div>
+                    <p>{review.comment}</p>
+                  </article>
+                ))
+              ) : (
+                <p className="admin-empty">No reviews have been posted yet.</p>
+              )}
+            </div>
+          )}
+
+          {section === "phoneClicks" && (
+            <div className="admin-record-list">
+              {data.phoneClicks.length ? (
+                data.phoneClicks.map((click) => (
+                  <article className="admin-record admin-phone-click" key={click.id}>
+                    <div className="admin-record-top">
+                      <div>
+                        <span className="eyebrow">
+                          {formatAdminDate(click.createdAt)} · {click.contactMethod === "whatsapp" ? "WHATSAPP TO 8074399963" : "PHONE NUMBER CLICK"} · {click.userId ? "SIGNED-IN USER" : "GUEST VISITOR"}
+                        </span>
+                        <strong>{click.propertyTitle}</strong>
+                      </div>
+                      <Link className="text-link" href={`/properties/${encodeURIComponent(click.propertyId)}`} target="_blank">View listing</Link>
+                    </div>
+                    <div className="admin-inquiry-contact">
+                      <span>Visitor: {click.visitorProfileId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.visitorProfileId!)}>{click.userName || "View visitor profile"}</button> : <strong>{click.userName || `Guest ${click.visitorId.slice(0, 8)}`}</strong>}</span>
+                      {click.userPhone && <span>Phone: {click.userPhone}</span>}
+                      <span>Seller: {click.sellerId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(click.sellerId!)}>{click.sellerName}</button> : <strong>{click.sellerName}</strong>}</span>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="admin-empty">No seller phone clicks have been recorded yet.</p>
+              )}
+            </div>
+          )}
+
+          {section === "activity" && (
+            <>
+              <div className="admin-site-activity-heading">
+                <div>
+                  <span className="eyebrow">USER JOURNEY</span>
+                  <h2>All site activity · newest first</h2>
+                  <p>Page views and actions from members and guest visitors.</p>
+                </div>
+                <button type="button" className="button button-outline" onClick={() => void load()}>Refresh log</button>
+              </div>
+              <div className="admin-record-list admin-site-activity-list">
+                {data.siteActivity.length ? (
+                  data.siteActivity.map((activity) => (
+                    <article className="admin-record admin-site-activity" key={activity.id}>
+                      <time dateTime={activity.createdAt}>{formatAdminDate(activity.createdAt)}</time>
+                      <div className="admin-site-activity-actor">
+                        {activity.userId ? <button type="button" className="admin-profile-link" onClick={() => openUserProfile(activity.userId!)}>{activity.actorName || "Member profile"}</button> : <strong>{activity.actorName || `Guest ${activity.visitorId.slice(0, 8)}`}</strong>}
+                        {!activity.userId && activity.visitorId && <small>Visitor ID {activity.visitorId.slice(0, 8)}</small>}
+                      </div>
+                      <div className="admin-site-activity-content">
+                        <strong>{activity.action}</strong>
+                        {activity.details && <span>{activity.details}</span>}
+                        {activity.propertyTitle && activity.propertyId && <Link href={`/properties/${encodeURIComponent(activity.propertyId)}`} target="_blank">{activity.propertyTitle}</Link>}
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <p className="admin-empty">No activity recorded yet.</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {section === "users" && (
+            <section className="admin-record-list admin-notifications">
+              <h2>Registration email delivery</h2>
+              {data.registrationNotifications.length ? (
+                data.registrationNotifications.map((notice) => (
+                  <article className="admin-record" key={notice.id}>
+                    <div className="admin-record-top">
+                      <div>
+                        <span className="eyebrow">{notice.status === "sent" ? `SENT ${notice.sentAt ? new Date(notice.sentAt).toLocaleString() : ""}` : "QUEUED"}</span>
+                        <strong>{notice.name}</strong>
+                      </div>
+                      <span>{notice.email}</span>
+                    </div>
+                    {notice.status === "pending" && <p>Attempts: {notice.attempts}. {notice.lastError ?? "Waiting for mail configuration."}</p>}
+                  </article>
+                ))
+              ) : (
+                <p className="admin-empty">No registration notifications yet.</p>
+              )}
+            </section>
+          )}
+        </>
+      )}
+    </section>
+  );
 }
