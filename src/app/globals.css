@@ -280,7 +280,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .footer-bottom > div { display: flex; gap: 19px; }
 
 /* Browse results */
-.search-page { min-height: 600px; }
+.search-page { min-height: 600px; background: var(--paper); }
 .search-banner { background: #e9eadf; height: 230px; padding: 49px max(40px, calc((100% - 1240px)/2)); display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; }
 .search-banner h1 { font-family: var(--serif); font-size: 48px; font-weight: 400; letter-spacing: -1.6px; margin: 13px 0 7px; }
 .search-banner h1 em { font-weight: 400; }
@@ -3595,7 +3595,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .hero .hero-search .search-submit { min-width: 0; min-height: 48px !important; justify-content: center; gap: 6px; padding: 8px; font-size: 12px; white-space: nowrap; }
   .hero .hero-cities-section { position: relative; display: flex; min-height: 0; flex-direction: column; padding: 8px 0 48px; }
   .hero .hero-cities-heading { display: block; flex: 0 0 auto; margin: 0 0 8px; font-size: 12px; }
-  .hero .hero-city-grid { display: grid !important; flex: 1; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 8px !important; margin-top: 0 !important; }
+  .hero .hero-city-grid { display: grid !important; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: rgba(198,220,129,.55) rgba(255,255,255,.08); grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-template-rows: repeat(3, minmax(132px, 1fr)); gap: 8px !important; margin-top: 0 !important; }
   .hero .hero-city-card { display: flex !important; min-width: 0; min-height: 0; aspect-ratio: auto; align-items: flex-end; overflow: hidden; padding: 9px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; background-color: #26372e; background-position: center; background-size: cover; color: white; box-shadow: 0 5px 14px rgba(0,0,0,.16); }
   .hero .hero-city-card strong { font-size: 11px; font-weight: 700; text-shadow: 0 1px 5px rgba(0,0,0,.8); }
   .hero .hero-register-cta { position: absolute; z-index: 2; right: 0; bottom: 3px; left: 0; display: inline-flex; width: 100%; min-height: 38px; align-items: center; justify-content: center; gap: 7px; margin: 0; padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; background-color: var(--forest); background-image: linear-gradient(var(--forest), var(--forest)), linear-gradient(112deg, #13b5ea 0%, #4285f4 25%, #9b72cb 50%, #d96570 74%, #c6dc81 100%); background-origin: border-box; background-clip: padding-box, border-box; box-shadow: inset 0 1px rgba(255,255,255,.045); color: var(--lime); font-size: 11px; font-weight: 700; transition: box-shadow .2s ease, transform .2s ease; }
