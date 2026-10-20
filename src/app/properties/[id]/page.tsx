@@ -66,7 +66,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
   const row = db.prepare("SELECT properties.*, users.email AS sellerEmail FROM properties LEFT JOIN users ON users.id = properties.ownerId WHERE properties.id = ? AND properties.status = 'published'").get(id) as Record<string, unknown> | undefined;
   if (!row) notFound();
   const user = await currentUser();
-  const showSellerContacts = getSiteSetting("showSellerPhones") !== "false" && Boolean(user);
+  const showSellerPhonesSetting = getSiteSetting("showSellerPhones") !== "false";
+  const showSellerContacts = showSellerPhonesSetting && Boolean(user);
+  const adminContactPhone = getSiteSetting("adminContactPhone") || "8074399963";
   const property = publicPropertyFromRow(row, showSellerContacts);
   const relatedRows = db.prepare("SELECT properties.*, users.email AS sellerEmail FROM properties LEFT JOIN users ON users.id = properties.ownerId WHERE properties.id != ? AND properties.status = 'published' AND properties.listingCategory = ? ORDER BY properties.createdAt DESC, properties.rowid DESC LIMIT 2")
     .all(property.id, property.listingCategory ?? "sale") as Record<string, unknown>[];
@@ -220,7 +222,16 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 phone: property.phone,
                 owner: property.owner,
                 sellerContactsVisible: showSellerContacts,
+                type: property.type,
+                listingCategory: property.listingCategory,
+                facing: property.facing,
+                roadWidth: property.roadWidth,
+                description: property.description,
+                approvals: property.approvals,
               }}
+              adminPhone={adminContactPhone}
+              showSellerPhones={showSellerPhonesSetting}
+              user={user ? { name: user.name, phone: user.phone, email: user.email } : null}
             />
 
             <section className="detail-card">
@@ -325,7 +336,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 {showSellerContacts && property.sellerEmail && (
                   <a className="seller-public-email" href={`mailto:${property.sellerEmail}`}>{property.sellerEmail}</a>
                 )}
-                <WhatsAppListingLink className="seller-public-whatsapp" property={property} />
+                <WhatsAppListingLink className="seller-public-whatsapp" property={property} adminPhone={adminContactPhone} />
               </div>
 
               <div className="sidebar-divider" />

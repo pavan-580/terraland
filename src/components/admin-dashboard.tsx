@@ -95,6 +95,9 @@ type DashboardData = {
   registrationNotifications: RegistrationNotification[];
   settings: {
     showSellerPhones: boolean;
+    adminContactPhone?: string;
+    customerCarePhone?: string;
+    customerCareEmail?: string;
     homeTickerText: string;
     homeTickerPropertyId: string;
     popupAdEnabled: boolean;
@@ -209,6 +212,9 @@ export function AdminDashboard() {
     registrationNotifications: [],
     settings: {
       showSellerPhones: true,
+      adminContactPhone: "8074399963",
+      customerCarePhone: "8074399963",
+      customerCareEmail: "care@terraland.in",
       homeTickerText: "New verified plots are added after owner and site checks.",
       homeTickerPropertyId: "",
       popupAdEnabled: false,
@@ -234,6 +240,10 @@ export function AdminDashboard() {
   const [retryingEmail, setRetryingEmail] = useState(false);
   const [retryingInquiryEmail, setRetryingInquiryEmail] = useState(false);
   const [savingPhoneSetting, setSavingPhoneSetting] = useState(false);
+  const [adminPhone, setAdminPhone] = useState("8074399963");
+  const [carePhone, setCarePhone] = useState("8074399963");
+  const [careEmail, setCareEmail] = useState("care@terraland.in");
+  const [savingContacts, setSavingContacts] = useState(false);
   const [tickerText, setTickerText] = useState("New verified plots are added after owner and site checks.");
   const [tickerPropertyId, setTickerPropertyId] = useState("");
   const [savingTicker, setSavingTicker] = useState(false);
@@ -346,6 +356,9 @@ export function AdminDashboard() {
       if (!response.ok) throw new Error(result.error ?? "The dashboard could not be loaded.");
       if (!("properties" in result) || !("phoneClicks" in result) || !("siteActivity" in result)) throw new Error(result.error ?? "The dashboard data is incomplete. Refresh and try again.");
       setData(result);
+      setAdminPhone(result.settings.adminContactPhone ?? "8074399963");
+      setCarePhone(result.settings.customerCarePhone ?? "8074399963");
+      setCareEmail(result.settings.customerCareEmail ?? "care@terraland.in");
       setTickerText(result.settings.homeTickerText ?? "New verified plots are added after owner and site checks.");
       setTickerPropertyId(result.settings.homeTickerPropertyId ?? "");
       setPopupEnabled(result.settings.popupAdEnabled ?? false);
@@ -498,6 +511,35 @@ export function AdminDashboard() {
     }
   }
 
+  async function saveContactSettings() {
+    setSavingContacts(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resource: "setting",
+          key: "contactChannels",
+          value: {
+            adminContactPhone: adminPhone,
+            customerCarePhone: carePhone,
+            customerCareEmail: careEmail,
+          },
+        }),
+      });
+      const result = (await response.json()) as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Failed to save contact settings.");
+      setMessage(result.message ?? "Contact channels updated successfully.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Failed to save contact settings.");
+    } finally {
+      setSavingContacts(false);
+    }
+  }
+
   async function toggleSellerPhones() {
     const value = !data.settings.showSellerPhones;
     setSavingPhoneSetting(true);
@@ -549,6 +591,61 @@ export function AdminDashboard() {
       await load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The listing popup could not be saved.");
+    } finally {
+      setSavingPopup(false);
+    }
+  }
+
+  async function activatePlotAsPopup(plot: Property) {
+    const kicker = popupKicker || "🔥 EXCLUSIVE OPPORTUNITY";
+    const title = plot.title;
+    const priceFormatted = Number(plot.price) >= 10000000
+      ? `₹${(Number(plot.price) / 10000000).toFixed(2)} Cr`
+      : Number(plot.price) >= 100000
+      ? `₹${(Number(plot.price) / 100000).toFixed(1)} Lakhs`
+      : `₹${Number(plot.price).toLocaleString("en-IN")}`;
+    const date = "Verified Listing · Limited Period";
+    const body = `${[plot.locality, plot.city].filter(Boolean).join(", ")} · ${priceFormatted} · ${plot.area} ${plot.unit}. Clear title documentation verified by NILAY.`;
+    const image = plot.image || "";
+
+    setPopupEnabled(true);
+    setPopupListingId(plot.id);
+    setPopupKicker(kicker);
+    setPopupTitle(title);
+    setPopupDate(date);
+    setPopupBody(body);
+    setPopupImage(image);
+
+    setSavingPopup(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resource: "setting",
+          key: "popupAd",
+          value: {
+            enabled: true,
+            propertyId: plot.id,
+            kicker,
+            title,
+            date,
+            body,
+            image,
+          },
+        }),
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Failed to activate popup ad.");
+      setMessage(`Popup ad enabled! "${plot.title}" will appear to visitors after 5 seconds.`);
+      if (typeof window !== "undefined") {
+        try { window.sessionStorage.clear(); } catch { /* ignore */ }
+      }
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Failed to activate popup ad.");
     } finally {
       setSavingPopup(false);
     }
@@ -777,6 +874,100 @@ export function AdminDashboard() {
           <span aria-hidden="true" />{savingPhoneSetting ? "Saving…" : data.settings.showSellerPhones ? "ON · Direct contact" : "OFF · NILAY connects"}
         </button>
       </div>
+
+      <section className="admin-setting-card admin-contact-channels-card" style={{ display: "grid", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div>
+            <strong style={{ fontSize: 14 }}>Direct Contact, WhatsApp & Support Channels</strong>
+            <p style={{ margin: "2px 0 0", color: "var(--muted)", fontSize: 11 }}>
+              Configure the phone numbers and email that receive customer inquiries and represent NILAY across the website.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="button button-dark"
+            style={{ minHeight: 34, fontSize: 11, padding: "6px 16px" }}
+            disabled={savingContacts}
+            onClick={() => void saveContactSettings()}
+          >
+            {savingContacts ? "Saving…" : "Save Contact Settings"}
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span>📱</span> Admin WhatsApp Number (Inquiry Receiver)
+            </span>
+            <input
+              type="text"
+              value={adminPhone}
+              onChange={(e) => setAdminPhone(e.target.value)}
+              placeholder="8074399963"
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--line)",
+                color: "var(--ink)",
+                fontSize: 12,
+              }}
+            />
+            <span style={{ fontSize: 10, color: "var(--muted)" }}>
+              Receives full plot details when buyers tap &quot;Connect with us&quot; or when seller phones are hidden.
+            </span>
+          </label>
+
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span>📞</span> Customer Care Number
+            </span>
+            <input
+              type="text"
+              value={carePhone}
+              onChange={(e) => setCarePhone(e.target.value)}
+              placeholder="8074399963"
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--line)",
+                color: "var(--ink)",
+                fontSize: 12,
+              }}
+            />
+            <span style={{ fontSize: 10, color: "var(--muted)" }}>
+              Public customer care phone shown on website footer and support links.
+            </span>
+          </label>
+
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span>✉️</span> Customer Care Email
+            </span>
+            <input
+              type="email"
+              value={careEmail}
+              onChange={(e) => setCareEmail(e.target.value)}
+              placeholder="care@terraland.in"
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--line)",
+                color: "var(--ink)",
+                fontSize: 12,
+              }}
+            />
+            <span style={{ fontSize: 10, color: "var(--muted)" }}>
+              Official contact email displayed in website footer and email notifications.
+            </span>
+          </label>
+        </div>
+      </section>
 
       <section className="admin-backup-card" aria-labelledby="admin-backup-title">
         {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
@@ -1078,6 +1269,43 @@ export function AdminDashboard() {
                     >
                       {savingPopup ? "Saving…" : "Save Ads & Popup Settings"}
                     </button>
+                  </div>
+
+                  {/* Instant 1-Click Popup Chooser from Listed Properties */}
+                  <div className="admin-ad-quick-picker" style={{ marginTop: 24, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,.08)" }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <span className="eyebrow">ONE-CLICK PROMOTION</span>
+                      <h3 style={{ margin: "4px 0", color: "var(--ink)", fontSize: 16 }}>Choose Any Listed Plot to Launch as Popup</h3>
+                      <p style={{ margin: 0, color: "var(--muted)", fontSize: 11 }}>Tap any listing below to immediately set it as the live 5-second popup ad on the website.</p>
+                    </div>
+                    <div className="admin-ad-listing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+                      {data.properties.filter((p) => p.status === "published").map((plot) => (
+                        <div
+                          key={plot.id}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            background: popupListingId === plot.id && popupEnabled ? "rgba(198, 220, 129, 0.12)" : "rgba(255, 255, 255, 0.03)",
+                            border: popupListingId === plot.id && popupEnabled ? "1px solid var(--lime)" : "1px solid rgba(255, 255, 255, 0.08)",
+                            display: "grid",
+                            gap: 6
+                          }}
+                        >
+                          {plot.image && <img src={plot.image} alt={plot.title} style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 6 }} />}
+                          <strong style={{ fontSize: 12, color: "var(--ink)" }}>{plot.title}</strong>
+                          <span style={{ fontSize: 10.5, color: "var(--lime)" }}>₹{Number(plot.price).toLocaleString("en-IN")} · {plot.locality}</span>
+                          <button
+                            type="button"
+                            className="button button-dark"
+                            style={{ minHeight: 32, fontSize: 11, padding: "5px 10px", marginTop: 4 }}
+                            disabled={savingPopup}
+                            onClick={() => void activatePlotAsPopup(plot)}
+                          >
+                            {popupListingId === plot.id && popupEnabled ? "✓ Active Popup" : "🚀 Set as 5-Sec Popup"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </section>

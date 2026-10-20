@@ -18,7 +18,7 @@ export default async function AdminPage() {
     <main className="admin-page">
       <header className="admin-heading">
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Link href="/admin" className="brand" aria-label="NILAY Admin">
+          <Link href="/" className="brand" aria-label="NILAY Home">
             <BrandLogo />
           </Link>
         </div>

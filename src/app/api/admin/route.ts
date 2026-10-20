@@ -89,7 +89,35 @@ export async function GET() {
     WHERE visitDate >= strftime('%Y-%m', date('now', '+330 minutes', 'start of month', '-11 months')) || '-01'
     GROUP BY substr(visitDate, 1, 7) ORDER BY period DESC
   `).all();
-  return NextResponse.json({ users, properties, inquiries, reviews, phoneClicks, memberActivity, siteActivity, registrationNotifications, inquiryNotifications, visits: { daily: dailyVisits, monthly: monthlyVisits }, settings: { showSellerPhones: getSiteSetting("showSellerPhones") !== "false", homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.", homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "", popupAdEnabled: getSiteSetting("popupAdEnabled") === "true", popupAdPropertyId: getSiteSetting("popupAdPropertyId") ?? "", popupAdKicker: getSiteSetting("popupAdKicker") ?? "IMPORTANT ANNOUNCEMENT", popupAdTitle: getSiteSetting("popupAdTitle") ?? "", popupAdDate: getSiteSetting("popupAdDate") ?? "", popupAdBody: getSiteSetting("popupAdBody") ?? "", popupAdImage: getSiteSetting("popupAdImage") ?? "", announcementEnabled: getSiteSetting("announcementEnabled") === "true", announcementText: getSiteSetting("announcementText") ?? "" } });
+  return NextResponse.json({
+    users,
+    properties,
+    inquiries,
+    reviews,
+    phoneClicks,
+    memberActivity,
+    siteActivity,
+    registrationNotifications,
+    inquiryNotifications,
+    visits: { daily: dailyVisits, monthly: monthlyVisits },
+    settings: {
+      showSellerPhones: getSiteSetting("showSellerPhones") !== "false",
+      adminContactPhone: getSiteSetting("adminContactPhone") ?? "8074399963",
+      customerCarePhone: getSiteSetting("customerCarePhone") ?? "8074399963",
+      customerCareEmail: getSiteSetting("customerCareEmail") ?? "care@terraland.in",
+      homeTickerText: getSiteSetting("homeTickerText") ?? "New verified plots are added after owner and site checks.",
+      homeTickerPropertyId: getSiteSetting("homeTickerPropertyId") ?? "",
+      popupAdEnabled: getSiteSetting("popupAdEnabled") === "true",
+      popupAdPropertyId: getSiteSetting("popupAdPropertyId") ?? "",
+      popupAdKicker: getSiteSetting("popupAdKicker") ?? "IMPORTANT ANNOUNCEMENT",
+      popupAdTitle: getSiteSetting("popupAdTitle") ?? "",
+      popupAdDate: getSiteSetting("popupAdDate") ?? "",
+      popupAdBody: getSiteSetting("popupAdBody") ?? "",
+      popupAdImage: getSiteSetting("popupAdImage") ?? "",
+      announcementEnabled: getSiteSetting("announcementEnabled") === "true",
+      announcementText: getSiteSetting("announcementText") ?? ""
+    }
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -119,6 +147,26 @@ export async function PATCH(request: NextRequest) {
     if (typeof input.value !== "boolean") return NextResponse.json({ error: "Choose whether seller phone numbers should be shown." }, { status: 400 });
     setSiteSetting("showSellerPhones", input.value ? "true" : "false");
     return NextResponse.json({ message: `Seller phone numbers are now ${input.value ? "visible" : "hidden"}.` });
+  }
+
+  if (input.resource === "setting" && input.key === "contactChannels") {
+    const value = input.value as Record<string, unknown> | null;
+    if (!value || typeof value !== "object") return NextResponse.json({ error: "Invalid contact channels data." }, { status: 400 });
+    const adminPhone = String(value.adminContactPhone ?? "").trim().replace(/[^\d+]/g, "");
+    const carePhone = String(value.customerCarePhone ?? "").trim().replace(/[^\d+]/g, "");
+    const careEmail = String(value.customerCareEmail ?? "").trim();
+    if (!adminPhone) return NextResponse.json({ error: "Admin WhatsApp phone number is required." }, { status: 400 });
+    setSiteSetting("adminContactPhone", adminPhone);
+    if (carePhone) setSiteSetting("customerCarePhone", carePhone);
+    if (careEmail) setSiteSetting("customerCareEmail", careEmail);
+    return NextResponse.json({ message: "Admin phone, Care number, and Support email updated successfully." });
+  }
+
+  if (input.resource === "setting" && (input.key === "adminContactPhone" || input.key === "customerCarePhone" || input.key === "customerCareEmail")) {
+    const text = String(input.value ?? "").trim();
+    if (!text && input.key === "adminContactPhone") return NextResponse.json({ error: "Admin phone number is required." }, { status: 400 });
+    setSiteSetting(input.key, text);
+    return NextResponse.json({ message: "Contact setting updated successfully." });
   }
 
   if (input.resource === "setting" && input.key === "homeTicker") {

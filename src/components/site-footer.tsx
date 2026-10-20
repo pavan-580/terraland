@@ -1,8 +1,37 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 
-export function SiteFooter() {
+export function SiteFooter({
+  carePhone: initialPhone = "8074399963",
+  careEmail: initialEmail = "care@terraland.in",
+}: {
+  carePhone?: string;
+  careEmail?: string;
+}) {
+  const [phone, setPhone] = useState(initialPhone);
+  const [email, setEmail] = useState(initialEmail);
+
+  useEffect(() => {
+    void fetch("/api/promotion-popup")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.contact?.carePhone || data?.contact?.adminPhone) {
+          setPhone(data.contact.carePhone || data.contact.adminPhone);
+        }
+        if (data?.contact?.careEmail) {
+          setEmail(data.contact.careEmail);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const digits = (phone || "8074399963").replace(/\D/g, "");
+  const whatsappCareNumber = digits.length === 10 ? `91${digits}` : digits;
+
   return (
     <footer className="site-footer">
       <div className="footer-main">
@@ -13,9 +42,22 @@ export function SiteFooter() {
           <p>
             The transparent residential land acquisition platform in Miyapur, Hyderabad. We connect genuine buyers and sellers with verified plot titles and physically inspected properties.
           </p>
-          <a className="footer-whatsapp-link" href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20inquire%20about%20plots%20in%20Miyapur." target="_blank" rel="noreferrer">
+          <a
+            className="footer-whatsapp-link"
+            href={`https://wa.me/${whatsappCareNumber}?text=Hello%20NILAY%2C%20I%20would%20like%20to%20inquire%20about%20plots%20in%20Miyapur.`}
+            target="_blank"
+            rel="noreferrer"
+          >
             Connect with NILAY on WhatsApp <ArrowUpRight size={14} />
           </a>
+          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 14, fontSize: 11, color: "var(--muted)" }}>
+            <a href={`tel:${digits.slice(-10)}`} style={{ color: "var(--lime)" }}>
+              Care: +91 {digits.slice(-10)}
+            </a>
+            <a href={`mailto:${email}`} style={{ color: "var(--lime)" }}>
+              {email}
+            </a>
+          </div>
         </div>
         <div className="footer-col">
           <strong>Explore Plots</strong>
@@ -30,7 +72,11 @@ export function SiteFooter() {
           <Link href="/sell">List your plot for verification</Link>
           <Link href="/sign-in">Account &amp; listings</Link>
           <Link href="/about">How verification works</Link>
-          <a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20own%20a%20plot%20in%20Miyapur%20and%20want%20to%20list." target="_blank" rel="noreferrer">
+          <a
+            href={`https://wa.me/${whatsappCareNumber}?text=Hello%20NILAY%2C%20I%20own%20a%20plot%20in%20Miyapur%20and%20want%20to%20list.`}
+            target="_blank"
+            rel="noreferrer"
+          >
             Seller WhatsApp assistance
           </a>
         </div>

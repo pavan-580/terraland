@@ -96,10 +96,10 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
             <div className="sort-dropdown-wrap search-toolbar-sort">
               <ArrowUpDown size={13} className="sort-icon" />
               <select value={sort} onChange={(e) => setSort(e.target.value)} className="sort-select" aria-label="Sort listings">
-                <option value="recent">Recently Listed</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="area_asc">Plot Size: Small to Large</option>
+                <option value="recent">Recent</option>
+                <option value="price_asc">Price: Low</option>
+                <option value="price_desc">Price: High</option>
+                <option value="area_asc">Size: Small</option>
               </select>
               <ChevronDown size={13} className="sort-chevron" />
             </div>
@@ -291,7 +291,9 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
               <span className="quick-label">Budget:</span>
               {[
                 { label: "All", minVal: "", maxVal: "" },
-                { label: "< ₹50 Lakhs", minVal: "", maxVal: "50" },
+                { label: "< ₹10 Lakhs", minVal: "", maxVal: "10" },
+                { label: "₹10L - ₹25L", minVal: "10", maxVal: "25" },
+                { label: "₹25L - ₹50L", minVal: "25", maxVal: "50" },
                 { label: "₹50L - ₹1 Cr", minVal: "50", maxVal: "100" },
                 { label: "₹1 Cr - ₹2 Cr", minVal: "100", maxVal: "200" },
                 { label: "> ₹2 Cr", minVal: "200", maxVal: "" },

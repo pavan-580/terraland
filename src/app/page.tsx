@@ -127,15 +127,32 @@ export default async function Home() {
           </div>
         </section>
 
-        {tickerProperty && <section className="home-listing-ticker" aria-label="Featured new listing">
-          <Link className="home-listing-ticker-image" href={`/properties/${tickerProperty.id}`} aria-label={`View ${tickerProperty.title}`} style={{ backgroundImage: `url("${tickerProperty.image}")` }} />
-          <div className="home-listing-ticker-copy">
-            <span className="eyebrow">NEW VERIFIED LISTING</span>
-            <Link href={`/properties/${tickerProperty.id}`} className="home-listing-ticker-title">{tickerProperty.title}</Link>
-            <div className="home-listing-ticker-track" aria-label={tickerText}><span>{tickerText}</span><span aria-hidden="true">{tickerText}</span></div>
-          </div>
-          <Link className="home-listing-ticker-link" href={`/properties/${tickerProperty.id}`} aria-label="View the new listing"><MoveUpRight size={17} /></Link>
-        </section>}
+        {tickerProperty && (
+          <section className="home-listing-ticker" aria-label="Featured new listing">
+            <Link
+              className="home-listing-ticker-image"
+              href={`/properties/${tickerProperty.id}`}
+              aria-label={`View ${tickerProperty.title}`}
+              style={{ backgroundImage: `url("${tickerProperty.image}")` }}
+            />
+            <div className="home-listing-ticker-copy">
+              <span className="eyebrow">NEW VERIFIED PLOT</span>
+              <Link href={`/properties/${tickerProperty.id}`} className="home-listing-ticker-title">
+                {tickerProperty.title}
+              </Link>
+              <div className="home-listing-ticker-text" title={tickerText}>
+                {tickerText}
+              </div>
+            </div>
+            <Link
+              className="home-listing-ticker-link"
+              href={`/properties/${tickerProperty.id}`}
+              aria-label="View the new listing"
+            >
+              <MoveUpRight size={18} />
+            </Link>
+          </section>
+        )}
 
         <section className="section places-section">
           <div className="places-heading">
