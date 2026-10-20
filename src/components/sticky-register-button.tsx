@@ -23,10 +23,11 @@ export function StickyRegisterButton() {
           return;
         }
 
-        const stickyTop = searchSection.getBoundingClientRect().bottom + 8;
+        const searchRect = searchSection.getBoundingClientRect();
+        const stickyTop = searchRect.bottom + 8;
         const slotTop = slot.getBoundingClientRect().top;
         const heroBottom = hero.getBoundingClientRect().bottom;
-        const shouldStick = slotTop <= stickyTop + 12 && heroBottom > stickyTop + 52;
+        const shouldStick = slotTop <= searchRect.bottom + 16 && heroBottom > searchRect.bottom;
 
         if (shouldStick) slot.style.setProperty("--sticky-register-top", `${stickyTop}px`);
         setStuck(shouldStick);
@@ -36,10 +37,14 @@ export function StickyRegisterButton() {
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
+    const resizeObserver = new ResizeObserver(update);
+    resizeObserver.observe(searchSection);
+    resizeObserver.observe(slot);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
+      resizeObserver.disconnect();
     };
   }, []);
 
