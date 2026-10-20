@@ -4712,8 +4712,8 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
   width: 100% !important;
-  padding-bottom: 3px !important;
-  margin-bottom: 0 !important;
+  padding: 6px 2px !important;
+  margin: 0 !important;
 }
 .search-quick-corridors::-webkit-scrollbar {
   display: none !important;
@@ -4721,6 +4721,28 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
 .quick-corridor-btn {
   flex-shrink: 0 !important;
   white-space: nowrap !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: rgba(235, 240, 235, 0.88) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.18s ease !important;
+}
+.quick-corridor-btn:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: var(--ink, #ffffff) !important;
+  border-color: rgba(198, 220, 129, 0.45) !important;
+}
+.quick-corridor-btn.is-active {
+  background: rgba(198, 220, 129, 0.14) !important;
+  color: var(--lime) !important;
+  border: 1px solid var(--lime) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
 }
 
 .promotion-popup-modal-wrap {
