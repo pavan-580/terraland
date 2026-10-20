@@ -255,7 +255,6 @@ export function SearchResults({ initial }: { initial: { q: string; city: string;
                   <option value="price_asc">Price: Low to High</option>
                   <option value="price_desc">Price: High to Low</option>
                   <option value="area_asc">Plot Size: Small to Large</option>
-                  <option value="area_desc">Plot Size: Large to Small</option>
                 </select>
                 <ChevronDown size={13} className="sort-chevron" />
               </div>

@@ -3857,3 +3857,22 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   border-radius: 10px !important;
 }
 
+/* Thin Google-color edges for primary actions across the app. */
+.button-dark:not(.search-submit-google-edge), .auth-submit {
+  border: 1px solid transparent !important;
+  background-color: var(--forest) !important;
+  background-image:
+    linear-gradient(var(--forest), var(--forest)),
+    conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  animation: aiBorderRotate 5s linear infinite;
+}
+.button-dark:not(.search-submit-google-edge):hover, .auth-submit:hover {
+  box-shadow: 0 0 12px rgba(66,133,244,.16), 0 0 14px rgba(198,220,129,.12), inset 0 1px rgba(255,255,255,.08);
+}
+
+@media (max-width: 700px) {
+  .hero { height: 100dvh; min-height: 100dvh; }
+}
+

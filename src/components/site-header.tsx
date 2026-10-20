@@ -107,7 +107,6 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
             </button>
           </div>
           <Link href="/search?category=sale">Explore plots</Link>
-          <Link href="/requirements">Buyer Requirements</Link>
           <div className="farmstay-nav-window" onPointerEnter={() => setFarmstayPaused(true)}
             onPointerLeave={() => setFarmstayPaused(false)} onFocusCapture={() => setFarmstayPaused(true)}
             onBlurCapture={(event) => {
@@ -124,6 +123,7 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
               </button>
             </div>
           </div>
+          <Link href="/requirements">Buyer Requirements</Link>
           <Link href="/my-listings">My listings</Link>
           <Link href="/lender-interest" className="nav-item-secondary">Become a lender</Link>
           <Link className="mobile-menu-favorites" href="/saved">Favorites <span className="mobile-favorites-heart"><Heart size={16} /></span></Link>

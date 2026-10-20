@@ -14,7 +14,7 @@ export function SiteFooter() {
             The transparent residential land acquisition platform in Miyapur, Hyderabad. We connect genuine buyers and sellers with verified plot titles and physically inspected properties.
           </p>
           <a href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20would%20like%20to%20inquire%20about%20plots%20in%20Miyapur." target="_blank" rel="noreferrer">
-            Talk to Founder on WhatsApp <ArrowUpRight size={14} />
+            Connect with NILAY on WhatsApp <ArrowUpRight size={14} />
           </a>
         </div>
         <div className="footer-col">

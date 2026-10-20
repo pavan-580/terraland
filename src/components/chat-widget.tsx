@@ -7,7 +7,10 @@ export function ChatWidget() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const updateVisibility = () => setVisible(window.scrollY >= 190);
+    const updateVisibility = () => {
+      const distanceToBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+      setVisible(window.scrollY >= 190 && distanceToBottom > 120);
+    };
     updateVisibility();
     window.addEventListener("scroll", updateVisibility, { passive: true });
     return () => window.removeEventListener("scroll", updateVisibility);
