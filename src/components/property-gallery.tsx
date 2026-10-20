@@ -13,6 +13,9 @@ import {
   Play,
   Film,
   Camera,
+  Share2,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 export interface PropertyGalleryProps {
@@ -39,15 +42,24 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
   const [zoomScale, setZoomScale] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [shareMessage, setShareMessage] = useState("");
   const dragStart = useRef({ x: 0, y: 0 });
 
   const viewerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const mainTouchStartX = useRef<number | null>(null);
+  const shareMessageTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastGalleryInteraction = useRef(0);
   const totalCount = mediaItems.length;
 
   const activeMedia = mediaItems[activeIndex] ?? mediaItems[0];
+
+  useEffect(() => () => {
+    if (shareMessageTimeout.current) clearTimeout(shareMessageTimeout.current);
+  }, []);
 
   useEffect(() => {
     const strip = thumbnailsRef.current;
@@ -68,6 +80,16 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
     },
     [totalCount, resetZoom]
   );
+
+  useEffect(() => {
+    if (totalCount < 2 || viewerOpen || activeMedia?.type === "video") return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible" && Date.now() - lastGalleryInteraction.current > 12000) {
+        showMedia(activeIndex + 1);
+      }
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [activeIndex, activeMedia?.type, showMedia, totalCount, viewerOpen]);
 
   const zoomIn = useCallback(() => {
     setZoomScale((scale) => Math.min(3.5, Number((scale + 0.5).toFixed(1))));
@@ -118,6 +140,43 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
     setViewerOpen(false);
     resetZoom();
     window.requestAnimationFrame(() => triggerRef.current?.focus());
+  }
+
+  async function shareListing() {
+    const shareData = { title, text: `View this property on NILAY: ${title}`, url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(shareData.url);
+        setShareMessage("Link copied");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        setShareMessage("Link copied");
+      } catch {
+        setShareMessage("Unable to share link");
+      }
+    }
+    if (shareMessageTimeout.current) clearTimeout(shareMessageTimeout.current);
+    shareMessageTimeout.current = setTimeout(() => setShareMessage(""), 2200);
+  }
+
+  function handleMainTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest("video, button")) {
+      mainTouchStartX.current = null;
+      return;
+    }
+    mainTouchStartX.current = event.changedTouches[0]?.clientX ?? null;
+  }
+
+  function handleMainTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    const start = mainTouchStartX.current;
+    const end = event.changedTouches[0]?.clientX;
+    mainTouchStartX.current = null;
+    if (start === null || end === undefined || Math.abs(end - start) < 45 || totalCount < 2) return;
+    showMedia(activeIndex + (end < start ? 1 : -1));
   }
 
   // File download handler for high-res images and videos
@@ -176,9 +235,9 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
   if (!totalCount) return null;
 
   return (
-    <section className="detail-gallery" aria-label="Property gallery" aria-roledescription="carousel">
+    <section className="detail-gallery" aria-label="Property gallery" aria-roledescription="carousel" onPointerDown={() => { lastGalleryInteraction.current = Date.now(); }}>
       {/* Main Display Area */}
-      <div className="gallery-media-wrapper">
+      <div className="gallery-media-wrapper" onTouchStart={handleMainTouchStart} onTouchEnd={handleMainTouchEnd}>
         {mediaItems.map((item, idx) => {
           const isActive = idx === activeIndex;
           return (
@@ -191,11 +250,14 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
                 <video
                   src={item.url}
                   controls
-                  muted
+                  muted={isMuted}
                   playsInline
                   preload="metadata"
                   className="gallery-main-video"
                   aria-label={`${title} video tour ${idx + 1}`}
+                  onVolumeChange={(event) => setIsMuted(event.currentTarget.muted || event.currentTarget.volume === 0)}
+                  onEnded={() => showMedia(activeIndex + 1)}
+                  ref={(element) => { if (!isActive) element?.pause(); }}
                 />
               ) : (
                 <img
@@ -229,6 +291,15 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
             aria-label="Download current photo or video"
           >
             <Download size={14} /> Download
+          </button>
+          {activeMedia?.type === "video" && (
+            <button type="button" className="gallery-action-btn" onClick={() => setIsMuted((muted) => !muted)} aria-label={isMuted ? "Unmute video" : "Mute video"} title={isMuted ? "Unmute video" : "Mute video"}>
+              {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              {isMuted ? "Unmute" : "Mute"}
+            </button>
+          )}
+          <button type="button" className="gallery-action-btn gallery-share-btn" onClick={shareListing} title="Share this listing" aria-label="Share this listing">
+            <Share2 size={14} /> {shareMessage || "Share"}
           </button>
           <button
             ref={triggerRef}
@@ -362,6 +433,15 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
               )}
 
               {/* Direct Download Button */}
+              {activeMedia?.type === "video" && (
+                <button type="button" className="lightbox-btn" onClick={() => setIsMuted((muted) => !muted)} aria-label={isMuted ? "Unmute video" : "Mute video"}>
+                  {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  {isMuted ? "Unmute" : "Mute"}
+                </button>
+              )}
+              <button type="button" className="lightbox-btn" onClick={shareListing} aria-label="Share this listing">
+                <Share2 size={16} /> {shareMessage || "Share"}
+              </button>
               <button
                 type="button"
                 className="lightbox-btn"
@@ -442,10 +522,12 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
                   src={activeMedia.url}
                   controls
                   autoPlay
-                  muted
+                  muted={isMuted}
                   playsInline
                   className="lightbox-video"
                   aria-label={`${title} video player`}
+                  onVolumeChange={(event) => setIsMuted(event.currentTarget.muted || event.currentTarget.volume === 0)}
+                  onEnded={() => showMedia(activeIndex + 1)}
                 />
               ) : (
                 <img

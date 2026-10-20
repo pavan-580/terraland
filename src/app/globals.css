@@ -1459,12 +1459,14 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   aspect-ratio: 16 / 9;
   min-height: 0;
   max-height: min(72vh, 760px);
+  touch-action: pan-y;
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 14px;
   background: #090e0b;
 }
 .gallery-main-image { object-fit: contain; }
 .gallery-main-video { object-fit: contain; border-radius: 0; }
+.gallery-main-video { touch-action: auto; }
 .gallery-thumbnails {
   gap: 10px;
   padding: 2px 3px 8px;
@@ -1479,7 +1481,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 }
 @media (max-width: 700px) {
   .gallery-media-wrapper { aspect-ratio: 4 / 3; max-height: 62vh; border-radius: 11px; }
-  .gallery-actions-overlay { top: 10px; right: 10px; gap: 6px; }
+  .gallery-actions-overlay { top: 10px; right: 10px; max-width: calc(100% - 20px); flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
   .gallery-action-btn { min-height: 38px; padding: 6px 9px; font-size: 10px; }
   .gallery-video-pill { top: 10px; left: 10px; padding: 6px 9px; font-size: 9px; }
   .gallery-thumbnail { flex-basis: 82px; height: 60px; }
@@ -3070,6 +3072,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   width: 100%;
   height: clamp(320px, 50vw, 580px);
   overflow: hidden;
+  touch-action: pan-y;
   border-radius: 12px;
   background-color: #0b110d;
   display: flex;
@@ -3099,7 +3102,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .gallery-main-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   cursor: zoom-in;
   transition: transform 0.35s ease;
 }
@@ -3109,6 +3112,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   object-fit: contain;
   background: #000;
   border-radius: 12px;
+  touch-action: auto;
 }
 .gallery-actions-overlay {
   position: absolute;
@@ -3324,6 +3328,14 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .lightbox-zoom-hint {
   color: rgba(255, 255, 255, 0.6);
   font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .gallery-media-wrapper { height: clamp(260px, 72vw, 440px); max-height: 62svh; }
+  .gallery-actions-overlay { top: 10px; right: 10px; left: 10px; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .gallery-action-btn { min-height: 38px; padding: 6px 9px; font-size: 10px; }
+  .lightbox-top-bar { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .lightbox-controls { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
 }
 
 /* Google Animated Rainbow Pill Button (Exact Match to User Uploaded Image) */
