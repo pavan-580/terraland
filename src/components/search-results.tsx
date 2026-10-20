@@ -266,7 +266,7 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
 
             {/* Interactive Corridor & Budget Quick Filter Bar */}
             <div className="search-quick-filter-row">
-              <span className="quick-label">Corridors:</span>
+              <span className="quick-label">CORRIDORS:</span>
               <div className="search-quick-corridors">
                 {[
                   { label: "All", value: "" },
@@ -290,7 +290,7 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
             </div>
 
             <div className="search-quick-filter-row">
-              <span className="quick-label">Budget:</span>
+              <span className="quick-label">BUDGET:</span>
               <div className="search-quick-corridors search-quick-budgets">
                 {[
                   { label: "All", minVal: "", maxVal: "" },

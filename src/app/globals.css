@@ -4713,14 +4713,17 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
 
 
 /* ==========================================================================
-   STICKY FILTERS, CORNER POPUP CLOSE, CONTACT CTA & REFINED VISIBILITY
+   INTERACTIVE QUICK FILTERS: 2 CLEAN ROWS (KEYS FIXED, VALUES SCROLLABLE)
    ========================================================================== */
 .search-quick-filter-row {
   display: flex !important;
-  flex-direction: column !important;
-  gap: 7px !important;
-  margin-bottom: 12px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
   width: 100% !important;
+  min-width: 0 !important;
+  position: relative !important;
 }
 
 .search-quick-filter-row .quick-label,
@@ -4729,9 +4732,10 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   align-items: center !important;
   position: static !important;
   background: transparent !important;
+  background-color: transparent !important;
   box-shadow: none !important;
   border: none !important;
-  color: var(--muted, #8ea394) !important;
+  color: #56c2d6 !important;
   font-size: 11px !important;
   font-weight: 800 !important;
   text-transform: uppercase !important;
@@ -4740,34 +4744,44 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   margin: 0 !important;
   width: auto !important;
   min-width: 0 !important;
-  flex: none !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
 }
 
 .search-quick-corridors {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
+  gap: 7px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 100% !important;
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
+  overflow-y: hidden !important;
   position: relative !important;
   overscroll-behavior-inline: contain !important;
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
-  width: 100% !important;
   padding: 6px 2px !important;
   margin: 0 !important;
 }
 .search-quick-corridors::-webkit-scrollbar {
   display: none !important;
 }
+.search-quick-budgets {
+  margin-bottom: 2px !important;
+}
 .quick-corridor-btn {
+  flex: 0 0 auto !important;
   flex-shrink: 0 !important;
   white-space: nowrap !important;
   padding: 6px 14px !important;
   border-radius: 999px !important;
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  color: rgba(235, 240, 235, 0.88) !important;
+  color: rgba(235, 240, 235, 0.9) !important;
   font-size: 11.5px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
@@ -4776,7 +4790,7 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
 }
 .quick-corridor-btn:hover {
   background: rgba(255, 255, 255, 0.09) !important;
-  color: var(--ink, #ffffff) !important;
+  color: #ffffff !important;
   border-color: rgba(198, 220, 129, 0.45) !important;
 }
 .quick-corridor-btn.is-active {
@@ -4861,9 +4875,20 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   grid-column: 1 / -1;
   display: flex !important;
   align-items: center !important;
+  justify-content: space-between !important;
   gap: 8px !important;
   width: 100% !important;
   min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 700px) {
+  .search-sticky-toolbar {
+    width: calc(100% + 32px) !important;
+    margin: 0 -16px 14px !important;
+    padding: 8px 16px !important;
+    box-sizing: border-box !important;
+  }
 }
 
 .search-sticky-toolbar > .site-back-btn,
