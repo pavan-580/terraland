@@ -19,6 +19,9 @@ const cityCards = [
   { name: "Guntur", image: "https://www.dekholand.com/assets/img/city/guntur.png" },
 ];
 
+const cityCardBackground = (image: string) =>
+  `linear-gradient(115deg, rgba(19,181,234,.12), rgba(155,114,203,.11) 48%, rgba(217,101,112,.12)), linear-gradient(180deg, rgba(11,20,16,.04) 32%, rgba(11,20,16,.78)), url("${image}")`;
+
 export default async function Home() {
   const user = await currentUser();
   const savedPropertyTypes = (db.prepare("SELECT DISTINCT type FROM properties WHERE status = 'published' AND TRIM(type) != '' ORDER BY type COLLATE NOCASE").all() as { type: string }[])
@@ -70,13 +73,16 @@ export default async function Home() {
                     key={city.name}
                     href={`/search?q=${encodeURIComponent(city.name)}`}
                     style={{
-                      backgroundImage: `linear-gradient(180deg, rgba(11,20,16,.02) 30%, rgba(11,20,16,.76)),url(${city.image})`
+                      backgroundImage: cityCardBackground(city.image)
                     }}
                   >
                     <strong>{city.name}</strong>
                   </Link>
                 ))}
               </div>
+              <Link className="hero-register-cta" href="/sell">
+                Register your land for free <ArrowUpRight size={15} />
+              </Link>
             </div>
           </div>
         </section>
@@ -95,7 +101,7 @@ export default async function Home() {
                 href={`/search?q=${encodeURIComponent(city.name)}`}
                 aria-label={`Explore plots in ${city.name}`}
                 style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(11,20,16,.02) 34%, rgba(11,20,16,.76)),url(${city.image})`
+                  backgroundImage: cityCardBackground(city.image)
                 }}
               >
                 <strong>{city.name}</strong>
