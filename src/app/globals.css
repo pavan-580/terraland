@@ -3162,16 +3162,6 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   backdrop-filter: blur(8px);
   z-index: 5;
 }
-.gallery-thumbnail-video-badge {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
-  border-radius: 4px;
-}
 
 /* Lightbox Photo & Video Viewer with Zoom & Download */
 .lightbox-viewer-backdrop {
@@ -3462,8 +3452,6 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   scrollbar-color: rgba(198,220,129,.65) rgba(255,255,255,.08);
 }
 .gallery-thumbnail { scroll-snap-align: start; }
-.gallery-thumbnail-video-badge { flex-direction: column; gap: 2px; }
-.gallery-thumbnail-video-badge span { font-size: 9px; font-weight: 700; letter-spacing: .08em; }
 @media (max-width: 700px) {
   .gallery-thumbnails { gap: 9px; padding: 3px 4px 9px; }
   .gallery-thumbnail { flex: 0 0 88px; height: 66px; touch-action: pan-x; }

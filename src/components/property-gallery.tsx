@@ -10,7 +10,6 @@ import {
   RotateCcw,
   Download,
   Maximize2,
-  Play,
   Film,
   Camera,
   Share2,
@@ -337,7 +336,7 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
         )}
       </div>
 
-      {/* Thumbnails Filmstrip with Play Badge for Videos */}
+      {/* Thumbnails filmstrip */}
       {totalCount > 1 && (
         <div ref={thumbnailsRef} className="gallery-thumbnails" aria-label="Choose property media">
           {mediaItems.map((item, index) => {
@@ -356,12 +355,6 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
                     : { backgroundColor: "#0b110d" }
                 }
               >
-                {item.type === "video" && (
-                  <div className="gallery-thumbnail-video-badge" aria-hidden="true">
-                    <Play size={14} fill="white" />
-                    <span>VIDEO</span>
-                  </div>
-                )}
               </button>
             );
           })}
@@ -558,11 +551,6 @@ export function PropertyGallery({ images, videos = [], title, badge }: PropertyG
                       }
                       aria-label={`Go to ${item.type} ${index + 1}`}
                     >
-                      {item.type === "video" && (
-                        <div className="gallery-thumbnail-video-badge">
-                          <Play size={14} fill="white" />
-                        </div>
-                      )}
                     </button>
                   );
                 })}
