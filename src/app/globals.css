@@ -3603,7 +3603,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .hero-register-cta { display: none; }
 @media (max-width: 700px) {
   .hero { height: auto; min-height: 100svh; min-height: 100dvh; overflow: visible; }
-  .hero .hero-content { --hero-top-inset: max(120px, calc(env(safe-area-inset-top) + 108px)); display: block; height: auto; min-height: 100svh; min-height: 100dvh; width: 100% !important; padding: var(--hero-top-inset) 14px 0 !important; }
+  .hero .hero-content { --hero-top-inset: max(132px, calc(env(safe-area-inset-top) + 120px)); display: block; height: auto; min-height: 100svh; min-height: 100dvh; width: 100% !important; padding: var(--hero-top-inset) 14px 0 !important; }
   .hero .hero-search-section { position: sticky; top: 74px; z-index: 8; display: flex; min-height: 0; flex-direction: column; justify-content: center; margin-inline: -5px; padding: 5px 5px 7px; border-radius: 12px; background: linear-gradient(180deg, rgba(11,20,16,.97), rgba(17,32,24,.95)); box-shadow: 0 8px 22px rgba(0,0,0,.24); backdrop-filter: blur(14px); transition: box-shadow .24s ease, background-color .24s ease; }
   .hero .hero-search-heading, .hero .hero-search-intro { display: block !important; }
   .hero .hero-search-heading { margin-bottom: 7px; color: #fff; font: 400 clamp(21px, 6vw, 25px)/1.08 var(--serif); letter-spacing: -.7px; }
@@ -3615,7 +3615,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .hero .hero-search .type-field .property-type-picker-trigger { min-height: 30px; padding: 5px 7px; font-size: 10px; }
   .hero .hero-search .type-field .property-type-picker-trigger > span { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
   .hero .hero-search .search-submit { min-width: 0; min-height: 48px !important; justify-content: center; gap: 6px; padding: 8px; font-size: 12px; white-space: nowrap; }
-  .hero .hero-cities-section { position: relative; display: flex; min-height: 0; flex-direction: column; padding: 100px 0 8px; }
+  .hero .hero-cities-section { position: relative; display: flex; min-height: 0; flex-direction: column; padding: 80px 0 8px; }
   .hero .hero-cities-heading { display: block; flex: 0 0 auto; margin: 0 0 8px; font-size: 12px; }
   .hero .hero-city-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-template-rows: none; gap: 8px !important; margin-top: 0 !important; }
   .hero .hero-city-card { display: flex !important; min-width: 0; min-height: 90px; aspect-ratio: 1.67; align-items: flex-end; overflow: hidden; padding: 9px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; background-color: #26372e; background-position: center; background-size: cover; color: white; box-shadow: 0 5px 14px rgba(0,0,0,.16); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
@@ -3635,17 +3635,17 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   to { opacity: 1; transform: translateY(0); }
 }
 @media (max-height: 700px) and (max-width: 700px) {
-  .hero .hero-content { --hero-top-inset: max(105px, calc(env(safe-area-inset-top) + 93px)); padding-top: var(--hero-top-inset) !important; }
+  .hero .hero-content { --hero-top-inset: max(117px, calc(env(safe-area-inset-top) + 105px)); padding-top: var(--hero-top-inset) !important; }
   .hero .hero-city-grid { gap: 7px !important; }
   .hero .hero-city-card { min-height: 76px; }
 }
 @media (max-height: 570px) and (max-width: 700px) {
   .hero { height: auto; min-height: max(100svh, 560px); overflow: visible; }
-  .hero .hero-content { --hero-top-inset: max(105px, calc(env(safe-area-inset-top) + 93px)); height: auto; min-height: max(100svh, 560px); padding-top: var(--hero-top-inset) !important; padding-bottom: 0 !important; }
+  .hero .hero-content { --hero-top-inset: max(117px, calc(env(safe-area-inset-top) + 105px)); height: auto; min-height: max(100svh, 560px); padding-top: var(--hero-top-inset) !important; padding-bottom: 0 !important; }
   .hero .hero-search-section { padding: 4px 5px 6px; }
   .hero .hero-search-heading { margin-bottom: 5px; font-size: 20px; }
   .hero .hero-search-intro { margin-bottom: 9px; font-size: 10px; }
-  .hero .hero-cities-section { padding-top: 100px; }
+  .hero .hero-cities-section { padding-top: 80px; }
   .hero .hero-city-card { min-height: 0; }
 }
 
