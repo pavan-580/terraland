@@ -3745,12 +3745,70 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .hero .hero-city-card strong { font-size: 11px; font-weight: 700; text-shadow: 0 1px 5px rgba(0,0,0,.8); }
   .hero .hero-register-cta-slot { display: block; width: 100%; min-height: 0; margin: 0; }
   .hero .hero-register-cta-slot.is-stuck > .hero-register-cta { visibility: hidden; }
-  .hero .hero-register-cta { position: relative; display: inline-flex; width: 100%; min-height: 42px; align-items: center; justify-content: center; gap: 7px; margin: 0; padding: 8px 13px; border: 1.5px solid #ffffff; border-radius: 999px; background: #ffffff; box-shadow: 0 4px 18px rgba(0,0,0,.5), 0 0 12px rgba(255,255,255,.25); color: #0c1811; font-size: 12px; font-weight: 700; transition: transform .2s ease; animation: hero-register-enter .24s cubic-bezier(.2,.75,.25,1) both; }
-  .hero .hero-register-cta svg { color: #0c1811; }
-  .hero-register-cta-stuck { position: fixed; z-index: 9999; right: 14px; left: 14px; display: inline-flex; width: auto; min-height: 38px; align-items: center; justify-content: center; gap: 7px; margin: 0; padding: 6px 13px; border: 1.5px solid #ffffff; border-radius: 999px; background: #ffffff; box-shadow: 0 4px 18px rgba(0,0,0,.5), 0 0 12px rgba(255,255,255,.25); color: #0c1811; font-size: 12px; font-weight: 700; transition: top .18s cubic-bezier(.2,.75,.25,1), transform .2s ease; animation: hero-register-enter .24s cubic-bezier(.2,.75,.25,1) both; }
-  .hero-register-cta-stuck svg { color: #0c1811; }
-  .hero-register-cta-stuck::before { position: absolute; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
-  .hero .hero-register-cta::before { position: absolute; inset: 0; padding: 1px; border-radius: inherit; background: conic-gradient(from var(--ai-angle, 0deg), #4285f4, #9b72cb, #d96570, #c6dc81, #13b5ea, #4285f4); content: ""; pointer-events: none; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: aiBorderRotate 5s linear infinite; }
+  .hero .hero-register-cta {
+    position: relative;
+    display: inline-flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 0;
+    padding: 8px 16px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    background: rgba(13, 27, 20, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    color: #ffffff !important;
+    font-size: 13px;
+    font-weight: 700;
+    transition: transform 0.2s ease;
+    animation: hero-register-enter 0.24s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  }
+  .hero .hero-register-cta svg { color: #ffffff !important; stroke: #ffffff !important; }
+  .hero-register-cta-stuck {
+    position: fixed;
+    z-index: 9999;
+    right: 14px;
+    left: 14px;
+    display: inline-flex;
+    width: auto;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 0;
+    padding: 7px 16px;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    background: rgba(13, 27, 20, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    color: #ffffff !important;
+    font-size: 13px;
+    font-weight: 700;
+    transition: top 0.18s cubic-bezier(0.2, 0.75, 0.25, 1), transform 0.2s ease;
+    animation: hero-register-enter 0.24s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  }
+  .hero-register-cta-stuck svg { color: #ffffff !important; stroke: #ffffff !important; }
+  .hero-register-cta-stuck::before,
+  .hero .hero-register-cta::before {
+    position: absolute;
+    inset: -1.5px;
+    padding: 1.5px;
+    border-radius: 13.5px;
+    background: conic-gradient(from var(--ai-angle, 0deg), #13b5ea, #9b72cb, #d96570, #c6dc81, #13b5ea);
+    content: "";
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: aiBorderRotate 5s linear infinite;
+  }
   .hero .hero-register-cta:hover { transform: translateY(-1px); }
   .hero .hero-register-cta svg { width: 14px; height: 14px; }
   .places-section { display: none !important; }
@@ -4830,17 +4888,17 @@ button:not(.save-button):not(.chat-launcher):not(.mobile-menu-toggle):not(.mobil
   align-items: center !important;
   gap: 7px !important;
   padding: 0 16px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-  font-size: 10px !important;
+  background: #c6dc81 !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.15) !important;
+  color: #0c1811 !important;
+  font-size: 10.5px !important;
   font-weight: 800 !important;
   letter-spacing: 0.08em !important;
   white-space: nowrap !important;
 }
 
 .site-announcement-label span[aria-hidden="true"] {
-  color: var(--lime) !important;
+  color: #ff6d00 !important;
 }
 
 .site-announcement-window {
@@ -4887,10 +4945,28 @@ body:has(.main-nav.is-open) .site-announcement-ticker,
   z-index: 50 !important;
 }
 .mobile-menu-backdrop {
-  z-index: 100 !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99990 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
 }
+.site-header .main-nav.is-open,
 .main-nav.is-open {
-  z-index: 150 !important;
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  width: min(390px, 88vw) !important;
+  z-index: 999999 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateX(0) !important;
 }
 
 /* Admin Brand Logo Clickable */
@@ -4899,4 +4975,98 @@ body:has(.main-nav.is-open) .site-announcement-ticker,
   pointer-events: auto !important;
   display: inline-flex !important;
   align-items: center !important;
+}
+
+/* ==========================================================================
+   SITE HEADER GROUP: ROLLER TOP -> NAV BELOW ROLLER -> HOME (EXACT TO IMAGE 2)
+   ========================================================================== */
+.site-header-group {
+  width: 100%;
+  position: relative;
+  z-index: 50;
+}
+
+/* Standard pages: use display contents so sticky header sticks to viewport */
+.site-header-group:not(.is-hero) {
+  display: contents;
+}
+
+.site-header-group:not(.is-hero) .site-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  width: 100% !important;
+}
+
+.site-header-group:not(.is-hero) .site-announcement-ticker {
+  position: relative !important;
+  top: auto !important;
+  inset: auto !important;
+  width: 100% !important;
+  z-index: 8 !important;
+}
+
+/* Hero page: column flexbox places Roller at top (Y=0), and Nav directly below Roller */
+.site-header-group.is-hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 50;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.site-header-group.is-hero .site-announcement-ticker {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  inset: auto !important;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  z-index: 8 !important;
+}
+
+.site-header-group.is-hero .site-header {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  inset: auto !important;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  z-index: 50 !important;
+}
+
+/* When scrolled down on hero page, nav stays fixed at top and ticker hides */
+.site-header-group.is-hero.is-scrolled {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 50 !important;
+}
+
+.site-header-group.is-hero.is-scrolled .site-announcement-ticker {
+  display: none !important;
+}
+
+.site-header-group.is-hero.is-scrolled .site-header {
+  background: rgba(9, 24, 20, 0.97) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.17) !important;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(16px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+}
+
+/* Sidebar opens cleanly: announcement ticker completely hidden */
+body:has(.main-nav.is-open) .site-announcement-ticker,
+.site-header-group:has(.main-nav.is-open) .site-announcement-ticker {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }

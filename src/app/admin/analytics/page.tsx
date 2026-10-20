@@ -20,9 +20,6 @@ export default async function AdminAnalyticsPage() {
           <a href="/" className="brand" aria-label="NILAY Home" style={{ cursor: "pointer", display: "inline-flex" }}>
             <BrandLogo />
           </a>
-          <a href="/" className="admin-pill-link" style={{ gap: 6, fontWeight: 700, color: "var(--lime)" }}>
-            🏠 Website Home
-          </a>
         </div>
         <div>
           <span>Signed in as {user.name}</span>

@@ -100,7 +100,20 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
   }
 
   return (
-    <>
+    <div className={`site-header-group${variant === "hero" ? " is-hero" : ""}${headerScrolled ? " is-scrolled" : ""}`}>
+      {!mobileMenuOpen && !pathname.startsWith("/admin") && !pathname.startsWith("/sign-in") && Boolean(ticker) && (
+        <div className="site-announcement-ticker" role="status" aria-label="Latest announcement">
+          <span className="site-announcement-label">
+            <span aria-hidden="true">⚡</span> LATEST UPDATES
+          </span>
+          <div className="site-announcement-window">
+            <div className="site-announcement-track">
+              <span>{ticker}</span>
+              <span aria-hidden="true">{ticker}</span>
+            </div>
+          </div>
+        </div>
+      )}
       <header className={`site-header${variant === "hero" ? " site-header-hero" : ""}${mobileLogoOnly ? " mobile-logo-only" : ""}${headerScrolled ? " is-scrolled" : ""}`} translate="yes">
       <div className="header-inner">
         <Link className="brand" href="/" aria-label="NILAY Real Estate home">
@@ -243,19 +256,6 @@ export function SiteHeader({ variant = "standard", mobileLogoOnly = false }: { v
         {logoutError && <span className="header-auth-error" role="alert">{logoutError}</span>}
       </div>
     </header>
-      {!mobileMenuOpen && !pathname.startsWith("/admin") && !pathname.startsWith("/sign-in") && Boolean(ticker) && (
-        <div className="site-announcement-ticker" role="status" aria-label="Latest announcement">
-          <span className="site-announcement-label">
-            <span aria-hidden="true">⚡</span> LATEST UPDATES
-          </span>
-          <div className="site-announcement-window">
-            <div className="site-announcement-track">
-              <span>{ticker}</span>
-              <span aria-hidden="true">{ticker}</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
