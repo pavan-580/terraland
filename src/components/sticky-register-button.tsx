@@ -29,7 +29,7 @@ export function StickyRegisterButton() {
       }
       const anchorY = anchorYRef.current ?? slot.getBoundingClientRect().top + window.scrollY;
       const shouldStick = anchorY <= window.scrollY + searchBottom + 20;
-      setTop(searchBottom + 2);
+      setTop(searchBottom - 2);
       stuckRef.current = shouldStick;
       setStuck(shouldStick);
     };
