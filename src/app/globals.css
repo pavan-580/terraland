@@ -3615,7 +3615,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .hero .hero-search .type-field .property-type-picker-trigger { min-height: 30px; padding: 5px 7px; font-size: 10px; }
   .hero .hero-search .type-field .property-type-picker-trigger > span { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
   .hero .hero-search .search-submit { min-width: 0; min-height: 48px !important; justify-content: center; gap: 6px; padding: 8px; font-size: 12px; white-space: nowrap; }
-  .hero .hero-cities-section { position: relative; display: flex; min-height: 0; flex-direction: column; padding: 48px 0 8px; }
+  .hero .hero-cities-section { position: relative; display: flex; min-height: 0; flex-direction: column; padding: 100px 0 8px; }
   .hero .hero-cities-heading { display: block; flex: 0 0 auto; margin: 0 0 8px; font-size: 12px; }
   .hero .hero-city-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-template-rows: none; gap: 8px !important; margin-top: 0 !important; }
   .hero .hero-city-card { display: flex !important; min-width: 0; min-height: 90px; aspect-ratio: 1.67; align-items: flex-end; overflow: hidden; padding: 9px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; background-color: #26372e; background-position: center; background-size: cover; color: white; box-shadow: 0 5px 14px rgba(0,0,0,.16); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
@@ -3645,7 +3645,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   .hero .hero-search-section { padding: 4px 5px 6px; }
   .hero .hero-search-heading { margin-bottom: 5px; font-size: 20px; }
   .hero .hero-search-intro { margin-bottom: 9px; font-size: 10px; }
-  .hero .hero-cities-section { padding-top: 8px; }
+  .hero .hero-cities-section { padding-top: 100px; }
   .hero .hero-city-card { min-height: 0; }
 }
 
