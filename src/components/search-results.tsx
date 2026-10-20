@@ -22,9 +22,15 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
   const [maxArea, setMaxArea] = useState("");
   const [sort, setSort] = useState("recent");
   const [loading, setLoading] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 820) {
+      setFiltersOpen(false);
+    }
+  }, []);
 
   const propertyOptions = [...new Map([...(category === "rent" ? rentalTypes : propertyTypes), type, ...properties.map((property) => property.type)]
     .filter((item): item is string => Boolean(item?.trim())).map((item) => [item.toLocaleLowerCase(), item])).values()];
@@ -70,7 +76,9 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
 
   const submitSearch = () => {
     setHasSearched(true);
-    setFiltersOpen(false);
+    if (typeof window !== "undefined" && window.innerWidth <= 820) {
+      setFiltersOpen(false);
+    }
     void load();
   };
 
@@ -78,12 +86,12 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
     <>
       <SiteHeader />
       <main className="search-page">
-        <div className="results-layout">
+        <div className={`results-layout ${filtersOpen ? "filters-open" : "filters-closed"}`}>
           <div className="search-sticky-toolbar" aria-label="Search tools">
             <BackButton className="search-back-link" fallbackHref="/" label="Back to home" />
             <button
               type="button"
-              className={`mobile-filter-toggle search-toolbar-filter${hasSearched ? " is-compact" : ""}`}
+              className={`mobile-filter-toggle search-toolbar-filter${hasSearched ? " is-compact" : ""}${filtersOpen ? " is-active" : ""}`}
               aria-label={filtersOpen ? "Close search filters" : "Open search filters"}
               aria-expanded={filtersOpen}
               aria-controls="search-filter-panel"
