@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -43,10 +44,18 @@ export function StickyRegisterButton() {
   }, []);
 
   return (
-    <div ref={slotRef} className={`hero-register-cta-slot${stuck ? " is-stuck" : ""}`} style={stuck ? { top } : undefined}>
+    <>
+      <div ref={slotRef} className={`hero-register-cta-slot${stuck ? " is-stuck" : ""}`}>
       <Link className="hero-register-cta" href="/sell">
         Register your land for free <ArrowUpRight size={15} />
       </Link>
-    </div>
+      </div>
+      {stuck && typeof document !== "undefined" && createPortal(
+        <Link className="hero-register-cta hero-register-cta-stuck" style={{ top }} href="/sell">
+          Register your land for free <ArrowUpRight size={15} />
+        </Link>,
+        document.body
+      )}
+    </>
   );
 }
