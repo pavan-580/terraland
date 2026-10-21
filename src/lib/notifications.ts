@@ -1,11 +1,18 @@
 import "server-only";
-import { db } from "@/lib/db";
+import { db, getSiteSetting } from "@/lib/db";
 import { formatListingPrice, type ListingCategory, type PricePeriod } from "@/lib/market";
 
 export const PRIMARY_ADMIN_EMAIL = "pavansai580@gmail.com";
 
+export function getEmailConfig() {
+  const apiKey = getSiteSetting("resendApiKey") || process.env.RESEND_API_KEY || "";
+  const from = getSiteSetting("emailFrom") || process.env.EMAIL_FROM || "NILAY <onboarding@resend.dev>";
+  const adminEmail = getSiteSetting("adminNotificationEmail") || process.env.ADMIN_EMAIL || PRIMARY_ADMIN_EMAIL;
+  return { apiKey, from, adminEmail };
+}
+
 export function getAdminRecipients(): string[] {
-  const envAdmin = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const envAdmin = (getSiteSetting("adminNotificationEmail") || process.env.ADMIN_EMAIL || PRIMARY_ADMIN_EMAIL).trim().toLowerCase();
   const set = new Set<string>([PRIMARY_ADMIN_EMAIL]);
   if (envAdmin && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(envAdmin)) {
     set.add(envAdmin);
@@ -104,16 +111,86 @@ function renderEmailLayout({
   `.trim();
 }
 
+function renderUserWelcomeEmail(name: string, siteUrl: string) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+    <body style="margin:0;padding:20px 10px;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+      <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 3px 12px rgba(0,0,0,0.05);">
+        <div style="background:#0b3b24;background-image:linear-gradient(135deg,#0b3b24,#155d39);padding:26px 28px;color:#ffffff;text-align:center;">
+          <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#c6dc81;font-weight:700;margin-bottom:6px;">WELCOME TO NILAY</div>
+          <h1 style="margin:0;font-size:24px;font-weight:700;color:#ffffff;">Welcome, ${escapeHtml(name)}!</h1>
+        </div>
+        <div style="padding:28px 28px 24px;color:#1f2937;font-size:14px;line-height:1.6;">
+          <p style="margin-top:0;">Your NILAY Real Estate member account is ready. With your account, you can:</p>
+          <ul style="padding-left:20px;color:#374151;margin-bottom:24px;">
+            <li style="margin-bottom:8px;"><strong>Browse verified plots:</strong> Explore clear-title open plots, residential layouts, farm houses, and resorts across Hyderabad & Telangana.</li>
+            <li style="margin-bottom:8px;"><strong>List your land for free:</strong> Reach genuine buyers and manage your properties directly from your profile.</li>
+            <li style="margin-bottom:8px;"><strong>Track buyer inquiries:</strong> Get direct lead alerts and connect with verified buyers.</li>
+          </ul>
+          <div style="text-align:center;margin:30px 0 24px;">
+            <a href="${escapeHtml(siteUrl)}/search" style="display:inline-block;background:#0b3b24;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;margin-right:10px;margin-bottom:10px;">Explore Verified Plots</a>
+            <a href="${escapeHtml(siteUrl)}/sell" style="display:inline-block;background:#155d39;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;margin-bottom:10px;">List Land for Free</a>
+          </div>
+          <div style="margin-top:28px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#6b7280;text-align:center;">
+            NILAY Real Estate · Hyderabad, Telangana<br>
+            Questions? Contact customer care: <a href="mailto:care@nilay.in" style="color:#0b3b24;text-decoration:none;font-weight:600;">care@nilay.in</a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `.trim();
+}
+
+export async function sendTestEmail(targetEmail?: string) {
+  const { apiKey, from, adminEmail } = getEmailConfig();
+  const to = targetEmail || adminEmail;
+  if (!apiKey) {
+    throw new Error("Resend API key is not configured. Please save your API key in Admin Settings.");
+  }
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: `NILAY Test Email · ${new Date().toLocaleTimeString("en-IN")}`,
+      text: `Hello,\n\nThis is a test email confirming your NILAY email notification delivery is working properly.\n\nSent from: ${from}\nDelivered to: ${to}`,
+      html: `<div style="font-family:sans-serif;max-width:520px;margin:auto;padding:24px;border:1px solid #c6dc81;border-radius:8px;background:#f9fdfa;">
+        <h2 style="color:#0b3b24;margin-top:0;">✅ NILAY Email Delivery Verified!</h2>
+        <p style="color:#274332;font-size:14px;line-height:1.5;">This test confirms that your Resend API key and sender configuration are operational.</p>
+        <div style="background:#ffffff;padding:12px 16px;border-radius:6px;border:1px solid #e2ece3;font-size:13px;color:#1e3326;margin:16px 0;">
+          <div><strong>Sender (From):</strong> ${escapeHtml(from)}</div>
+          <div><strong>Recipient (To):</strong> ${escapeHtml(to)}</div>
+          <div><strong>Timestamp:</strong> ${escapeHtml(new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }))}</div>
+        </div>
+        <p style="color:#52735d;font-size:12px;margin-bottom:0;">NILAY Real Estate · Notification System</p>
+      </div>`,
+    }),
+  });
+  if (!response.ok) {
+    const detail = await response.text();
+    let errMsg = detail;
+    try {
+      const parsed = JSON.parse(detail) as { message?: string };
+      errMsg = parsed.message || detail;
+    } catch {}
+    throw new Error(`Resend API Error (${response.status}): ${errMsg}`);
+  }
+  return { success: true, to, from };
+}
+
 export async function sendPasswordResetCode(email: string, code: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from) {
     console.log(`\n======================================================`);
     console.log(`🔑 [NILAY PASSWORD RESET CODE]`);
     console.log(`Recipient: ${email}`);
     console.log(`Verification Code: ${code}`);
     console.log(`Expires in: 10 minutes`);
-    console.log(`(Configure RESEND_API_KEY and EMAIL_FROM in .env.local to send real emails)`);
+    console.log(`(Configure Resend API key in Admin Settings to send real emails)`);
     console.log(`======================================================\n`);
     return;
   }
@@ -145,10 +222,9 @@ export async function sendPasswordResetCode(email: string, code: string) {
 }
 
 export async function sendRegistrationNotice(name: string, email: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from) {
-    throw new Error("Registration email is not configured. Set RESEND_API_KEY and EMAIL_FROM.");
+    throw new Error("Registration email is not configured. Set your Resend API Key in Admin Settings.");
   }
 
   const siteUrl = getSiteUrl();
@@ -165,20 +241,21 @@ export async function sendRegistrationNotice(name: string, email: string) {
 
   const html = renderEmailLayout({
     eyebrow: "NEW USER REGISTRATION",
-    headline: `New Terraland Member: ${name}`,
+    headline: `New NILAY Member: ${name}`,
     primaryCta: { label: "Open Admin Dashboard →", url: crmUrl },
     rows,
   });
 
-  const text = `New Terraland account registered:\n\nName: ${name}\nEmail: ${email}\nAdmin CRM: ${crmUrl}\nDelivered to: ${recipients.join(", ")}`;
+  const text = `New NILAY account registered:\n\nName: ${name}\nEmail: ${email}\nAdmin CRM: ${crmUrl}\nDelivered to: ${recipients.join(", ")}`;
 
+  // 1. Send notice to Admin
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from,
       to: recipients,
-      subject: `New Terraland Registration: ${name} (${email})`,
+      subject: `New NILAY Member: ${name} (${email})`,
       text,
       html,
     }),
@@ -187,7 +264,32 @@ export async function sendRegistrationNotice(name: string, email: string) {
   if (!response.ok) {
     const detail = await response.text();
     console.error("Registration email delivery failed:", response.status, detail);
-    throw new Error("The registration notification could not be delivered. Please try again later.");
+    let errMsg = detail;
+    try {
+      const parsed = JSON.parse(detail) as { message?: string };
+      errMsg = parsed.message || detail;
+    } catch {}
+    throw new Error(`Email delivery error (${response.status}): ${errMsg}`);
+  }
+
+  // 2. Also send Welcome email to the newly registered Member
+  if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !email.endsWith("@phone.nilay.invalid")) {
+    try {
+      const welcomeHtml = renderUserWelcomeEmail(name, siteUrl);
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from,
+          to: [email],
+          subject: `Welcome to NILAY Real Estate, ${name}!`,
+          text: `Hi ${name},\n\nWelcome to NILAY Real Estate. Your account has been created successfully.\n\nBrowse verified plots: ${siteUrl}/search\nList your land for free: ${siteUrl}/sell\n\nBest regards,\nThe NILAY Team`,
+          html: welcomeHtml,
+        }),
+      });
+    } catch (userErr) {
+      console.warn("Failed to deliver user welcome email:", userErr);
+    }
   }
 }
 

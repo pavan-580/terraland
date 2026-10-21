@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Property } from "@/lib/market";
+import { formatListingPrice, type Property } from "@/lib/market";
+import { BrandLogo } from "@/components/brand-logo";
 import { ListingClassificationFields } from "@/components/listing-classification-fields";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import Link from "next/link";
@@ -109,6 +110,10 @@ type DashboardData = {
     popupAdImage: string;
     announcementEnabled: boolean;
     announcementText: string;
+    resendApiKey?: string;
+    emailFrom?: string;
+    adminNotificationEmail?: string;
+    siteLogoUrl?: string;
   };
 };
 
@@ -268,6 +273,18 @@ export function AdminDashboard() {
   const [copiedPromo, setCopiedPromo] = useState(false);
   const [showLivePopupModal, setShowLivePopupModal] = useState(false);
   const [focusedListingId, setFocusedListingId] = useState("");
+
+  // Email delivery & Branding State
+  const [resendApiKey, setResendApiKey] = useState("");
+  const [emailFrom, setEmailFrom] = useState("NILAY <onboarding@resend.dev>");
+  const [adminNotificationEmail, setAdminNotificationEmail] = useState("pavansai580@gmail.com");
+  const [savingEmailSettings, setSavingEmailSettings] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState("");
+  const [pushingAllEmails, setPushingAllEmails] = useState(false);
+  const [siteLogoUrl, setSiteLogoUrl] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToElementAndFocus = (targetId: string, focusSelector?: string) => {
     const applyFocusAndScroll = (el: Element) => {
@@ -433,6 +450,10 @@ export function AdminDashboard() {
       setPopupImage(result.settings.popupAdImage ?? "");
       setAnnouncementEnabled(result.settings.announcementEnabled ?? false);
       setAnnouncementText(result.settings.announcementText ?? "");
+      setResendApiKey(result.settings.resendApiKey ?? "");
+      setEmailFrom(result.settings.emailFrom ?? "NILAY <onboarding@resend.dev>");
+      setAdminNotificationEmail(result.settings.adminNotificationEmail ?? "pavansai580@gmail.com");
+      setSiteLogoUrl(result.settings.siteLogoUrl ?? "");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
     } finally {
@@ -645,12 +666,29 @@ export function AdminDashboard() {
     }
   }
 
-  async function savePopupAd() {
+  async function savePopupAd(overrideEnabled?: boolean) {
     setSavingPopup(true);
     setError("");
     setMessage("");
+    const isEnabled = typeof overrideEnabled === "boolean" ? overrideEnabled : popupEnabled;
     try {
-      const response = await fetch("/api/admin", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resource: "setting", key: "popupAd", value: { enabled: popupEnabled, propertyId: popupListingId, kicker: popupKicker, title: popupTitle, date: popupDate, body: popupBody, image: popupImage } }) });
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resource: "setting",
+          key: "popupAd",
+          value: {
+            enabled: isEnabled,
+            propertyId: popupListingId,
+            kicker: popupKicker,
+            title: popupTitle,
+            date: popupDate,
+            body: popupBody,
+            image: popupImage,
+          },
+        }),
+      });
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "The listing popup could not be saved.");
       setMessage(result.message ?? "Listing popup settings saved.");
@@ -776,6 +814,144 @@ export function AdminDashboard() {
     }
   }
 
+  function jumpToAdminListing(prop: Property) {
+    setSection("properties");
+    if (prop.deleteRequestedAt || prop.status === "pending") {
+      setListingTab("pending");
+    } else if (prop.status === "hidden") {
+      setListingTab("hidden");
+    } else {
+      setListingTab((prop.listingCategory as "sale" | "rent") ?? "sale");
+    }
+    setFocusedListingId(prop.id);
+    setTimeout(() => {
+      scrollToElementAndFocus(`admin-listing-${prop.id}`);
+    }, 80);
+  }
+
+  async function saveEmailSettings() {
+    setSavingEmailSettings(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resource: "setting",
+          key: "emailSettings",
+          value: {
+            resendApiKey,
+            emailFrom,
+            adminNotificationEmail,
+          },
+        }),
+      });
+      const data = await res.json() as { message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to save email settings.");
+      setMessage(data.message ?? "Email settings saved successfully.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save email settings.");
+    } finally {
+      setSavingEmailSettings(false);
+    }
+  }
+
+  async function sendTestEmailAction() {
+    setSendingTestEmail(true);
+    setTestEmailResult("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-test-email", targetEmail: adminNotificationEmail }),
+      });
+      const data = await res.json() as { message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Test email failed to send.");
+      setTestEmailResult(`✅ ${data.message ?? "Test email delivered successfully!"}`);
+    } catch (err) {
+      setTestEmailResult(`❌ ${err instanceof Error ? err.message : "Test email failed."}`);
+    } finally {
+      setSendingTestEmail(false);
+    }
+  }
+
+  async function pushAllQueuedEmailsAction() {
+    setPushingAllEmails(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "push-all-queued-emails" }),
+      });
+      const data = await res.json() as { message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to push emails.");
+      setMessage(data.message ?? "Queued emails pushed.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to push emails.");
+    } finally {
+      setPushingAllEmails(false);
+    }
+  }
+
+  async function handleLogoUpload(file: File) {
+    setUploadingLogo(true);
+    setError("");
+    setMessage("");
+    const formData = new FormData();
+    formData.set("logo", file);
+    try {
+      const res = await fetch("/api/branding", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json() as { logoUrl?: string; message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to upload logo.");
+      setSiteLogoUrl(data.logoUrl || "");
+      try {
+        if (data.logoUrl) localStorage.setItem("nilay:custom-logo", data.logoUrl);
+      } catch {}
+      window.dispatchEvent(new CustomEvent("nilay:logo-updated", { detail: { logoUrl: data.logoUrl } }));
+      setMessage(data.message ?? "Logo updated successfully across all pages!");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload logo.");
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  async function handleResetLogo() {
+    setUploadingLogo(true);
+    setError("");
+    setMessage("");
+    const formData = new FormData();
+    formData.set("reset", "true");
+    try {
+      const res = await fetch("/api/branding", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json() as { logoUrl?: string; message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to reset logo.");
+      setSiteLogoUrl("");
+      try {
+        localStorage.removeItem("nilay:custom-logo");
+      } catch {}
+      window.dispatchEvent(new CustomEvent("nilay:logo-updated", { detail: { logoUrl: "/nilay-logo.png" } }));
+      setMessage(data.message ?? "Logo reset to default NILAY brand mark.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset logo.");
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
   async function downloadBackup() {
     setBackupBusy(true);
     setBackupError("");
@@ -891,44 +1067,54 @@ export function AdminDashboard() {
 
       {/* Live Full-Screen Popup Test Modal */}
       {showLivePopupModal && (
-        <div className="promotion-popup" role="dialog" aria-modal="true" aria-label="Popup Ad Live Test" style={{ zIndex: 99999 }}>
-          <div className="promotion-popup-link" style={{ pointerEvents: "auto" }}>
+        <div className="promotion-popup" role="dialog" aria-modal="true" aria-label="Popup Ad Live Test" style={{ zIndex: 99999 }} onClick={() => setShowLivePopupModal(false)}>
+          <div className="promotion-popup-modal-wrap" onClick={(e) => e.stopPropagation()}>
             <article className="promotion-popup-card">
-              <div className="promotion-popup-tabs">
-                <span>{popupKicker || "IMPORTANT ANNOUNCEMENT"}</span>
-                <span>{popupDate || "Verified listing"}</span>
-              </div>
-              <img
-                className="promotion-popup-image"
-                src={popupImage || (data.properties.find((p) => p.id === popupListingId)?.image) || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80"}
-                alt="Test popup"
-              />
-              <div className="promotion-popup-copy">
-                <span className="eyebrow">{popupKicker || "IMPORTANT ANNOUNCEMENT"}</span>
-                {popupDate && <span className="promotion-popup-date">{popupDate}</span>}
-                <h2>{popupTitle || "Featured Property Announcement"}</h2>
-                <p className="promotion-popup-body">{popupBody || "Announcement details will appear here."}</p>
-                <div className="promotion-popup-details">
-                  <strong>
-                    {(() => {
-                      const p = data.properties.find((prop) => prop.id === popupListingId);
-                      return p ? (Number(p.price) >= 10000000 ? `₹${(Number(p.price) / 10000000).toFixed(2)} Cr` : `₹${(Number(p.price) / 100000).toFixed(1)} Lakhs`) : "₹ Special Price";
-                    })()}
-                  </strong>
-                  <span>
-                    {(() => {
-                      const p = data.properties.find((prop) => prop.id === popupListingId);
-                      return p ? [p.locality, p.city].filter(Boolean).join(" · ") : "Telangana";
-                    })()}
-                  </span>
+              <button
+                type="button"
+                className="promotion-popup-card-close"
+                aria-label="Close test popup"
+                onClick={() => setShowLivePopupModal(false)}
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+              <div className="promotion-popup-card-inner">
+                <div className="promotion-popup-tabs">
+                  <span>{popupKicker || "IMPORTANT ANNOUNCEMENT"}</span>
+                  <span>{popupDate || "Verified listing"}</span>
                 </div>
-                <span className="promotion-popup-cta">View listing ↗</span>
+                <img
+                  className="promotion-popup-image"
+                  src={popupImage || (data.properties.find((p) => p.id === popupListingId)?.image) || "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80"}
+                  alt="Test popup"
+                />
+                <div className="promotion-popup-copy">
+                  <span className="eyebrow">{popupKicker || "IMPORTANT ANNOUNCEMENT"}</span>
+                  {popupDate && <span className="promotion-popup-date">{popupDate}</span>}
+                  <h2>{popupTitle || "Featured Property Announcement"}</h2>
+                  <p className="promotion-popup-body">{popupBody || "Announcement details will appear here."}</p>
+                  <div className="promotion-popup-details">
+                    <strong>
+                      {(() => {
+                        const p = data.properties.find((prop) => prop.id === popupListingId);
+                        return p ? (Number(p.price) >= 10000000 ? `₹${(Number(p.price) / 10000000).toFixed(2)} Cr` : `₹${(Number(p.price) / 100000).toFixed(1)} Lakhs`) : "₹ Special Price";
+                      })()}
+                    </strong>
+                    <span>
+                      {(() => {
+                        const p = data.properties.find((prop) => prop.id === popupListingId);
+                        return p ? [p.locality, p.city].filter(Boolean).join(" · ") : "Telangana";
+                      })()}
+                    </span>
+                  </div>
+                  <div className="promotion-popup-cta" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,.15)", color: "var(--lime)", fontSize: 13, fontWeight: 700 }}>
+                    <span>View Listing Details</span>
+                    <ArrowUpRight size={16} />
+                  </div>
+                </div>
               </div>
             </article>
           </div>
-          <button type="button" className="promotion-popup-close" aria-label="Close test popup" onClick={() => setShowLivePopupModal(false)}>
-            <X size={20} />
-          </button>
         </div>
       )}
 
@@ -1024,7 +1210,7 @@ export function AdminDashboard() {
               type="email"
               value={careEmail}
               onChange={(e) => setCareEmail(e.target.value)}
-              placeholder="care@terraland.in"
+              placeholder="care@nilay.in"
               style={{
                 width: "100%",
                 padding: "8px 12px",
@@ -1039,6 +1225,148 @@ export function AdminDashboard() {
               Official contact email displayed in website footer and email notifications.
             </span>
           </label>
+        </div>
+      </section>
+
+      {/* Website Brand Logo Manager */}
+      <section id="admin-setting-branding" className="admin-setting-card" style={{ display: "grid", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div>
+            <strong style={{ fontSize: 14 }}>Website Brand Logo</strong>
+            <p style={{ margin: "2px 0 0", color: "var(--muted)", fontSize: 11 }}>
+              Upload a custom logo to replace the brand mark across all pages (header, mobile drawer, footer, admin). The logo strictly adheres to the standard layout dimensions.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              type="file"
+              ref={logoFileInputRef}
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleLogoUpload(file);
+              }}
+            />
+            <button
+              type="button"
+              className="button button-dark"
+              style={{ minHeight: 34, fontSize: 11, padding: "6px 14px" }}
+              disabled={uploadingLogo}
+              onClick={() => logoFileInputRef.current?.click()}
+            >
+              {uploadingLogo ? "Uploading…" : "📁 Upload New Logo"}
+            </button>
+            {siteLogoUrl && (
+              <button
+                type="button"
+                className="button button-outline"
+                style={{ minHeight: 34, fontSize: 11, padding: "6px 12px" }}
+                disabled={uploadingLogo}
+                onClick={() => void handleResetLogo()}
+              >
+                Reset Default
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "12px 16px", borderRadius: 8, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}>
+          <div style={{ textAlign: "center" }}>
+            <span style={{ display: "block", fontSize: 10, color: "var(--muted)", marginBottom: 6 }}>Current Logo Preview:</span>
+            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "8px 14px", background: "rgba(255,255,255,.06)", borderRadius: 6, border: "1px solid rgba(255,255,255,.1)" }}>
+              <BrandLogo />
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>
+            <strong style={{ color: "var(--ink)", display: "block", marginBottom: 2 }}>
+              {siteLogoUrl ? "Using custom uploaded logo" : "Using standard NILAY brand mark (/nilay-logo.png)"}
+            </strong>
+            <span>Standard dimensions: 90×60px in header and mobile navigation, 150×100px in footer. Maintains original proportions without stretching.</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Email Delivery & Resend Settings */}
+      <section id="admin-setting-email" className="admin-setting-card" style={{ display: "grid", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div>
+            <strong style={{ fontSize: 14 }}>Email Notifications &amp; Resend Delivery Settings</strong>
+            <p style={{ margin: "2px 0 0", color: "var(--muted)", fontSize: 11 }}>
+              Configure Resend API to deliver new user registration alerts and buyer inquiry notifications to admin and confirmation emails to members.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="button button-dark"
+              style={{ minHeight: 34, fontSize: 11, padding: "6px 14px" }}
+              disabled={savingEmailSettings}
+              onClick={() => void saveEmailSettings()}
+            >
+              {savingEmailSettings ? "Saving…" : "Save Email Settings"}
+            </button>
+            <button
+              type="button"
+              className="button button-outline"
+              style={{ minHeight: 34, fontSize: 11, padding: "6px 12px" }}
+              disabled={pushingAllEmails}
+              onClick={() => void pushAllQueuedEmailsAction()}
+              title="Push all pending registration and inquiry emails"
+            >
+              {pushingAllEmails ? "Pushing…" : "🚀 Push All Queued Emails"}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span>Resend API Key</span>
+            <input
+              type="password"
+              value={resendApiKey}
+              onChange={(e) => setResendApiKey(e.target.value)}
+              placeholder="re_xxxxxxxxxxxxxx"
+            />
+            <small style={{ color: "var(--muted)", fontSize: 10 }}>From resend.com/api-keys</small>
+          </label>
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span>From Sender Email</span>
+            <input
+              type="text"
+              value={emailFrom}
+              onChange={(e) => setEmailFrom(e.target.value)}
+              placeholder="NILAY <onboarding@resend.dev>"
+            />
+            <small style={{ color: "var(--muted)", fontSize: 10 }}>Use onboarding@resend.dev or your verified domain</small>
+          </label>
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span>Admin Recipient Email</span>
+            <input
+              type="email"
+              value={adminNotificationEmail}
+              onChange={(e) => setAdminNotificationEmail(e.target.value)}
+              placeholder="pavansai580@gmail.com"
+            />
+            <small style={{ color: "var(--muted)", fontSize: 10 }}>Receives leads, registrations &amp; inquiry alerts</small>
+          </label>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,.08)" }}>
+          <button
+            type="button"
+            className="button button-outline"
+            style={{ minHeight: 32, fontSize: 11, padding: "4px 12px" }}
+            disabled={sendingTestEmail || !resendApiKey}
+            onClick={() => void sendTestEmailAction()}
+          >
+            {sendingTestEmail ? "Sending Test Email…" : "✉️ Send Test Email to Admin"}
+          </button>
+          {testEmailResult && (
+            <span style={{ fontSize: 11, color: testEmailResult.startsWith("✅") ? "var(--lime)" : "#ff6b6b" }}>
+              {testEmailResult}
+            </span>
+          )}
         </div>
       </section>
 
@@ -1186,19 +1514,34 @@ export function AdminDashboard() {
                   <span className="eyebrow">SITE PROMOTION</span>
                   <h2 id="admin-ad-manager-title">5-Second Modal Popup Ad</h2>
                   <p>
-                    Visitors see this interactive announcement card 5 seconds after landing on the site. Perfect for spotlighting a featured plot or hot promotion. Tapping opens the listing; it appears once per session.
+                    Visitors see this interactive announcement card on the homepage 5 seconds after loading. Tapping the popup opens the listing details directly. It appears on the homepage on every refresh.
                   </p>
                 </div>
 
                 <div className="admin-card-inner">
-                  <label className="admin-ad-toggle">
-                    <input
-                      type="checkbox"
-                      checked={popupEnabled}
-                      onChange={(event) => setPopupEnabled(event.target.checked)}
-                    />
-                    <strong>Enable the 5-second listing popup</strong>
-                  </label>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+                    <label className="admin-ad-toggle" style={{ margin: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={popupEnabled}
+                        onChange={(event) => {
+                          const next = event.target.checked;
+                          setPopupEnabled(next);
+                          void savePopupAd(next);
+                        }}
+                      />
+                      <strong>Enable the 5-second listing popup</strong>
+                    </label>
+                    <button
+                      type="button"
+                      className="button button-dark"
+                      style={{ minHeight: 34, fontSize: 11, padding: "6px 16px" }}
+                      disabled={savingPopup}
+                      onClick={() => void savePopupAd(true)}
+                    >
+                      {savingPopup ? "Saving…" : "🚀 Save & Activate Popup Now"}
+                    </button>
+                  </div>
 
                   <div className="admin-field-group">
                     <label>
@@ -1212,7 +1555,7 @@ export function AdminDashboard() {
                       >
                         <option value="">Select a published plot</option>
                         {data.properties
-                          .filter((property) => property.status === "published" && (property.listingCategory ?? "sale") === "sale")
+                          .filter((property) => property.status === "published")
                           .map((property) => (
                             <option key={property.id} value={property.id}>
                               {property.title} · {property.locality} (₹{Number(property.price).toLocaleString("en-IN")})
@@ -1864,6 +2207,70 @@ export function AdminDashboard() {
                     <label>Email <span className="optional-label">optional</span><input name="email" type="email" defaultValue={user.email} placeholder="No email; phone login only" /></label>
                   </div>
                   <button className="button button-dark admin-save" disabled={busyId === user.id}>{busyId === user.id ? "Saving…" : "Save member"}</button>
+                  {(() => {
+                    const memberListings = data.properties.filter(
+                      (prop) => prop.ownerId === user.id || prop.owner === user.name || (user.phone && prop.phone === user.phone)
+                    );
+                    return (
+                      <div className="admin-member-listings-box">
+                        <div className="admin-member-listings-header">
+                          <strong>Member&apos;s listings ({memberListings.length})</strong>
+                          <span className="eyebrow">{memberListings.length ? "CLICK TO VISIT OR EDIT IN ADMIN" : "NO LISTINGS"}</span>
+                        </div>
+                        {memberListings.length ? (
+                          <div className="admin-member-listings-grid">
+                            {memberListings.map((prop) => (
+                              <div className="admin-member-listing-card" key={prop.id}>
+                                <div
+                                  className="admin-member-listing-img"
+                                  style={{ backgroundImage: `url("${prop.images?.[0] || prop.image || ""}")` }}
+                                />
+                                <div className="admin-member-listing-content">
+                                  <div className="admin-member-listing-tag-row">
+                                    <span className={`admin-status-pill status-${prop.status || "published"}`}>
+                                      {prop.deleteRequestedAt
+                                        ? "DELETION REQUESTED"
+                                        : prop.status === "pending"
+                                        ? "PENDING REVIEW"
+                                        : prop.status === "hidden"
+                                        ? "HIDDEN"
+                                        : "PUBLISHED"}
+                                    </span>
+                                    <span className="admin-cat-pill">{prop.listingCategory === "rent" ? "RENT" : "SALE"} · {prop.type}</span>
+                                  </div>
+                                  <strong className="admin-member-listing-name">{prop.title}</strong>
+                                  <span className="admin-member-listing-price">
+                                    {formatListingPrice(prop)} · {prop.area} {prop.unit} · {prop.locality}, {prop.city}
+                                  </span>
+                                  <div className="admin-member-listing-btns">
+                                    <a
+                                      href={`/properties/${encodeURIComponent(prop.id)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="admin-member-visit-btn"
+                                      title="Open live listing on website"
+                                    >
+                                      Visit listing ↗
+                                    </a>
+                                    <button
+                                      type="button"
+                                      className="admin-member-edit-btn"
+                                      onClick={() => jumpToAdminListing(prop)}
+                                      title="Edit this listing in Admin panel"
+                                    >
+                                      Edit in Admin
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="admin-member-no-listings">This member does not have any listings yet.</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <details className="member-activity" open={user.id === profileFocusId}>
                     <summary>Full activity log · {activityForUser(user.id).length} events</summary>
                     {activityForUser(user.id).length ? (

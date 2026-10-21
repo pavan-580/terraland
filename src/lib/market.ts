@@ -17,6 +17,7 @@ export type Property = {
   badge: string;
   description: string;
   owner: string;
+  ownerId?: string;
   phone: string;
   showPhone?: boolean;
   sellerEmail?: string;

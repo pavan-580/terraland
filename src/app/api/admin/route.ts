@@ -117,7 +117,11 @@ export async function GET() {
       popupAdBody: getSiteSetting("popupAdBody") ?? "",
       popupAdImage: getSiteSetting("popupAdImage") ?? "",
       announcementEnabled: getSiteSetting("announcementEnabled") === "true",
-      announcementText: getSiteSetting("announcementText") ?? ""
+      announcementText: getSiteSetting("announcementText") ?? "",
+      resendApiKey: getSiteSetting("resendApiKey") ?? "",
+      emailFrom: getSiteSetting("emailFrom") ?? "NILAY <onboarding@resend.dev>",
+      adminNotificationEmail: getSiteSetting("adminNotificationEmail") ?? "pavansai580@gmail.com",
+      siteLogoUrl: getSiteSetting("siteLogoUrl") ?? "",
     }
   });
 }
@@ -135,6 +139,24 @@ export async function POST(request: NextRequest) {
   }
   if (action === "retry-inquiry-emails") {
     return NextResponse.json(await notifications.deliverPendingInquiryNotices());
+  }
+  if (action === "push-all-queued-emails") {
+    const regResult = await notifications.deliverPendingRegistrationNotices();
+    const inqResult = await notifications.deliverPendingInquiryNotices();
+    return NextResponse.json({
+      message: `Pushed ${regResult.sent + inqResult.sent} emails (${regResult.failed + inqResult.failed} failed, ${regResult.pending + inqResult.pending} remaining queued).`,
+      registrations: regResult,
+      inquiries: inqResult,
+    });
+  }
+  if (action === "send-test-email") {
+    try {
+      const target = typeof (body as Record<string, unknown>).targetEmail === "string" ? (body as Record<string, unknown>).targetEmail as string : undefined;
+      const testResult = await notifications.sendTestEmail(target);
+      return NextResponse.json({ message: `Test email successfully delivered to ${testResult.to}!`, ...testResult });
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : "Test email failed to deliver." }, { status: 400 });
+    }
   }
   return NextResponse.json({ error: "Unknown admin action." }, { status: 400 });
 }
@@ -187,8 +209,8 @@ export async function PATCH(request: NextRequest) {
     const value = input.value as Record<string, unknown> | null;
     if (!value || typeof value.enabled !== "boolean" || typeof value.propertyId !== "string" || typeof value.kicker !== "string" || typeof value.title !== "string" || typeof value.date !== "string" || typeof value.body !== "string" || typeof value.image !== "string") return NextResponse.json({ error: "Complete the popup announcement details." }, { status: 400 });
     const propertyId = value.propertyId.trim();
-    if (value.enabled && !propertyId) return NextResponse.json({ error: "Select a published plot before enabling the popup." }, { status: 400 });
-    if (propertyId && !db.prepare("SELECT 1 FROM properties WHERE id = ? AND status = 'published' AND listingCategory = 'sale'").get(propertyId)) return NextResponse.json({ error: "Choose a published sale listing for the popup." }, { status: 400 });
+    if (value.enabled && !propertyId && !value.body && !value.title) return NextResponse.json({ error: "Select a published plot or write announcement text before enabling the popup." }, { status: 400 });
+    if (propertyId && !db.prepare("SELECT 1 FROM properties WHERE id = ? AND status = 'published'").get(propertyId)) return NextResponse.json({ error: "Choose a published listing for the popup." }, { status: 400 });
     const fields = [["popupAdKicker", value.kicker, 80], ["popupAdTitle", value.title, 140], ["popupAdDate", value.date, 80], ["popupAdBody", value.body, 700], ["popupAdImage", value.image, 1000]] as const;
     const normalizedFields: [string, string][] = [];
     for (const [key, raw, max] of fields) {
@@ -199,7 +221,19 @@ export async function PATCH(request: NextRequest) {
     setSiteSetting("popupAdEnabled", value.enabled ? "true" : "false");
     setSiteSetting("popupAdPropertyId", propertyId);
     for (const [key, text] of normalizedFields) setSiteSetting(key, text);
-    return NextResponse.json({ message: value.enabled ? "Announcement popup saved and enabled." : "Announcement popup settings saved." });
+    return NextResponse.json({ message: value.enabled ? "5-Second Popup is now LIVE on every page refresh!" : "Announcement popup disabled." });
+  }
+
+  if (input.resource === "setting" && input.key === "emailSettings") {
+    const val = input.value as Record<string, unknown> | null;
+    if (!val) return NextResponse.json({ error: "Invalid email settings payload." }, { status: 400 });
+    const apiKey = String(val.resendApiKey ?? "").trim();
+    const from = String(val.emailFrom ?? "").trim();
+    const adminEmail = String(val.adminNotificationEmail ?? "").trim();
+    if (apiKey) setSiteSetting("resendApiKey", apiKey);
+    if (from) setSiteSetting("emailFrom", from);
+    if (adminEmail) setSiteSetting("adminNotificationEmail", adminEmail);
+    return NextResponse.json({ message: "Email and Resend configuration saved successfully." });
   }
 
   if (input.resource === "setting" && input.key === "announcementTicker") {

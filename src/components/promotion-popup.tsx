@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 
 type PopupListing = {
   id: string;
@@ -36,7 +37,8 @@ export function PromotionPopup() {
 
   useEffect(() => {
     setOpen(false);
-    if (pathname.startsWith("/admin") || pathname.startsWith("/sign-in")) return;
+    // ONLY appear on the home screen ("/") — remain any other page that popup no need to show
+    if (pathname !== "/") return;
 
     let active = true;
     let timer = 0;
@@ -51,11 +53,11 @@ export function PromotionPopup() {
 
         setListing(result.ad);
 
-        // Appears on every refresh as requested
+        // Appears on home screen after exactly 5 seconds, and on every refresh in home page
         timer = window.setTimeout(() => {
           if (!active) return;
           setOpen(true);
-        }, 1000);
+        }, 5000);
       })
       .catch(() => undefined);
 
@@ -83,7 +85,9 @@ export function PromotionPopup() {
     setOpen(false);
   }
 
-  if (!open || !listing) return null;
+  if (!open || !listing || pathname !== "/") return null;
+
+  const destinationHref = listing.id ? `/properties/${encodeURIComponent(listing.id)}` : "/search";
 
   return (
     <div
@@ -101,14 +105,21 @@ export function PromotionPopup() {
             className="promotion-popup-card-close"
             aria-label="Close announcement"
             title="Close"
-            onClick={handleDismiss}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              handleDismiss();
+            }}
           >
             <X size={18} strokeWidth={2.5} />
           </button>
 
-          <div
+          {/* Clicking the popup navigates directly to the listing */}
+          <Link
+            href={destinationHref}
             className="promotion-popup-card-inner"
-            aria-label={`Announcement: ${listing.heading || listing.title}`}
+            aria-label={`View listing: ${listing.heading || listing.title}`}
+            onClick={() => setOpen(false)}
           >
             <div className="promotion-popup-tabs">
               <span>{listing.kicker || "IMPORTANT ANNOUNCEMENT"}</span>
@@ -126,7 +137,6 @@ export function PromotionPopup() {
               <p className="promotion-popup-body">
                 {(listing.body ||
                   `${[listing.locality, listing.city].filter(Boolean).join(", ")} · ${formatPrice(listing.price)} · ${new Intl.NumberFormat("en-IN").format(listing.area)} ${listing.unit}`)
-                  // Guarantee no phone numbers are displayed on the popup
                   .replace(/(\+?91[\s-]?)?[6-9]\d{9}\b/g, "")
                   .trim()}
               </p>
@@ -134,8 +144,25 @@ export function PromotionPopup() {
                 <strong>{listing.price ? formatPrice(listing.price) : "Special Opportunity"}</strong>
                 <span>{[listing.locality, listing.city].filter(Boolean).join(" · ")}</span>
               </div>
+              <div
+                className="promotion-popup-cta"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: 14,
+                  paddingTop: 12,
+                  borderTop: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "var(--lime)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                <span>View Full Listing Details</span>
+                <ArrowUpRight size={16} />
+              </div>
             </div>
-          </div>
+          </Link>
         </article>
       </div>
     </div>
