@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, X } from "lucide-react";
+import { X } from "lucide-react";
 
 type PopupListing = {
   id: string;
@@ -41,7 +40,6 @@ export function PromotionPopup() {
 
     let active = true;
     let timer = 0;
-    const openedAt = Date.now();
 
     void fetch("/api/promotion-popup", { cache: "no-store" })
       .then(async (response) => {
@@ -53,19 +51,11 @@ export function PromotionPopup() {
 
         setListing(result.ad);
 
-        // Check if this specific ad signature was dismissed in this session
-        const adSignature = `nilay-ad-dismissed-${result.ad.id}-${result.ad.heading}`;
-        try {
-          if (window.sessionStorage.getItem(adSignature) === "true") return;
-        } catch {
-          /* Continue without session persistence when browser storage is unavailable. */
-        }
-
-        const delay = Math.max(0, 5000 - (Date.now() - openedAt));
+        // Appears on every refresh as requested
         timer = window.setTimeout(() => {
           if (!active) return;
           setOpen(true);
-        }, delay);
+        }, 1000);
       })
       .catch(() => undefined);
 
@@ -90,18 +80,8 @@ export function PromotionPopup() {
   }, [open]);
 
   function handleDismiss() {
-    if (listing) {
-      const adSignature = `nilay-ad-dismissed-${listing.id}-${listing.heading}`;
-      try {
-        window.sessionStorage.setItem(adSignature, "true");
-      } catch {
-        /* storage may be blocked */
-      }
-    }
     setOpen(false);
   }
-
-  const destinationHref = listing?.id ? `/properties/${encodeURIComponent(listing.id)}` : "/search";
 
   if (!open || !listing) return null;
 
@@ -115,7 +95,7 @@ export function PromotionPopup() {
     >
       <div className="promotion-popup-modal-wrap" onClick={(event) => event.stopPropagation()}>
         <article className="promotion-popup-card">
-          {/* Corner Close Button ("wrong mark" X) right on the card corner */}
+          {/* Corner Close Button */}
           <button
             type="button"
             className="promotion-popup-card-close"
@@ -126,10 +106,9 @@ export function PromotionPopup() {
             <X size={18} strokeWidth={2.5} />
           </button>
 
-          <Link
-            className="promotion-popup-link"
-            href={destinationHref}
-            aria-label={`View listing: ${listing.title}`}
+          <div
+            className="promotion-popup-card-inner"
+            aria-label={`Announcement: ${listing.heading || listing.title}`}
           >
             <div className="promotion-popup-tabs">
               <span>{listing.kicker || "IMPORTANT ANNOUNCEMENT"}</span>
@@ -145,18 +124,18 @@ export function PromotionPopup() {
               {listing.date && <span className="promotion-popup-date">{listing.date}</span>}
               <h2>{listing.heading || listing.title}</h2>
               <p className="promotion-popup-body">
-                {listing.body ||
-                  `${[listing.locality, listing.city].filter(Boolean).join(", ")} · ${formatPrice(listing.price)} · ${new Intl.NumberFormat("en-IN").format(listing.area)} ${listing.unit}`}
+                {(listing.body ||
+                  `${[listing.locality, listing.city].filter(Boolean).join(", ")} · ${formatPrice(listing.price)} · ${new Intl.NumberFormat("en-IN").format(listing.area)} ${listing.unit}`)
+                  // Guarantee no phone numbers are displayed on the popup
+                  .replace(/(\+?91[\s-]?)?[6-9]\d{9}\b/g, "")
+                  .trim()}
               </p>
               <div className="promotion-popup-details">
                 <strong>{listing.price ? formatPrice(listing.price) : "Special Opportunity"}</strong>
                 <span>{[listing.locality, listing.city].filter(Boolean).join(" · ")}</span>
               </div>
-              <span className="promotion-popup-cta">
-                View listing <ArrowUpRight size={16} aria-hidden="true" />
-              </span>
             </div>
-          </Link>
+          </div>
         </article>
       </div>
     </div>

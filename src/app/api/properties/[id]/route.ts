@@ -133,11 +133,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const removedVideos = requestedVideos.filter((item): item is string => existingVideos.includes(item));
   videos = videos.filter((video) => !removedVideos.includes(video));
 
+  const newStatus = user.role === "admin" ? (row.status ?? "published") : "pending";
+
   db.prepare(`
     UPDATE properties SET title = ?, type = ?, listingCategory = ?, pricePeriod = ?, availability = ?, guestCapacity = ?, city = ?, locality = ?, price = ?, area = ?, unit = ?,
       description = ?, phone = ?, images = ?, image = ?, videos = ?, owner = ?, facing = ?, approvals = ?,
       loanAvailable = ?, registrationAvailable = ?, renovation = ?, cornerPlot = ?, roadWidth = ?,
-      surveyNumber = ?, soilType = ?, clearTitle = ?, amenities = ?, address = ?, landmark = ?, mapUrl = ?
+      surveyNumber = ?, soilType = ?, clearTitle = ?, amenities = ?, address = ?, landmark = ?, mapUrl = ?,
+      status = ?
     WHERE id = ? AND ownerId = ?
   `).run(
     title, type, listingCategory, pricePeriod, listingCategory === "rent" ? availability : "",
@@ -147,7 +150,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     choice("registrationAvailable"), value("renovation").slice(0, 120), choice("cornerPlot"),
     value("roadWidth").slice(0, 40), value("surveyNumber").slice(0, 80), value("soilType").slice(0, 80),
     choice("clearTitle"), JSON.stringify(amenities), value("address").slice(0, 240), value("landmark").slice(0, 120),
-    value("mapUrl").slice(0, 500), id, user.id,
+    value("mapUrl").slice(0, 500), newStatus, id, user.id,
   );
   const changedFields = [
     title !== row.title && "title",
@@ -164,9 +167,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       ? "property details" : "",
   ].filter(Boolean);
   if (changedFields.length) {
-    logMemberActivity(user.id, "Listing updated", `Changed: ${changedFields.join(", ")}`, { id, title });
+    logMemberActivity(
+      user.id,
+      user.role === "admin" ? "Listing updated" : "Listing update submitted",
+      `Changed: ${changedFields.join(", ")}${user.role === "admin" ? "" : " (awaiting admin approval)"}`,
+      { id, title }
+    );
   }
-  return NextResponse.json({ message: "Your listing has been updated." });
+  const message = user.role === "admin"
+    ? "Your listing has been updated."
+    : "Your updates have been submitted and are awaiting administrator approval.";
+  return NextResponse.json({ message, status: newStatus });
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

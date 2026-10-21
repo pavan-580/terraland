@@ -72,7 +72,7 @@ export function MyListings() {
       });
       const result = await response.json() as { message?: string; error?: string };
       if (!response.ok) throw new Error(result.error ?? "Your listing could not be updated.");
-      setMessage(result.message ?? "Your listing has been updated.");
+      setMessage(result.message ?? "Your updates have been submitted and are awaiting administrator approval.");
       setRemovedMedia((current) => { const next = { ...current }; delete next[property.id]; return next; });
       await load();
     } catch (reason) {
@@ -129,12 +129,26 @@ export function MyListings() {
             <summary><span>Edit listing details, photos, and videos</span><small>Changes are saved only when you select Save changes.</small></summary>
             <div className="my-listing-editor-content">
               <p className="my-listing-instructions">Update the information customers see. Your current photos and videos stay in place unless you choose replacements below.</p>
-              <div className="my-listing-current-photos" aria-label={`${property.images?.length ?? 1} current listing photos`}>
-                {(property.images?.length ? property.images : [property.image]).filter((image) => !(removedMedia[property.id]?.images ?? []).includes(image)).map((image, index) => <div className="my-listing-media-item" key={`${image}-${index}`}><div role="img" aria-label={`Current listing photo ${index + 1}`} style={{ backgroundImage: `url("${image}")` }} /><button type="button" aria-label={`Remove photo ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: [...(current[property.id]?.images ?? []), image], videos: current[property.id]?.videos ?? [] } }))}>Remove</button></div>)}
+              <div className="my-listing-media-strip-header">
+                <strong>Current photos</strong>
+                {((property.images?.length ? property.images : [property.image]).filter((image) => !(removedMedia[property.id]?.images ?? []).includes(image)).length > 1) && (
+                  <span className="media-scroll-hint">Swipe horizontally to view all photos →</span>
+                )}
               </div>
-              {property.videos?.length ? <div className="my-listing-current-photos" aria-label={`${property.videos.length} current listing videos`}>
-                {property.videos.filter((video) => !(removedMedia[property.id]?.videos ?? []).includes(video)).map((video, index) => <div className="my-listing-media-item" key={`${video}-${index}`}><video src={video} controls muted playsInline preload="metadata" aria-label={`Current listing video ${index + 1}`} /><button type="button" aria-label={`Remove video ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: current[property.id]?.images ?? [], videos: [...(current[property.id]?.videos ?? []), video] } }))}>Remove</button></div>)}
-              </div> : null}
+              <div className="my-listing-current-photos" aria-label={`${property.images?.length ?? 1} current listing photos`}>
+                {(property.images?.length ? property.images : [property.image]).filter((image) => !(removedMedia[property.id]?.images ?? []).includes(image)).map((image, index) => <div className="my-listing-media-item" key={`${image}-${index}`}><div role="img" aria-label={`Current listing photo ${index + 1}`} style={{ backgroundImage: `url("${image}")` }} /><button type="button" className="my-listing-remove-btn" aria-label={`Delete photo ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: [...(current[property.id]?.images ?? []), image], videos: current[property.id]?.videos ?? [] } }))}>🗑️ Delete photo</button></div>)}
+              </div>
+              {property.videos?.length ? <>
+                <div className="my-listing-media-strip-header">
+                  <strong>Current videos</strong>
+                  {property.videos.filter((video) => !(removedMedia[property.id]?.videos ?? []).includes(video)).length > 1 && (
+                    <span className="media-scroll-hint">Swipe horizontally to view all videos →</span>
+                  )}
+                </div>
+                <div className="my-listing-current-photos" aria-label={`${property.videos.length} current listing videos`}>
+                  {property.videos.filter((video) => !(removedMedia[property.id]?.videos ?? []).includes(video)).map((video, index) => <div className="my-listing-media-item is-video" key={`${video}-${index}`}><video src={video} controls muted playsInline preload="metadata" aria-label={`Current listing video ${index + 1}`} /><button type="button" className="my-listing-remove-btn" aria-label={`Delete video ${index + 1}`} onClick={() => setRemovedMedia((current) => ({ ...current, [property.id]: { images: current[property.id]?.images ?? [], videos: [...(current[property.id]?.videos ?? []), video] } }))}>🗑️ Delete video</button></div>)}
+                </div>
+              </> : null}
               <div className="my-listing-fields">
             <label>Listing title<input name="title" required minLength={4} maxLength={100} defaultValue={property.title} /></label>
             <ListingClassificationFields category={property.listingCategory ?? "sale"} type={property.type} pricePeriod={property.pricePeriod ?? "total"}
@@ -187,7 +201,7 @@ export function MyListings() {
               </div>
               <div className="my-listing-actions">
                 <button className="button button-dark" type="submit" disabled={busyId === property.id}>{busyId === property.id ? "Saving…" : "Save changes"}</button>
-                <span className="my-listing-save-note">Your update will appear on the public listing after it saves.</span>
+                <span className="my-listing-save-note">Your updates will appear on the public listing after administrator approval.</span>
               </div>
             </div>
           </details>
