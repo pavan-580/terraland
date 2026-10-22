@@ -180,7 +180,7 @@ export function AdminMatchesView() {
             }
 
             const cleanBuyerPhone = match.buyerPhone.replace(/[^0-9]/g, "");
-            const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://terraland.in";
+            const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://terraland.onrender.com";
             const propUrl = `${siteUrl}/properties/${encodeURIComponent(match.propertyId)}`;
             const whatsappText = `Hello ${match.buyerName}, based on your plot requirement in ${match.preferredLocation}, I found a matching verified plot on Terraland: ${match.propertyTitle} in ${match.propertyLocality}. Price: ₹${match.propertyPrice.toLocaleString("en-IN")}, Area: ${match.propertyArea} ${match.propertyUnit}. View details: ${propUrl}`;
 

@@ -122,6 +122,7 @@ export async function GET() {
       emailFrom: getSiteSetting("emailFrom") ?? "NILAY <onboarding@resend.dev>",
       adminNotificationEmail: getSiteSetting("adminNotificationEmail") ?? "pavansai580@gmail.com",
       siteLogoUrl: getSiteSetting("siteLogoUrl") ?? "",
+      siteBaseUrl: getSiteSetting("siteBaseUrl") ?? "",
     }
   });
 }
@@ -236,6 +237,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: "Email and Resend configuration saved successfully." });
   }
 
+  if ((input.resource === "setting" && input.key === "domainSettings") || input.resource === "domainSettings") {
+    const rawUrl = String((input.value as Record<string, unknown> | null)?.siteBaseUrl ?? input.siteBaseUrl ?? "").trim();
+    if (rawUrl && !/^https?:\/\/.+/i.test(rawUrl)) {
+      return NextResponse.json({ error: "Please enter a valid URL starting with http:// or https://" }, { status: 400 });
+    }
+    const cleanUrl = rawUrl.replace(/\/+$/, "");
+    setSiteSetting("siteBaseUrl", cleanUrl);
+    return NextResponse.json({ message: "Root domain saved successfully.", siteBaseUrl: cleanUrl });
+  }
+
   if (input.resource === "setting" && input.key === "announcementTicker") {
     const value = input.value as Record<string, unknown> | null;
     if (!value || typeof value.enabled !== "boolean" || typeof value.text !== "string") return NextResponse.json({ error: "Enter announcement text and choose whether it is visible." }, { status: 400 });
@@ -255,11 +266,19 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: "Deletion request declined. The listing remains active." });
   }
 
+  if (input.resource === "property" && input.action === "approve") {
+    const id = String(input.id ?? "");
+    if (!id) return NextResponse.json({ error: "A listing ID is required." }, { status: 400 });
+    const result = db.prepare("UPDATE properties SET status = 'published', deleteRequestedAt = NULL WHERE id = ?").run(id);
+    if (!result.changes) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
+    return NextResponse.json({ message: "Listing approved and published successfully." });
+  }
+
   if (input.resource === "property" && input.action === "toggle-visibility") {
     const id = String(input.id ?? "");
     const visible = input.visible;
     if (!id || typeof visible !== "boolean") return NextResponse.json({ error: "Choose whether this listing should be visible." }, { status: 400 });
-    const result = db.prepare("UPDATE properties SET status = ? WHERE id = ?").run(visible ? "published" : "hidden", id);
+    const result = db.prepare("UPDATE properties SET status = ?, deleteRequestedAt = CASE WHEN ? = 1 THEN NULL ELSE deleteRequestedAt END WHERE id = ?").run(visible ? "published" : "hidden", visible ? 1 : 0, id);
     if (!result.changes) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
     return NextResponse.json({ message: `Listing is now ${visible ? "visible on the website" : "hidden from the website"}.` });
   }

@@ -4,6 +4,7 @@ import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/mark
 import { currentUser, newId } from "@/lib/session";
 import { storePropertyPhotos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { sendListingSubmissionNotice } from "@/lib/notifications";
 
 export async function GET(request: NextRequest) {
   const user = await currentUser();
@@ -259,5 +260,18 @@ export async function POST(request: NextRequest) {
 
   logMemberActivity(user.id, "Listing submitted for review", `${property.listingCategory === "rent" ? "For rent" : "For sale"} · ${property.type} · ${property.area} ${property.unit}`, { id: property.id, title: property.title });
   db.prepare("UPDATE users SET phone = ? WHERE id = ?").run(property.phone, user.id);
+  void sendListingSubmissionNotice({
+    id: property.id,
+    title: property.title,
+    owner: property.owner,
+    phone: property.phone,
+    price: property.price,
+    locality: property.locality,
+    city: property.city,
+    area: property.area,
+    unit: property.unit,
+    listingCategory: property.listingCategory,
+    type: property.type,
+  });
   return NextResponse.json({ ...property, images, videos, amenities, verified: false }, { status: 201 });
 }

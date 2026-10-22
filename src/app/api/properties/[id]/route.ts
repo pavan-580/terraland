@@ -3,6 +3,7 @@ import { db, getSiteSetting, logMemberActivity, publicPropertyFromRow } from "@/
 import { isGoogleMapsUrl, isListingCategory, parseListingArea } from "@/lib/market";
 import { currentUser } from "@/lib/session";
 import { storePropertyPhotos, storePropertyVideos, validateStoredPropertyPhotos, validateStoredPropertyVideos } from "@/lib/property-images";
+import { sendListingEditNotice, sendListingDeletionNotice } from "@/lib/notifications";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser();
@@ -152,8 +153,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     choice("clearTitle"), JSON.stringify(amenities), value("address").slice(0, 240), value("landmark").slice(0, 120),
     value("mapUrl").slice(0, 500), newStatus, id, user.id,
   );
-  const changedFields = [
-    title !== row.title && "title",
+  const changedFields: string[] = [
+    title !== row.title ? "title" : "",
     type !== row.type || listingCategory !== row.listingCategory ? "property type" : "",
     city !== row.city || locality !== row.locality ? "location" : "",
     Math.round(price) !== Number(row.price) ? "price" : "",
@@ -165,7 +166,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     ["facing", "approvals", "loanAvailable", "registrationAvailable", "renovation", "cornerPlot", "roadWidth", "surveyNumber", "soilType", "clearTitle", "amenities", "address", "landmark", "mapUrl", "availability", "guestCapacity"]
       .some((key) => String(row[key] ?? "") !== (key === "amenities" ? JSON.stringify(amenities) : key === "guestCapacity" ? String(listingCategory === "rent" ? guestCapacity ?? "" : "") : choice(key)))
       ? "property details" : "",
-  ].filter(Boolean);
+  ].filter((item): item is string => Boolean(item));
   if (changedFields.length) {
     logMemberActivity(
       user.id,
@@ -173,6 +174,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       `Changed: ${changedFields.join(", ")}${user.role === "admin" ? "" : " (awaiting admin approval)"}`,
       { id, title }
     );
+    if (user.role !== "admin") {
+      void sendListingEditNotice({ id, title, owner: user.name, changedFields });
+    }
   }
   const message = user.role === "admin"
     ? "Your listing has been updated."
@@ -189,7 +193,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     UPDATE properties SET deleteRequestedAt = CURRENT_TIMESTAMP
     WHERE id = ? AND ownerId = ? AND deleteRequestedAt IS NULL
   `).run(id, user.id);
-  if (result.changes && property) logMemberActivity(user.id, "Listing deletion requested", "Waiting for admin approval.", property);
+  if (result.changes && property) {
+    logMemberActivity(user.id, "Listing deletion requested", "Waiting for admin approval.", property);
+    void sendListingDeletionNotice({ id, title: property.title, owner: user.name });
+  }
   if (!result.changes) {
     const existing = db.prepare("SELECT deleteRequestedAt FROM properties WHERE id = ? AND ownerId = ?").get(id, user.id) as { deleteRequestedAt: string | null } | undefined;
     if (!existing) return NextResponse.json({ error: "Listing not found or you do not own it." }, { status: 404 });

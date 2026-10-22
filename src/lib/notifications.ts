@@ -21,9 +21,11 @@ export function getAdminRecipients(): string[] {
 }
 
 export function getSiteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "";
-  if (raw) return raw.replace(/\/+$/, "");
-  return "https://nkart.store";
+  const saved = getSiteSetting("siteBaseUrl")?.trim();
+  if (saved) return saved.replace(/\/+$/, "");
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.APP_BASE_URL?.trim() || process.env.RENDER_EXTERNAL_URL?.trim();
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+  return "https://terraland.onrender.com";
 }
 
 export function getWhatsAppLink(phone: string, text?: string): string {
@@ -294,9 +296,8 @@ export async function sendRegistrationNotice(name: string, email: string) {
 }
 
 export async function sendLenderInterestNotice(lead: { name: string; email: string; phone: string; amount: number; message: string; createdAt: string }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) throw new Error("Lender interest email is not configured.");
+  const { apiKey, from } = getEmailConfig();
+  if (!apiKey || !from) throw new Error("Lender interest email is not configured. Add Resend key in Admin.");
 
   const amountStr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(lead.amount);
   const siteUrl = getSiteUrl();
@@ -371,10 +372,9 @@ export type InquiryNotice = {
 };
 
 export async function sendInquiryNotice(inquiry: InquiryNotice) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from) {
-    throw new Error("Enquiry email is not configured. Set RESEND_API_KEY and EMAIL_FROM.");
+    throw new Error("Enquiry email is not configured. Configure Resend API Key in Admin Settings.");
   }
 
   const siteUrl = getSiteUrl();
@@ -468,8 +468,7 @@ export async function sendInquiryNotice(inquiry: InquiryNotice) {
 }
 
 export async function sendCustomerInquiryConfirmation(inquiry: InquiryNotice) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from) {
     return;
   }
@@ -630,8 +629,7 @@ export type BuyerRequirementNotice = {
 };
 
 export async function sendBuyerRequirementNotice(req: BuyerRequirementNotice) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from) return;
 
   const siteUrl = getSiteUrl();
@@ -717,8 +715,7 @@ export async function sendBuyerRequirementNotice(req: BuyerRequirementNotice) {
 }
 
 export async function sendCustomerBuyerRequirementConfirmation(req: BuyerRequirementNotice) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from || !req.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.email.trim())) return;
 
   const siteUrl = getSiteUrl();
@@ -782,8 +779,7 @@ export type SiteVisitNotice = {
 };
 
 export async function sendSiteVisitNotice(visit: SiteVisitNotice) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from) return;
 
   const siteUrl = getSiteUrl();
@@ -866,8 +862,7 @@ export async function sendSiteVisitNotice(visit: SiteVisitNotice) {
 }
 
 export async function sendCustomerSiteVisitConfirmation(visit: SiteVisitNotice) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const { apiKey, from } = getEmailConfig();
   if (!apiKey || !from || !visit.buyerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(visit.buyerEmail.trim())) return;
 
   const siteUrl = getSiteUrl();
@@ -907,5 +902,192 @@ export async function sendCustomerSiteVisitConfirmation(visit: SiteVisitNotice) 
     });
   } catch (err) {
     console.error("Customer site visit email confirmation error:", err);
+  }
+}
+
+export async function sendListingSubmissionNotice(property: {
+  id: string;
+  title: string;
+  owner: string;
+  phone: string;
+  price: number;
+  locality: string;
+  city: string;
+  area: number | string;
+  unit: string;
+  listingCategory?: string;
+  type?: string;
+}) {
+  const { apiKey, from } = getEmailConfig();
+  if (!apiKey || !from) return;
+
+  const siteUrl = getSiteUrl();
+  const adminUrl = `${siteUrl}/admin`;
+  const recipients = getAdminRecipients();
+  const categoryLabel = property.listingCategory === "rent" ? "Rental" : "Plot For Sale";
+  const formattedPrice = formatListingPrice({ price: property.price, listingCategory: (property.listingCategory ?? "sale") as ListingCategory, pricePeriod: "total" as PricePeriod });
+
+  const rows: [string, string][] = [
+    ["Listing Title", `<strong>${escapeHtml(property.title)}</strong>`],
+    ["Listing ID", `<code>${escapeHtml(property.id)}</code>`],
+    ["Category / Type", escapeHtml(`${categoryLabel} · ${property.type || "Plot"}`)],
+    ["Location", escapeHtml(`${property.locality}, ${property.city}`)],
+    ["Land Area", escapeHtml(`${property.area} ${property.unit}`)],
+    ["Price", `<strong style="color:#0b3b24;">${escapeHtml(formattedPrice)}</strong>`],
+    ["Owner Name", escapeHtml(property.owner)],
+    ["Owner Phone", `<a href="tel:${escapeHtml(property.phone)}" style="color:#0b3b24;font-weight:600;">${escapeHtml(property.phone)}</a>`],
+    ["Approval Status", "<strong style='color:#b45309;'>Awaiting Admin Review & Approval</strong>"],
+  ];
+
+  const html = renderEmailLayout({
+    eyebrow: "NEW LISTING SUBMITTED · ACTION REQUIRED",
+    headline: `New Listing: ${property.title} by ${property.owner}`,
+    primaryCta: { label: "Review & Approve in Admin →", url: adminUrl },
+    rows,
+  });
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: recipients,
+        subject: `[New Listing Submitted] ${property.title} - Awaiting Approval`,
+        html,
+      }),
+    });
+  } catch (err) {
+    console.error("Listing submission notification error:", err);
+  }
+}
+
+export async function sendListingEditNotice(property: {
+  id: string;
+  title: string;
+  owner: string;
+  changedFields: string[];
+}) {
+  const { apiKey, from } = getEmailConfig();
+  if (!apiKey || !from) return;
+
+  const siteUrl = getSiteUrl();
+  const adminUrl = `${siteUrl}/admin`;
+  const recipients = getAdminRecipients();
+
+  const rows: [string, string][] = [
+    ["Listing Title", `<strong>${escapeHtml(property.title)}</strong>`],
+    ["Listing ID", `<code>${escapeHtml(property.id)}</code>`],
+    ["Seller / Member", escapeHtml(property.owner)],
+    ["Modified Fields", escapeHtml(property.changedFields.join(", "))],
+    ["Status", "<strong style='color:#b45309;'>Updates Submitted · Awaiting Admin Approval</strong>"],
+  ];
+
+  const html = renderEmailLayout({
+    eyebrow: "LISTING EDIT SUBMITTED · ACTION REQUIRED",
+    headline: `Listing Updated: ${property.title}`,
+    primaryCta: { label: "Review in Admin Dashboard →", url: adminUrl },
+    rows,
+  });
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: recipients,
+        subject: `[Listing Edit Awaiting Approval] ${property.title}`,
+        html,
+      }),
+    });
+  } catch (err) {
+    console.error("Listing edit notification error:", err);
+  }
+}
+
+export async function sendListingDeletionNotice(property: {
+  id: string;
+  title: string;
+  owner: string;
+}) {
+  const { apiKey, from } = getEmailConfig();
+  if (!apiKey || !from) return;
+
+  const siteUrl = getSiteUrl();
+  const adminUrl = `${siteUrl}/admin`;
+  const recipients = getAdminRecipients();
+
+  const rows: [string, string][] = [
+    ["Listing Title", `<strong>${escapeHtml(property.title)}</strong>`],
+    ["Listing ID", `<code>${escapeHtml(property.id)}</code>`],
+    ["Seller / Member", escapeHtml(property.owner)],
+    ["Request", "<strong style='color:#dc2626;'>Seller requested listing removal · Awaiting your approval</strong>"],
+  ];
+
+  const html = renderEmailLayout({
+    eyebrow: "LISTING DELETION REQUESTED",
+    headline: `Deletion Request: ${property.title}`,
+    primaryCta: { label: "Review in Admin Dashboard →", url: adminUrl },
+    rows,
+  });
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: recipients,
+        subject: `[Listing Deletion Requested] ${property.title}`,
+        html,
+      }),
+    });
+  } catch (err) {
+    console.error("Listing deletion notification error:", err);
+  }
+}
+
+export async function sendReviewSubmissionNotice(review: {
+  propertyId: string;
+  propertyTitle: string;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+}) {
+  const { apiKey, from } = getEmailConfig();
+  if (!apiKey || !from) return;
+
+  const siteUrl = getSiteUrl();
+  const propUrl = `${siteUrl}/properties/${encodeURIComponent(review.propertyId)}`;
+  const recipients = getAdminRecipients();
+
+  const rows: [string, string][] = [
+    ["Property", `<strong>${escapeHtml(review.propertyTitle)}</strong>`],
+    ["Reviewer", escapeHtml(review.reviewerName)],
+    ["Rating", `<strong>${"⭐".repeat(review.rating)} (${review.rating} / 5)</strong>`],
+    ["Review Comment", escapeHtml(review.comment)],
+  ];
+
+  const html = renderEmailLayout({
+    eyebrow: "NEW REVIEW SUBMITTED",
+    headline: `New Review on ${review.propertyTitle}`,
+    primaryCta: { label: "View Property Reviews →", url: propUrl },
+    rows,
+  });
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from,
+        to: recipients,
+        subject: `[New Review] ${review.reviewerName} rated ${review.propertyTitle} (${review.rating}/5)`,
+        html,
+      }),
+    });
+  } catch (err) {
+    console.error("Review notification error:", err);
   }
 }

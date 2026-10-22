@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, logMemberActivity } from "@/lib/db";
 import { currentUser, newId } from "@/lib/session";
+import { sendReviewSubmissionNotice } from "@/lib/notifications";
 
 export async function GET(request: NextRequest) {
   const propertyId = request.nextUrl.searchParams.get("propertyId")?.trim() ?? "";
@@ -41,5 +42,12 @@ export async function POST(request: NextRequest) {
       comment = excluded.comment, updatedAt = CURRENT_TIMESTAMP
   `).run(id, propertyId, user.id, user.name, rating, comment);
   logMemberActivity(user.id, priorReview ? "Review updated" : "Review posted", `${rating}/5 rating.`, property);
+  void sendReviewSubmissionNotice({
+    propertyId,
+    propertyTitle: property.title,
+    reviewerName: user.name,
+    rating,
+    comment,
+  });
   return NextResponse.json({ message: priorReview ? "Your review has been updated." : "Your review has been posted." }, { status: priorReview ? 200 : 201 });
 }

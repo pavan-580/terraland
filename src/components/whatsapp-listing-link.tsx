@@ -14,7 +14,8 @@ export function WhatsAppListingLink({
   className?: string;
   adminPhone?: string;
 }) {
-  const listingUrl = `${siteUrl}/properties/${encodeURIComponent(property.id)}`;
+  const currentOrigin = (typeof window !== "undefined" && window.location.origin) ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.onrender.com").replace(/\/+$/, "");
+  const listingUrl = `${currentOrigin}/properties/${encodeURIComponent(property.id)}`;
   const category = property.listingCategory === "rent" ? "For rent" : "For sale";
   const description = property.description ? property.description.replace(/\s+/g, " ").trim() : "";
 

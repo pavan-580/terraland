@@ -114,6 +114,7 @@ type DashboardData = {
     emailFrom?: string;
     adminNotificationEmail?: string;
     siteLogoUrl?: string;
+    siteBaseUrl?: string;
   };
 };
 
@@ -285,6 +286,13 @@ export function AdminDashboard() {
   const [siteLogoUrl, setSiteLogoUrl] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const [siteBaseUrl, setSiteBaseUrl] = useState("");
+  const [savingDomain, setSavingDomain] = useState(false);
+  const [domainMessage, setDomainMessage] = useState("");
+  const [currentOrigin, setCurrentOrigin] = useState("");
+  useEffect(() => {
+    if (typeof window !== "undefined") setCurrentOrigin(window.location.origin);
+  }, []);
 
   const scrollToElementAndFocus = (targetId: string, focusSelector?: string) => {
     const applyFocusAndScroll = (el: Element) => {
@@ -381,7 +389,7 @@ export function AdminDashboard() {
       : Number(plot.price) >= 100000
       ? `₹${(Number(plot.price) / 100000).toFixed(1)} Lakhs`
       : `₹${Number(plot.price).toLocaleString("en-IN")}`;
-    const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://nkart.store";
+    const siteUrl = siteBaseUrl || (typeof window !== "undefined" ? window.location.origin : "https://terraland.onrender.com");
     const link = `${siteUrl}/properties/${encodeURIComponent(plot.id)}`;
 
     return `🏡 *EXCLUSIVE PLOT FOR SALE - ${plot.locality?.toUpperCase() || "HYDERABAD"}, ${plot.city?.toUpperCase() || "TELANGANA"}*\n\n` +
@@ -454,6 +462,7 @@ export function AdminDashboard() {
       setEmailFrom(result.settings.emailFrom ?? "NILAY <onboarding@resend.dev>");
       setAdminNotificationEmail(result.settings.adminNotificationEmail ?? "pavansai580@gmail.com");
       setSiteLogoUrl(result.settings.siteLogoUrl ?? "");
+      setSiteBaseUrl(result.settings.siteBaseUrl ?? "");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The dashboard could not be loaded.");
     } finally {
@@ -462,11 +471,13 @@ export function AdminDashboard() {
   }
 
   useEffect(() => {
+
     const timer = window.setTimeout(() => { void load(); }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
+
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
@@ -476,6 +487,7 @@ export function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+
     if (section !== "users" || !profileFocusId) return;
     document.querySelector(`[data-admin-user-id="${CSS.escape(profileFocusId)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [section, profileFocusId, data.users]);
@@ -522,6 +534,12 @@ export function AdminDashboard() {
   async function confirmDelete() {
     if (!pendingDelete) return;
     const { type, id } = pendingDelete;
+    if (type === "property") {
+      setData((prev) => !prev ? prev : ({
+        ...prev,
+        properties: prev.properties.filter((p) => p.id !== id),
+      }));
+    }
     setBusyId(id);
     setError("");
     setMessage("");
@@ -544,6 +562,10 @@ export function AdminDashboard() {
   }
 
   async function keepListing(id: string) {
+    setData((prev) => !prev ? prev : ({
+      ...prev,
+      properties: prev.properties.map((p) => p.id === id ? { ...p, deleteRequestedAt: null } : p),
+    }));
     setBusyId(id);
     setError("");
     setMessage("");
@@ -564,7 +586,59 @@ export function AdminDashboard() {
     }
   }
 
+  async function approveListing(id: string) {
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    setData((prev) => !prev ? prev : ({
+      ...prev,
+      properties: prev.properties.map((p) => p.id === id ? { ...p, status: "published", deleteRequestedAt: null } : p),
+    }));
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resource: "property", action: "approve", id }),
+      });
+      const result = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Listing could not be approved.");
+      setMessage(result.message ?? "Listing approved and published on website.");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Listing could not be approved.");
+      await load();
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function saveDomainSettings() {
+    setSavingDomain(true);
+    setDomainMessage("");
+    setError("");
+    try {
+      const response = await fetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resource: "domainSettings", siteBaseUrl }),
+      });
+      const result = await response.json() as { message?: string; error?: string; siteBaseUrl?: string };
+      if (!response.ok) throw new Error(result.error ?? "Failed to save root domain settings.");
+      setDomainMessage(result.message ?? "Root domain saved.");
+      setSiteBaseUrl(result.siteBaseUrl ?? siteBaseUrl);
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Failed to save root domain settings.");
+    } finally {
+      setSavingDomain(false);
+    }
+  }
+
   async function toggleListingVisibility(id: string, visible: boolean) {
+    setData((prev) => !prev ? prev : ({
+      ...prev,
+      properties: prev.properties.map((p) => p.id === id ? { ...p, status: visible ? "published" : "hidden", deleteRequestedAt: visible ? null : p.deleteRequestedAt } : p),
+    }));
     setBusyId(id);
     setError("");
     setMessage("");
@@ -1370,6 +1444,61 @@ export function AdminDashboard() {
         </div>
       </section>
 
+      {/* Website Root Domain & Base URL Configuration */}
+      <section className="admin-backup-card" style={{ background: "linear-gradient(135deg, #132219 0%, #0d1611 100%)", borderColor: "rgba(74, 222, 128, 0.25)" }}>
+        <div className="admin-backup-copy" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <span className="eyebrow" style={{ color: "var(--lime)" }}>ROOT DOMAIN &amp; URL ROUTING</span>
+            <h2>Website Root Domain &amp; Base URL</h2>
+            <p>
+              Controls the base address used in all emails, WhatsApp listing links, and social shares.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="button button-dark"
+            style={{ minHeight: 34, fontSize: 11, padding: "6px 16px" }}
+            disabled={savingDomain}
+            onClick={() => void saveDomainSettings()}
+          >
+            {savingDomain ? "Saving…" : "Save Root Domain"}
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14, marginTop: 12 }}>
+          <div style={{ padding: 12, background: "rgba(0,0,0,0.25)", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)" }}>
+            <span style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 4 }}>
+              Currently Pointed Active Domain
+            </span>
+            <strong style={{ fontSize: 14, color: "#4ade80", fontFamily: "var(--mono, monospace)" }}>
+              {currentOrigin || (typeof window !== "undefined" ? window.location.origin : "https://terraland.onrender.com")}
+            </strong>
+            <small style={{ display: "block", color: "var(--muted)", fontSize: 10, marginTop: 4 }}>
+              Live host detected from current browser session.
+            </small>
+          </div>
+
+          <label className="admin-field" style={{ margin: 0 }}>
+            <span>Configured Root Domain (Base URL)</span>
+            <input
+              type="url"
+              value={siteBaseUrl}
+              onChange={(e) => setSiteBaseUrl(e.target.value)}
+              placeholder={currentOrigin || "https://terraland.onrender.com"}
+            />
+            <small style={{ color: "var(--muted)", fontSize: 10 }}>
+              Leave blank to automatically use the pointed domain or Render URL.
+            </small>
+          </label>
+        </div>
+
+        {domainMessage && (
+          <p style={{ marginTop: 10, fontSize: 11, color: "var(--lime)" }}>
+            ✅ {domainMessage}
+          </p>
+        )}
+      </section>
+
       <section id="admin-setting-backup" className="admin-backup-card" aria-labelledby="admin-backup-title">
         {backupError && <div className="admin-backup-feedback is-error" role="alert">{backupError}</div>}
         {backupMessage && <div className="admin-backup-feedback" role="status">{backupMessage}</div>}
@@ -2031,6 +2160,21 @@ export function AdminDashboard() {
                           <span className="admin-listing-meta">Submitted {property.createdAt ? formatAdminDate(property.createdAt) : "time unavailable"}</span>
                         </div>
                         <div className="admin-listing-actions-group">
+                          {property.status === "pending" && (
+                            <button
+                              type="button"
+                              className="button button-dark"
+                              style={{ background: "#059669", color: "#fff", borderColor: "#059669", fontWeight: 700, padding: "4px 12px", minHeight: 28, fontSize: 11 }}
+                              disabled={busyId === property.id}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                void approveListing(property.id);
+                              }}
+                            >
+                              ✅ Approve
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="admin-edit-listing-btn"
@@ -2080,7 +2224,7 @@ export function AdminDashboard() {
                             availability: form.get("availability"),
                             guestCapacity: form.get("guestCapacity"),
                             verified: form.get("verified") === "on",
-                            status: property.status ?? "published",
+                            status: (form.get("status") as string) || (property.status === "pending" ? "published" : property.status ?? "published"),
                             images: readMediaArray(form.get("images")),
                             videos: readMediaArray(form.get("videos")),
                             facing: form.get("facing"),
@@ -2112,6 +2256,17 @@ export function AdminDashboard() {
                             <strong translate="no">{property.title}</strong>
                           </div>
                           <div className="admin-record-actions">
+                            {property.status === "pending" && (
+                              <button
+                                type="button"
+                                className="button button-dark"
+                                style={{ background: "#059669", color: "#fff", borderColor: "#059669", fontWeight: 700, padding: "6px 14px", minHeight: 32, fontSize: 11 }}
+                                disabled={busyId === property.id}
+                                onClick={() => void approveListing(property.id)}
+                              >
+                                ✅ Approve &amp; Publish
+                              </button>
+                            )}
                             {property.deleteRequestedAt && (
                               <button type="button" className="text-link" disabled={busyId === property.id} onClick={() => void keepListing(property.id)}>
                                 Keep listing
@@ -2167,7 +2322,8 @@ export function AdminDashboard() {
                           <label className="admin-wide">Nearby landmark<input name="landmark" maxLength={120} defaultValue={property.landmark ?? ""} /></label>
                           <label className="admin-wide">Google Maps location URL<input name="mapUrl" type="url" maxLength={500} defaultValue={property.mapUrl ?? ""} placeholder="https://maps.app.goo.gl/..." /></label>
                           <label>Badge<input name="badge" required defaultValue={property.badge} /></label>
-                          <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void toggleListingVisibility(property.id, property.status !== "published")}>{property.status === "pending" ? "Approve and publish listing" : property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
+                          <label>Listing Status<select name="status" defaultValue={property.status === "pending" ? "published" : property.status}><option value="published">Published (Visible on site)</option><option value="pending">Pending Admin Review</option><option value="hidden">Hidden from site</option></select></label>
+                          <button type="button" className="admin-visibility-button" disabled={busyId === property.id} onClick={() => void (property.status === "pending" ? approveListing(property.id) : toggleListingVisibility(property.id, property.status !== "published"))}>{property.status === "pending" ? "✅ Approve and publish listing" : property.status === "hidden" ? "Show this listing on website" : "Hide this listing from website"}</button>
                           <button type="button" className="admin-visibility-button" aria-pressed={property.showPhone !== false} disabled={busyId === property.id} onClick={() => void toggleListingPhoneVisibility(property.id, property.showPhone === false)}>{property.showPhone === false ? "Show phone on this listing" : "Hide phone on this listing"}</button>
                           <label className="admin-checkbox">Verified seller<input type="checkbox" name="verified" defaultChecked={property.verified} /></label>
                           <AdminListingMediaManager title={property.title} initialImages={property.images?.length ? property.images : property.image ? [property.image] : []} initialVideos={property.videos ?? []} disabled={busyId === property.id} />
@@ -2260,6 +2416,18 @@ export function AdminDashboard() {
                                     >
                                       Edit in Admin
                                     </button>
+                                    {prop.status === "pending" && (
+                                      <button
+                                        type="button"
+                                        className="admin-member-edit-btn"
+                                        style={{ background: "#059669", color: "#fff", borderColor: "#059669", fontWeight: 700 }}
+                                        disabled={busyId === prop.id}
+                                        onClick={() => void approveListing(prop.id)}
+                                        title="Approve and publish listing immediately"
+                                      >
+                                        ✅ Approve
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
