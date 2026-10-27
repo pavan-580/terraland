@@ -9,7 +9,7 @@ const PRIMARY_ADMIN_EMAIL = "pavansai580@gmail.com";
 const oauthStateCookie = "terraland_google_state";
 const oauthNextCookie = "terraland_google_next";
 
-export function isUserAdmin(email: string): boolean {
+function isUserAdmin(email: string): boolean {
   const normalized = email.trim().toLowerCase();
   const envAdmin = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   return normalized === PRIMARY_ADMIN_EMAIL || (Boolean(envAdmin) && normalized === envAdmin);
@@ -84,7 +84,7 @@ function objectValue(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
-export function getGoogleCredentials() {
+function getGoogleCredentials() {
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim() ?? "";
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() ?? "";
   return { clientId, clientSecret };

@@ -8,6 +8,9 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
   const router = useRouter();
   const [signup, setSignup] = useState(false);
   const [identifierInput, setIdentifierInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [nameInput, setNameInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
   const [existingAccount, setExistingAccount] = useState<{ identifier: string; message: string } | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -18,6 +21,11 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
   const [resetEmail, setResetEmail] = useState("");
   const [resetComplete, setResetComplete] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+
+  const hasIdentifier = Boolean(identifierInput && identifierInput.trim().length > 0);
+  const hasPassword = Boolean(passwordInput && passwordInput.length > 0);
+  const hasName = Boolean(nameInput && nameInput.trim().length > 0);
+  const hasEmail = Boolean(emailInput && emailInput.trim().length > 0);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -296,15 +304,24 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
 
           <form onSubmit={submit}>
             {signup && (
-              <label>
-                <span className="auth-field-label">Your name</span>
-                <input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="How should we address you?" />
+              <label className={`auth-floating-field${hasName ? " has-value" : ""}`}>
+                <span className="auth-floating-label">Your name</span>
+                <input
+                  name="name"
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  autoComplete="name"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder=" "
+                />
               </label>
             )}
 
             {signup ? (
               <>
-                <label>
+                <label className="auth-phone-field">
                   <span className="auth-field-label">Mobile number</span>
                   <div className="phone-input-wrap">
                     <span className="phone-input-prefix">+91</span>
@@ -328,16 +345,21 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                     Enter your 10-digit mobile number (country code +91 is added automatically).
                   </small>
                 </label>
-                <label>
-                  <span className="auth-field-label">
-                    Email address <span className="optional-label">optional, for password recovery</span>
-                  </span>
-                  <input name="email" type="email" autoComplete="email" placeholder="you@example.com" />
+                <label className={`auth-floating-field${hasEmail ? " has-value" : ""}`}>
+                  <span className="auth-floating-label">Email address (optional)</span>
+                  <input
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    placeholder=" "
+                  />
                 </label>
               </>
             ) : (
-              <label>
-                <span className="auth-field-label">10-digit mobile number or email address</span>
+              <label className={`auth-floating-field${hasIdentifier ? " has-value" : ""}`}>
+                <span className="auth-floating-label">10-digit mobile number or email address</span>
                 <input
                   name="identifier"
                   type="text"
@@ -345,13 +367,13 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   autoComplete="username"
                   value={identifierInput}
                   onChange={(e) => setIdentifierInput(e.target.value)}
-                  placeholder="e.g. 9876543210 or pavansai580@gmail.com"
+                  placeholder=" "
                 />
               </label>
             )}
 
-            <label>
-              <span className="auth-field-label">Password</span>
+            <label className={`auth-floating-field${hasPassword ? " has-value" : ""}`}>
+              <span className="auth-floating-label">Password</span>
               <span className="password-input-wrap">
                 <input
                   name="password"
@@ -360,7 +382,9 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   minLength={8}
                   maxLength={72}
                   autoComplete={signup ? "new-password" : "current-password"}
-                  placeholder={signup ? "At least 8 characters" : "Enter your password"}
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder=" "
                 />
                 <button
                   type="button"

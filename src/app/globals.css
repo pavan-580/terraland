@@ -3708,7 +3708,7 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   display: flex;
   flex-direction: column;
   gap: 7px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   color: rgba(231,239,230,.92);
   font-size: 11px;
   text-align: left;
@@ -3724,6 +3724,64 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .sign-in-page-shell .auth-panel form > label { animation: authFieldEnter .4s ease both; }
 .sign-in-page-shell .auth-panel form > label:nth-of-type(2) { animation-delay: .07s; }
 .sign-in-page-shell .auth-panel form > label:nth-of-type(3) { animation-delay: .13s; }
+.sign-in-page-shell .auth-panel form > label.auth-floating-field {
+  position: relative;
+  display: block;
+  padding: 0;
+  margin-bottom: 18px;
+}
+.sign-in-page-shell .auth-panel .auth-floating-label {
+  position: absolute;
+  z-index: 3;
+  top: 15px;
+  left: 14px;
+  max-width: calc(100% - 28px);
+  padding: 0 4px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1;
+  color: rgba(223, 232, 222, 0.58);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  background-color: transparent;
+  transform-origin: left top;
+  transition:
+    top 0.18s cubic-bezier(0.2, 0, 0, 1),
+    font-size 0.18s cubic-bezier(0.2, 0, 0, 1),
+    color 0.18s cubic-bezier(0.2, 0, 0, 1),
+    background-color 0.18s ease,
+    padding 0.18s ease;
+}
+.sign-in-page-shell .auth-panel .auth-floating-field:focus-within .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field.has-value .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:has(input:not(:placeholder-shown)) .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:has(input:-webkit-autofill) .auth-floating-label {
+  top: -8px;
+  left: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--lime);
+  background-color: #101713;
+  padding: 0 6px;
+  border-radius: 3px;
+  line-height: 1;
+}
+.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within).has-value .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within):has(input:not(:placeholder-shown)) .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within):has(input:-webkit-autofill) .auth-floating-label {
+  color: rgba(223, 232, 222, 0.85);
+  background-color: #101713;
+}
+.sign-in-page-shell .auth-panel .auth-floating-field input::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
+}
+.sign-in-page-shell .auth-panel .auth-floating-field input:focus::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
+}
 .sign-in-page-shell .auth-panel input {
   width: 100%;
   height: 48px;
