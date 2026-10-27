@@ -305,7 +305,6 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
           <form onSubmit={submit}>
             {signup && (
               <label className={`auth-floating-field${hasName ? " has-value" : ""}`}>
-                <span className="auth-floating-label">Your name</span>
                 <input
                   name="name"
                   required
@@ -316,6 +315,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   onChange={(e) => setNameInput(e.target.value)}
                   placeholder=" "
                 />
+                <span className="auth-floating-label">Your name</span>
               </label>
             )}
 
@@ -346,7 +346,6 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   </small>
                 </label>
                 <label className={`auth-floating-field${hasEmail ? " has-value" : ""}`}>
-                  <span className="auth-floating-label">Email address (optional)</span>
                   <input
                     name="email"
                     type="email"
@@ -355,11 +354,11 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                     onChange={(e) => setEmailInput(e.target.value)}
                     placeholder=" "
                   />
+                  <span className="auth-floating-label">Email address (optional)</span>
                 </label>
               </>
             ) : (
               <label className={`auth-floating-field${hasIdentifier ? " has-value" : ""}`}>
-                <span className="auth-floating-label">10-digit mobile number or email address</span>
                 <input
                   name="identifier"
                   type="text"
@@ -369,11 +368,11 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   onChange={(e) => setIdentifierInput(e.target.value)}
                   placeholder=" "
                 />
+                <span className="auth-floating-label">10-digit mobile number or email address</span>
               </label>
             )}
 
             <label className={`auth-floating-field${hasPassword ? " has-value" : ""}`}>
-              <span className="auth-floating-label">Password</span>
               <span className="password-input-wrap">
                 <input
                   name="password"
@@ -386,6 +385,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder=" "
                 />
+                <span className="auth-floating-label">Password</span>
                 <button
                   type="button"
                   className="password-visibility"
