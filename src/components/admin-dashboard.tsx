@@ -401,7 +401,7 @@ export function AdminDashboard() {
       (plot.roadWidth ? `🛣️ *Road Width:* ${plot.roadWidth}\n` : "") +
       `✨ 100% Clear Title Documentation & Ready for Registration\n\n` +
       `📸 *View Full Photos, Video & Details:*\n${link}\n\n` +
-      `📞 *Direct Site Visits & Negotiation:* 8074399963\n` +
+      `📞 *Direct Site Visits & Negotiation:* Contact via NILAY Marketplace\n` +
       `🌐 *NILAY Real Estate Marketplace*`;
   }
 
@@ -1962,13 +1962,13 @@ export function AdminDashboard() {
                         value={announcementText}
                         onChange={(event) => setAnnouncementText(event.target.value)}
                         maxLength={240}
-                        placeholder="⚡ Spot booking discounts available this week! Call 8074399963 to arrange your site visit."
+                        placeholder="⚡ Spot booking discounts available this week! Arrange your site visit today."
                       />
                     </label>
                     <div className="admin-preset-row">
                       <span className="admin-preset-label">1-Click marketing presets:</span>
                       {[
-                        "⚡ Spot booking discounts available this week! Call 8074399963 to arrange your site visit.",
+                        "⚡ Spot booking discounts available this week! Arrange your site visit today.",
                         "🔥 Verified HMDA & RERA approved residential plots in Miyapur & Bachupally corridors now live.",
                         "📢 Looking for customized plot sizes? Register your buyer requirements for offline private inventory.",
                         "✨ 0% Brokerage on direct verified owner plots across Hyderabad & Telangana.",

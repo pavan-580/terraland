@@ -51,8 +51,8 @@ export function SiteFooter({
             Connect with NILAY on WhatsApp <ArrowUpRight size={14} />
           </a>
           <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 14, fontSize: 11, color: "var(--muted)" }}>
-            <a href={`tel:${digits.slice(-10)}`} style={{ color: "var(--lime)" }}>
-              Care: +91 {digits.slice(-10)}
+            <a href={`tel:${digits.slice(-10)}`} style={{ color: "var(--lime)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              Call Customer Care <ArrowUpRight size={12} />
             </a>
             <a href={`mailto:${email}`} style={{ color: "var(--lime)" }}>
               {email}

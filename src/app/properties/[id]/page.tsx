@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, BadgeCheck, Check, MapPin, ShieldAlert, Sparkles } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, MapPin, Phone, ShieldAlert, Sparkles } from "lucide-react";
 import { BackButton } from "@/components/back-button";
 import { EmiCalculator } from "@/components/emi-calculator";
 import { InquiryForm } from "@/components/inquiry-form";
@@ -330,7 +330,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
                 </div>
                 {showSellerContacts && property.phone && (
                   <SellerPhoneLink className="seller-public-phone" propertyId={property.id} phone={property.phone} owner={property.owner}>
-                    {property.phone}
+                    <Phone size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />
+                    <span>Call seller directly</span>
                   </SellerPhoneLink>
                 )}
                 {showSellerContacts && property.sellerEmail && (

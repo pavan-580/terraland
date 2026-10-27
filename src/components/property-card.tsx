@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, MapPin } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, MapPin, Phone } from "lucide-react";
 import type { Property } from "@/lib/market";
 import { formatListingPrice, calculatePricePerSqYd, formatPricePerSqYd } from "@/lib/market";
 import { SaveButton } from "@/components/save-button";
@@ -43,7 +43,8 @@ export function PropertyCard({ property }: { property: Property }) {
           {property.phone && (
             <div className="card-seller-links">
               <SellerPhoneLink propertyId={property.id} phone={property.phone} owner={property.owner}>
-                {property.phone}
+                <Phone size={12} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />
+                <span>Call seller</span>
               </SellerPhoneLink>
             </div>
           )}

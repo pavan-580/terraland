@@ -144,22 +144,22 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
           <form onSubmit={submitPasswordReset}>
             {resetStep === "request" ? (
               <label>
-                Email address
+                <span className="auth-field-label">Email address</span>
                 <input name="email" type="email" required autoComplete="email" defaultValue={resetEmail} placeholder="you@example.com" />
               </label>
             ) : (
               <>
                 <input type="hidden" name="email" value={resetEmail} />
                 <label>
-                  Verification code
+                  <span className="auth-field-label">Verification code</span>
                   <input name="code" required inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" placeholder="6-digit code" />
                 </label>
                 <label>
-                  New password
+                  <span className="auth-field-label">New password</span>
                   <input name="password" type="password" required minLength={8} maxLength={72} autoComplete="new-password" placeholder="At least 8 characters" />
                 </label>
                 <label>
-                  Confirm new password
+                  <span className="auth-field-label">Confirm new password</span>
                   <input name="confirmPassword" type="password" required minLength={8} maxLength={72} autoComplete="new-password" placeholder="Enter the new password again" />
                 </label>
               </>
@@ -297,7 +297,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
           <form onSubmit={submit}>
             {signup && (
               <label>
-                Your name
+                <span className="auth-field-label">Your name</span>
                 <input name="name" required minLength={2} maxLength={80} autoComplete="name" placeholder="How should we address you?" />
               </label>
             )}
@@ -305,24 +305,9 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
             {signup ? (
               <>
                 <label>
-                  Mobile number
-                  <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "0 12px",
-                        background: "#f3f4f6",
-                        border: "1px solid #dedfd6",
-                        minHeight: "43px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        color: "#374151",
-                      }}
-                    >
-                      +91
-                    </span>
+                  <span className="auth-field-label">Mobile number</span>
+                  <div className="phone-input-wrap">
+                    <span className="phone-input-prefix">+91</span>
                     <input
                       name="phone"
                       type="tel"
@@ -337,21 +322,22 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                         const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;
                         e.target.value = clean.slice(0, 10);
                       }}
-                      style={{ flex: 1 }}
                     />
                   </div>
-                  <small style={{ color: "var(--muted)", fontSize: "10px", marginTop: "4px" }}>
+                  <small className="auth-field-hint">
                     Enter your 10-digit mobile number (country code +91 is added automatically).
                   </small>
                 </label>
                 <label>
-                  Email address <span className="optional-label">optional, for password recovery</span>
+                  <span className="auth-field-label">
+                    Email address <span className="optional-label">optional, for password recovery</span>
+                  </span>
                   <input name="email" type="email" autoComplete="email" placeholder="you@example.com" />
                 </label>
               </>
             ) : (
-              <label className="auth-floating-field">
-                <span className="auth-floating-label">10-digit mobile number or email address</span>
+              <label>
+                <span className="auth-field-label">10-digit mobile number or email address</span>
                 <input
                   name="identifier"
                   type="text"
@@ -364,8 +350,8 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
               </label>
             )}
 
-            <label className="auth-floating-field">
-              <span className="auth-floating-label">Password</span>
+            <label>
+              <span className="auth-field-label">Password</span>
               <span className="password-input-wrap">
                 <input
                   name="password"
@@ -374,7 +360,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   minLength={8}
                   maxLength={72}
                   autoComplete={signup ? "new-password" : "current-password"}
-                  placeholder="At least 8 characters"
+                  placeholder={signup ? "At least 8 characters" : "Enter your password"}
                 />
                 <button
                   type="button"

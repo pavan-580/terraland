@@ -99,7 +99,7 @@ export function PropertyActionButtons({
 
         {hasDirectPhone ? (
           <SellerPhoneLink propertyId={property.id} phone={property.phone!} owner={property.owner} className="button button-outline full-width-btn sticky-seller-phone">
-            <Phone size={16} /> <span>{property.phone}</span>
+            <Phone size={16} /> <span>Call seller directly</span>
           </SellerPhoneLink>
         ) : showConnectWithUs ? (
           <a
@@ -108,13 +108,13 @@ export function PropertyActionButtons({
             rel="noreferrer"
             onClick={handleConnectClick}
             className="button button-outline full-width-btn sticky-seller-phone connect-with-us-btn"
-            title="Send complete listing details to NILAY on WhatsApp"
+            title="Connect with NILAY on WhatsApp"
           >
-            <MessageSquare size={16} /> <span>Connect with us</span>
+            <MessageSquare size={16} /> <span>Connect on WhatsApp</span>
           </a>
         ) : (
           <Link href={`/sign-in?next=${encodeURIComponent(`/properties/${property.id}`)}`} className="button button-outline full-width-btn sticky-seller-phone">
-            <UserRound size={16} /> <span>Sign in for seller number</span>
+            <UserRound size={16} /> <span>Sign in to call seller</span>
           </Link>
         )}
       </div>

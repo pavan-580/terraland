@@ -155,7 +155,7 @@ export function SiteVisitModal({ isOpen, onClose, property }: SiteVisitModalProp
             </div>
 
             <p className="visit-note">
-              Our founder will call or WhatsApp you at <strong>{phone}</strong> to confirm the exact landmark and accompany you to the parcel.
+              Our founder will call or WhatsApp you to confirm the exact landmark and accompany you to the parcel.
             </p>
 
             <div className="success-action-buttons">

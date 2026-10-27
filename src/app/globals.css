@@ -3704,58 +3704,118 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .sign-in-page-shell .auth-brand > span { color: var(--lime); font-size: 19px; line-height: .5; }
 .sign-in-page-shell .auth-panel h2 { margin: 17px 0 8px; font-size: 38px; letter-spacing: -.035em; }
 .sign-in-page-shell .auth-panel > p { margin-bottom: 25px; color: rgba(231,239,230,.72); font-size: 12px; line-height: 1.6; }
-.sign-in-page-shell .auth-panel label { color: rgba(231,239,230,.9); font-size: 10px; gap: 8px; margin-bottom: 15px; }
+.sign-in-page-shell .auth-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 16px;
+  color: rgba(231,239,230,.92);
+  font-size: 11px;
+  text-align: left;
+}
+.sign-in-page-shell .auth-panel .auth-field-label {
+  display: block;
+  color: rgba(235,242,234,.94);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.35;
+}
 .sign-in-page-shell .auth-panel form > label { animation: authFieldEnter .4s ease both; }
 .sign-in-page-shell .auth-panel form > label:nth-of-type(2) { animation-delay: .07s; }
 .sign-in-page-shell .auth-panel form > label:nth-of-type(3) { animation-delay: .13s; }
-.sign-in-page-shell .auth-panel form > label.auth-floating-field {
-  position: relative;
-  display: block;
-  padding-top: 0;
-  color: rgba(231,239,230,.9);
-}
-.sign-in-page-shell .auth-panel .auth-floating-label {
-  position: absolute;
-  z-index: 1;
-  top: 17px;
-  left: 12px;
-  max-width: calc(100% - 24px);
-  overflow: hidden;
-  color: rgba(223,232,222,.62);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  pointer-events: none;
-  transition: top .16s ease, left .16s ease, color .16s ease, font-size .16s ease;
-}
-.sign-in-page-shell .auth-panel .auth-floating-field:focus-within .auth-floating-label,
-.sign-in-page-shell .auth-panel .auth-floating-field:has(input:not(:placeholder-shown)) .auth-floating-label {
-  top: -5px;
-  left: 9px;
-  padding: 0 4px;
-  background: transparent;
-  color: var(--lime);
-  font-size: 9px;
-}
-.sign-in-page-shell .auth-panel .auth-floating-field input::placeholder { color: transparent; }
-.sign-in-page-shell .auth-panel .auth-floating-field input:focus::placeholder { color: rgba(223,232,222,.4); }
 .sign-in-page-shell .auth-panel input {
-  height: 46px;
-  min-height: 46px;
-  padding: 0 11px;
-  border: 1px solid rgba(222,232,223,.2);
-  border-radius: 5px;
-  background: rgba(255,255,255,.07);
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(222,232,223,.22);
+  border-radius: 6px;
+  background: rgba(255,255,255,.06);
   color: #f3f6f1;
-  font-size: 13px;
+  font-size: 13.5px;
+  box-sizing: border-box;
   transition: border-color .2s, box-shadow .2s, background .2s;
 }
-.sign-in-page-shell .auth-panel input::placeholder { color: rgba(223,232,222,.4); }
-.sign-in-page-shell .auth-panel input:focus { border-color: rgba(198,220,129,.72); background: rgba(9,17,12,.55); box-shadow: 0 0 0 3px rgba(198,220,129,.1); }
-.sign-in-page-shell .password-visibility { height: 46px; color: #c0cabe; }
+.sign-in-page-shell .auth-panel input::placeholder {
+  color: rgba(223,232,222,.38);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.sign-in-page-shell .auth-panel input:focus {
+  border-color: rgba(198,220,129,.75);
+  background: rgba(9,17,12,.65);
+  box-shadow: 0 0 0 3px rgba(198,220,129,.12);
+  outline: none;
+}
+.sign-in-page-shell .auth-panel .password-input-wrap {
+  width: 100%;
+  display: flex;
+  position: relative;
+}
+.sign-in-page-shell .auth-panel .password-input-wrap input {
+  padding-right: 78px;
+}
+.sign-in-page-shell .password-visibility {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: #c0cabe;
+  font-size: 11px;
+  cursor: pointer;
+}
 .sign-in-page-shell .password-visibility:hover { color: var(--lime); }
+.sign-in-page-shell .auth-panel .phone-input-wrap {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100%;
+  border: 1px solid rgba(222,232,223,.22);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.sign-in-page-shell .auth-panel .phone-input-wrap:focus-within {
+  border-color: rgba(198,220,129,.75);
+  box-shadow: 0 0 0 3px rgba(198,220,129,.12);
+}
+.sign-in-page-shell .auth-panel .phone-input-prefix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(222,232,223,.18);
+  font-size: 13px;
+  font-weight: 600;
+  color: #f3f6f1;
+  user-select: none;
+  min-height: 48px;
+  height: 48px;
+}
+.sign-in-page-shell .auth-panel .phone-input-wrap input {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  flex: 1;
+}
+.sign-in-page-shell .auth-panel .auth-field-hint {
+  color: rgba(223,232,222,.6);
+  font-size: 11px;
+  margin-top: 4px;
+  display: block;
+}
 .sign-in-page-shell .google-signin-button {
   min-height: 48px;
   border: 1px solid transparent !important;
@@ -3782,8 +3842,9 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .sign-in-page-shell .auth-divider { margin: 18px 0; color: rgba(231,239,230,.58); font-size: 9px; }
 .sign-in-page-shell .auth-divider::before, .sign-in-page-shell .auth-divider::after { background: rgba(221,234,222,.13); }
 .sign-in-page-shell .auth-submit { min-height: 48px; margin-top: 3px; padding-inline: 16px; border-radius: 5px; background: var(--forest); color: #f3f6f1; font-size: 12px; }
-.sign-in-page-shell .auth-switch { margin-top: 17px; color: rgba(231,239,230,.68); font-size: 10px; }
-.sign-in-page-shell .auth-switch button { color: #d4e69e; }
+.sign-in-page-shell .auth-switch { margin-top: 14px; color: rgba(231,239,230,.72); font-size: 11px; }
+.sign-in-page-shell .auth-switch button { color: #d4e69e; font-size: 11px; font-weight: 600; cursor: pointer; }
+.sign-in-page-shell .auth-switch button:hover { text-decoration: underline; }
 .sign-in-page-shell .auth-redirect-success { margin-top: 20px; }
 .sign-in-page-shell .auth-redirect-loader {
   display: flex;
