@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, Eye, EyeOff } from "lucide-react";
 
@@ -21,6 +21,43 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
   const [resetEmail, setResetEmail] = useState("");
   const [resetComplete, setResetComplete] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+
+  const identifierRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const syncAutofill = () => {
+      if (identifierRef.current) {
+        const val = identifierRef.current.value;
+        if (val && val !== identifierInput) {
+          setIdentifierInput(val);
+        }
+      }
+      if (passwordRef.current) {
+        const val = passwordRef.current.value;
+        if (val && val !== passwordInput) {
+          setPasswordInput(val);
+        }
+      }
+      if (nameRef.current) {
+        const val = nameRef.current.value;
+        if (val && val !== nameInput) {
+          setNameInput(val);
+        }
+      }
+      if (emailRef.current) {
+        const val = emailRef.current.value;
+        if (val && val !== emailInput) {
+          setEmailInput(val);
+        }
+      }
+    };
+    syncAutofill();
+    const timer = setInterval(syncAutofill, 200);
+    return () => clearInterval(timer);
+  }, [identifierInput, passwordInput, nameInput, emailInput]);
 
   const hasIdentifier = Boolean(identifierInput && identifierInput.trim().length > 0);
   const hasPassword = Boolean(passwordInput && passwordInput.length > 0);
@@ -306,6 +343,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
             {signup && (
               <label className={`auth-floating-field${hasName ? " has-value" : ""}`}>
                 <input
+                  ref={nameRef}
                   name="name"
                   required
                   minLength={2}
@@ -313,6 +351,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   autoComplete="name"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
+                  onInput={(e) => setNameInput((e.target as HTMLInputElement).value)}
                   placeholder=" "
                 />
                 <span className="auth-floating-label">Your name</span>
@@ -347,11 +386,13 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                 </label>
                 <label className={`auth-floating-field${hasEmail ? " has-value" : ""}`}>
                   <input
+                    ref={emailRef}
                     name="email"
                     type="email"
                     autoComplete="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
+                    onInput={(e) => setEmailInput((e.target as HTMLInputElement).value)}
                     placeholder=" "
                   />
                   <span className="auth-floating-label">Email address (optional)</span>
@@ -360,12 +401,14 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
             ) : (
               <label className={`auth-floating-field${hasIdentifier ? " has-value" : ""}`}>
                 <input
+                  ref={identifierRef}
                   name="identifier"
                   type="text"
                   required
                   autoComplete="username"
                   value={identifierInput}
                   onChange={(e) => setIdentifierInput(e.target.value)}
+                  onInput={(e) => setIdentifierInput((e.target as HTMLInputElement).value)}
                   placeholder=" "
                 />
                 <span className="auth-floating-label">10-digit mobile number or email address</span>
@@ -375,6 +418,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
             <label className={`auth-floating-field${hasPassword ? " has-value" : ""}`}>
               <span className="password-input-wrap">
                 <input
+                  ref={passwordRef}
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
@@ -383,6 +427,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   autoComplete={signup ? "new-password" : "current-password"}
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
+                  onInput={(e) => setPasswordInput((e.target as HTMLInputElement).value)}
                   placeholder=" "
                 />
                 <span className="auth-floating-label">Password</span>

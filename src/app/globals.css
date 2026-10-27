@@ -3756,8 +3756,13 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 }
 .sign-in-page-shell .auth-panel .auth-floating-field input:focus ~ .auth-floating-label,
 .sign-in-page-shell .auth-panel .auth-floating-field input:not(:placeholder-shown) ~ .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field input:-webkit-autofill ~ .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field input:autofill ~ .auth-floating-label,
 .sign-in-page-shell .auth-panel .auth-floating-field.has-value .auth-floating-label,
-.sign-in-page-shell .auth-panel .auth-floating-field:focus-within .auth-floating-label {
+.sign-in-page-shell .auth-panel .auth-floating-field:focus-within .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:has(input:not(:placeholder-shown)) .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:has(input:-webkit-autofill) .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:has(input:autofill) .auth-floating-label {
   top: -8px !important;
   left: 10px !important;
   font-size: 10.5px !important;
@@ -3769,9 +3774,20 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   line-height: 1 !important;
 }
 .sign-in-page-shell .auth-panel .auth-floating-field input:not(:focus):not(:placeholder-shown) ~ .auth-floating-label,
-.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within).has-value .auth-floating-label {
+.sign-in-page-shell .auth-panel .auth-floating-field input:not(:focus):-webkit-autofill ~ .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field input:not(:focus):autofill ~ .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within).has-value .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within):has(input:not(:placeholder-shown)) .auth-floating-label,
+.sign-in-page-shell .auth-panel .auth-floating-field:not(:focus-within):has(input:-webkit-autofill) .auth-floating-label {
+  top: -8px !important;
+  left: 10px !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
   color: rgba(223, 232, 222, 0.85) !important;
   background-color: #101713 !important;
+  padding: 0 6px !important;
+  border-radius: 3px !important;
+  line-height: 1 !important;
 }
 .sign-in-page-shell .auth-panel .auth-floating-field input::placeholder {
   color: transparent !important;
