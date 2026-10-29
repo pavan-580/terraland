@@ -189,7 +189,7 @@ export function MyListings() {
                   pattern="[0-9]{10}"
                   maxLength={10}
                   defaultValue={property.phone ? property.phone.replace(/^\+91/, "").replace(/\D/g, "") : ""}
-                  placeholder="9876543210"
+                  placeholder="Enter 10-digit mobile number"
                 />
               </div>
             </label>

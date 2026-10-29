@@ -69,7 +69,7 @@ export function LenderInterestForm() {
         <select name="country" aria-label="Country calling code" autoComplete="country" value={country} onChange={(event) => setCountry(event.target.value as CountryCode)}>
           {dialingCountries.map((item) => <option key={item.code} value={item.code}>{item.name} (+{item.callingCode})</option>)}
         </select>
-        <input name="phone" required type="tel" inputMode="tel" autoComplete="tel-national" maxLength={24} placeholder={country === "IN" ? "98765 43210" : "Enter your local number"} />
+        <input name="phone" required type="tel" inputMode="tel" autoComplete="tel-national" maxLength={24} placeholder={country === "IN" ? "Enter 10-digit mobile number" : "Enter your local number"} />
       </span>
       <small>Choose your country code, then enter your mobile number.</small>
     </label>

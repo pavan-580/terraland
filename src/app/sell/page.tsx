@@ -476,7 +476,7 @@ export default function SellPage() {
                 onChange={(event) => {
                   setContactPhone(normalizeIndianMobile(event.target.value));
                 }}
-                placeholder="9876543210"
+                placeholder="Enter 10-digit mobile number"
               />
             </div>
             <small>Enter your 10-digit mobile number (+91 is added automatically). The NILAY team will contact you to verify details before listing.</small>

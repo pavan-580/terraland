@@ -58,7 +58,7 @@ export function ProfilePanel({ user }: { user: ProfileDetails }) {
             pattern="[0-9]{10}"
             maxLength={10}
             defaultValue={user.phone ? user.phone.replace(/^\+91/, "").replace(/\D/g, "") : ""}
-            placeholder="9876543210"
+            placeholder="Enter 10-digit mobile number"
             onChange={(e) => {
               const val = e.target.value.replace(/\D/g, "");
               const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;

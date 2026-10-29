@@ -3725,51 +3725,59 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
 .sign-in-page-shell .auth-panel form > label:nth-of-type(2) { animation-delay: .07s; }
 .sign-in-page-shell .auth-panel form > label:nth-of-type(3) { animation-delay: .13s; }
 /* Animated Floating Input Group */
-.sign-in-page-shell .auth-panel .auth-float-wrap {
+.auth-panel .auth-float-wrap {
   position: relative !important;
   display: block !important;
-  margin-top: 24px !important;
-  margin-bottom: 18px !important;
+  margin-top: 26px !important;
+  margin-bottom: 20px !important;
 }
 
-.sign-in-page-shell .auth-panel .auth-float-input {
+.auth-panel .auth-float-input {
   width: 100% !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  padding: 0 14px !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  padding: 0 16px !important;
   border: 1px solid rgba(222, 232, 223, 0.22) !important;
-  border-radius: 6px !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
   color: #f3f6f1 !important;
-  font-size: 13.5px !important;
+  font-size: 14px !important;
   box-sizing: border-box !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+  transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1),
+              background 0.2s ease !important;
 }
 
-.sign-in-page-shell .auth-panel .auth-float-input.password-float-input {
-  padding-right: 78px !important;
+.auth-panel .auth-float-input.password-float-input {
+  padding-right: 80px !important;
 }
 
-.sign-in-page-shell .auth-panel .auth-float-input:focus {
+.auth-panel .auth-float-input:focus {
   border-color: rgba(198, 220, 129, 0.85) !important;
-  background: rgba(9, 17, 12, 0.75) !important;
+  background: rgba(9, 17, 12, 0.85) !important;
   box-shadow: 0 0 0 3px rgba(198, 220, 129, 0.15) !important;
   outline: none !important;
 }
 
 /* Floating Label Animation */
-.sign-in-page-shell .auth-panel .auth-float-label {
+.auth-panel .auth-float-label {
   position: absolute !important;
   left: 14px !important;
-  top: 15px !important;
-  font-size: 13px !important;
+  top: 16px !important;
+  font-size: 13.5px !important;
   font-weight: 400 !important;
-  line-height: 1 !important;
-  color: rgba(223, 232, 222, 0.58) !important;
+  line-height: 1.2 !important;
+  color: rgba(223, 232, 222, 0.6) !important;
   pointer-events: none !important;
   transform-origin: left top !important;
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
-              color 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+  padding: 0 4px !important;
+  border-radius: 4px !important;
+  background-color: transparent !important;
+  z-index: 3 !important;
+  transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1),
+              color 0.22s cubic-bezier(0.2, 0, 0, 1),
+              font-weight 0.22s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.22s ease !important;
   will-change: transform, color;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -3777,22 +3785,28 @@ body { background: radial-gradient(ellipse at 50% -20%, #23362b 0, var(--paper) 
   max-width: calc(100% - 28px) !important;
 }
 
-/* Smooth float up ABOVE the input border when focused or filled */
-.sign-in-page-shell .auth-panel .auth-float-input:focus ~ .auth-float-label,
-.sign-in-page-shell .auth-panel .auth-float-wrap:focus-within .auth-float-label {
-  transform: translateY(-25px) scale(0.85) !important;
+/* Smooth float up ABOVE the input border when focused, filled, or autofilled - ZERO OVERLAP, ZERO BORDER CUT */
+.auth-panel .auth-float-input:focus ~ .auth-float-label,
+.auth-panel .auth-float-input:not(:placeholder-shown) ~ .auth-float-label,
+.auth-panel .auth-float-input:-webkit-autofill ~ .auth-float-label,
+.auth-panel .auth-float-input:autofill ~ .auth-float-label,
+.auth-panel .auth-float-wrap.has-value .auth-float-label,
+.auth-panel .auth-float-wrap:focus-within .auth-float-label,
+.auth-panel .auth-float-wrap:has(.auth-float-input:focus) .auth-float-label,
+.auth-panel .auth-float-wrap:has(.auth-float-input:not(:placeholder-shown)) .auth-float-label,
+.auth-panel .auth-float-wrap:has(.auth-float-input:-webkit-autofill) .auth-float-label,
+.auth-panel .auth-float-wrap:has(.auth-float-input:autofill) .auth-float-label {
+  transform: translateY(-33px) scale(0.85) !important;
   font-weight: 600 !important;
-  color: var(--lime) !important;
+  background-color: var(--paper) !important;
+  color: rgba(235, 242, 234, 0.92) !important;
 }
 
-.sign-in-page-shell .auth-panel .auth-float-input:not(:placeholder-shown) ~ .auth-float-label,
-.sign-in-page-shell .auth-panel .auth-float-wrap.has-value .auth-float-label {
-  transform: translateY(-25px) scale(0.85) !important;
-  font-weight: 600 !important;
-  color: rgba(235, 242, 234, 0.88) !important;
-}
-
-.sign-in-page-shell .auth-panel .auth-float-wrap.has-value:focus-within .auth-float-label {
+.auth-panel .auth-float-input:focus ~ .auth-float-label,
+.auth-panel .auth-float-wrap:focus-within .auth-float-label,
+.auth-panel .auth-float-wrap.has-value:focus-within .auth-float-label,
+.auth-panel .auth-float-input:not(:placeholder-shown):focus ~ .auth-float-label,
+.auth-panel .auth-float-input:-webkit-autofill:focus ~ .auth-float-label {
   color: var(--lime) !important;
 }
 .sign-in-page-shell .auth-panel input:-webkit-autofill,

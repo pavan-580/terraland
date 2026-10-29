@@ -378,7 +378,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                       inputMode="numeric"
                       pattern="[0-9]{10}"
                       maxLength={10}
-                      placeholder="98765 43210"
+                      placeholder="Enter 10-digit mobile number"
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, "");
                         const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;

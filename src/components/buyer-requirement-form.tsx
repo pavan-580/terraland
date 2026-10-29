@@ -151,7 +151,7 @@ export function BuyerRequirementForm({
                 const clean = (val.startsWith("91") && val.length > 10) ? val.slice(2) : val;
                 setPhone(clean.slice(0, 10));
               }}
-              placeholder="9876543210"
+              placeholder="Enter 10-digit mobile number"
             />
           </div>
           <small style={{ color: "var(--muted)", fontSize: "11px", marginTop: "4px", display: "block" }}>

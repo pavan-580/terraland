@@ -1441,7 +1441,7 @@ export function AdminDashboard() {
               type="email"
               value={adminNotificationEmail}
               onChange={(e) => setAdminNotificationEmail(e.target.value)}
-              placeholder="pavansai580@gmail.com"
+              placeholder="admin@example.com"
             />
             <small style={{ color: "var(--muted)", fontSize: 10 }}>Receives leads, registrations &amp; inquiry alerts</small>
           </label>

@@ -309,7 +309,7 @@ export function AdminPackagesView() {
                     type="tel"
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
-                    placeholder="e.g. 9876543210"
+                    placeholder="Enter 10-digit mobile number"
                   />
                 </label>
                 <label>

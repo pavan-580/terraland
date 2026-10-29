@@ -403,7 +403,7 @@ export function AdminLeadsCrm() {
                   type="tel"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="e.g. 9876543210"
+                  placeholder="Enter 10-digit mobile number"
                 />
               </label>
 

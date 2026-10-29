@@ -173,7 +173,7 @@ export function AccountPhoneGate() {
                   setPhoneNumber(val.slice(0, 10));
                   setError("");
                 }}
-                placeholder="9876543210"
+                placeholder="Enter 10-digit mobile number"
                 className="account-phone-input"
               />
             </div>
