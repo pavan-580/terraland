@@ -15,7 +15,8 @@ import { currentUser } from "@/lib/session";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
-const BACKUP_FORMAT = "terraland-backup";
+const BACKUP_FORMAT = "nilay-backup";
+const LEGACY_BACKUP_FORMAT = "terraland-backup";
 const BACKUP_VERSION = 1;
 const STREAM_BACKUP_VERSION = 2;
 const STREAM_BACKUP_MAGIC = Buffer.from("NILAYBK2");
@@ -150,9 +151,9 @@ export async function GET(request: Request) {
     return new NextResponse(Readable.toWeb(archive) as ReadableStream<Uint8Array>, {
       headers: {
         "Content-Type": "application/octet-stream",
-        "Content-Disposition": `attachment; filename="terraland-backup-v2-${new Date().toISOString().slice(0, 10)}.terraland-backup.gz"`,
+        "Content-Disposition": `attachment; filename="nilay-backup-v2-${new Date().toISOString().slice(0, 10)}.nilay-backup.gz"`,
         "Cache-Control": "private, no-store, no-transform",
-        "X-Backup-Format": "terraland-backup-v2",
+        "X-Backup-Format": "nilay-backup-v2",
         "X-Content-Type-Options": "nosniff",
       },
     });
@@ -170,13 +171,13 @@ export async function HEAD() {
 }
 
 function validateManifest(value: unknown): BackupManifest {
-  if (!value || typeof value !== "object") throw new Error("This file is not a Terraland backup.");
+  if (!value || typeof value !== "object") throw new Error("This file is not a NILAY backup.");
   const manifest = value as Partial<BackupManifest>;
-  if (manifest.format !== BACKUP_FORMAT || manifest.version !== BACKUP_VERSION ||
+  if ((manifest.format !== BACKUP_FORMAT && manifest.format !== LEGACY_BACKUP_FORMAT) || manifest.version !== BACKUP_VERSION ||
     typeof manifest.createdAt !== "string" || !Number.isFinite(Date.parse(manifest.createdAt)) ||
     !manifest.database || typeof manifest.database !== "object" || !isBase64(manifest.database.data) ||
     !/^[a-f0-9]{64}$/.test(manifest.database.sha256) || !Array.isArray(manifest.uploads)) {
-    throw new Error("The backup format is invalid or not supported by this version of Terraland.");
+    throw new Error("The backup format is invalid or not supported by this version of NILAY.");
   }
   if (manifest.uploads.length > 100_000) throw new Error("The backup contains too many media files.");
   for (const file of manifest.uploads) {
@@ -314,7 +315,7 @@ async function stageBackupPayload(reader: StreamByteReader, databasePath: string
   try { manifest = validateManifest(JSON.parse(legacyData.toString("utf8").replace(/^\uFEFF/, "")) as unknown); }
   catch (reason) {
     if (reason instanceof Error && reason.message.startsWith("This older backup")) throw reason;
-    throw new Error("This file is not a readable Terraland backup. Download a fresh backup from the updated site.");
+    throw new Error("This file is not a readable NILAY backup. Download a fresh backup from the updated site.");
   }
   const database = Buffer.from(manifest.database.data, "base64");
   if (sha256(database) !== manifest.database.sha256) throw new Error("The database file failed its integrity check.");
@@ -408,7 +409,7 @@ export async function POST(request: NextRequest) {
     } catch (reason) {
       const message = reason instanceof Error && (reason.message.includes("1 GB") || reason.message.startsWith("This older backup"))
         ? reason.message
-        : "This file is not a readable Terraland backup. Download a fresh backup from the updated site; no site data was changed.";
+        : "This file is not a readable NILAY backup. Download a fresh backup from the updated site; no site data was changed.";
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
@@ -421,7 +422,7 @@ export async function POST(request: NextRequest) {
       const tableCount = incomingDb.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").get() as { count: number };
       const requiredTables = new Set((incomingDb.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map(({ name }) => name));
       if (tableCount.count === 0 || !["users", "properties", "site_settings", "property_reviews"].every((table) => requiredTables.has(table))) {
-        return NextResponse.json({ error: "The backup database is missing required Terraland data tables, including listing reviews. No data was restored." }, { status: 400 });
+        return NextResponse.json({ error: "The backup database is missing required NILAY data tables, including listing reviews. No data was restored." }, { status: 400 });
       }
       const requiredColumns: Record<string, string[]> = { users: ["id", "role"], properties: ["id", "image", "images", "videos"], site_settings: ["key", "value"], property_reviews: ["id", "propertyId", "userId", "reviewerName", "rating", "comment", "createdAt"] };
       for (const [table, required] of Object.entries(requiredColumns)) {

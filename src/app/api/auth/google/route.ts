@@ -6,8 +6,8 @@ import { deliverPendingRegistrationNotices } from "@/lib/notifications";
 import { newId, startSession } from "@/lib/session";
 
 const PRIMARY_ADMIN_EMAIL = "pavansai580@gmail.com";
-const oauthStateCookie = "terraland_google_state";
-const oauthNextCookie = "terraland_google_next";
+const oauthStateCookie = "nilay_google_state";
+const oauthNextCookie = "nilay_google_next";
 
 function isUserAdmin(email: string): boolean {
   const normalized = email.trim().toLowerCase();

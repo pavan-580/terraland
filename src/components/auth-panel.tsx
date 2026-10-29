@@ -98,6 +98,7 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
         return;
       }
 
+      window.dispatchEvent(new Event("nilay:account-changed"));
       window.dispatchEvent(new Event("terraland:account-changed"));
       const target = result.user?.role === "admin" ? "/admin" : (destination || "/");
       setContinueTo(target);
@@ -339,12 +340,14 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
             <span>{signup ? "Register with your phone" : "Sign in with phone or email"}</span>
           </div>
 
-          <form onSubmit={submit}>
+          <form onSubmit={submit} className="auth-form-fields">
             {signup && (
-              <label className={`auth-floating-field${hasName ? " has-value" : ""}`}>
+              <div className={`auth-float-wrap${hasName ? " has-value" : ""}`}>
                 <input
                   ref={nameRef}
+                  id="auth-name"
                   name="name"
+                  type="text"
                   required
                   minLength={2}
                   maxLength={80}
@@ -353,14 +356,17 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   onChange={(e) => setNameInput(e.target.value)}
                   onInput={(e) => setNameInput((e.target as HTMLInputElement).value)}
                   placeholder=" "
+                  className="auth-float-input"
                 />
-                <span className="auth-floating-label">Your name</span>
-              </label>
+                <label htmlFor="auth-name" className="auth-float-label">
+                  Your full name
+                </label>
+              </div>
             )}
 
             {signup ? (
               <>
-                <label className="auth-phone-field">
+                <div className="auth-field-group auth-phone-field" style={{ marginTop: 12 }}>
                   <span className="auth-field-label">Mobile number</span>
                   <div className="phone-input-wrap">
                     <span className="phone-input-prefix">+91</span>
@@ -383,10 +389,11 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   <small className="auth-field-hint">
                     Enter your 10-digit mobile number (country code +91 is added automatically).
                   </small>
-                </label>
-                <label className={`auth-floating-field${hasEmail ? " has-value" : ""}`}>
+                </div>
+                <div className={`auth-float-wrap${hasEmail ? " has-value" : ""}`}>
                   <input
                     ref={emailRef}
+                    id="auth-email"
                     name="email"
                     type="email"
                     autoComplete="email"
@@ -394,14 +401,18 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                     onChange={(e) => setEmailInput(e.target.value)}
                     onInput={(e) => setEmailInput((e.target as HTMLInputElement).value)}
                     placeholder=" "
+                    className="auth-float-input"
                   />
-                  <span className="auth-floating-label">Email address (optional)</span>
-                </label>
+                  <label htmlFor="auth-email" className="auth-float-label">
+                    Email address (optional)
+                  </label>
+                </div>
               </>
             ) : (
-              <label className={`auth-floating-field${hasIdentifier ? " has-value" : ""}`}>
+              <div className={`auth-float-wrap${hasIdentifier ? " has-value" : ""}`}>
                 <input
                   ref={identifierRef}
+                  id="auth-identifier"
                   name="identifier"
                   type="text"
                   required
@@ -410,39 +421,44 @@ export function AuthPanel({ destination, googleError }: { destination: string; g
                   onChange={(e) => setIdentifierInput(e.target.value)}
                   onInput={(e) => setIdentifierInput((e.target as HTMLInputElement).value)}
                   placeholder=" "
+                  className="auth-float-input"
                 />
-                <span className="auth-floating-label">10-digit mobile number or email address</span>
-              </label>
+                <label htmlFor="auth-identifier" className="auth-float-label">
+                  10-digit mobile number or email address
+                </label>
+              </div>
             )}
 
-            <label className={`auth-floating-field${hasPassword ? " has-value" : ""}`}>
-              <span className="password-input-wrap">
-                <input
-                  ref={passwordRef}
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={8}
-                  maxLength={72}
-                  autoComplete={signup ? "new-password" : "current-password"}
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  onInput={(e) => setPasswordInput((e.target as HTMLInputElement).value)}
-                  placeholder=" "
-                />
-                <span className="auth-floating-label">Password</span>
-                <button
-                  type="button"
-                  className="password-visibility"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showPassword}
-                  onClick={() => setShowPassword((visible) => !visible)}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  <span>{showPassword ? "Hide" : "Show"}</span>
-                </button>
-              </span>
-            </label>
+            <div className={`auth-float-wrap${hasPassword ? " has-value" : ""}`}>
+              <input
+                ref={passwordRef}
+                id="auth-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                maxLength={72}
+                autoComplete={signup ? "new-password" : "current-password"}
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onInput={(e) => setPasswordInput((e.target as HTMLInputElement).value)}
+                placeholder=" "
+                className="auth-float-input password-float-input"
+              />
+              <label htmlFor="auth-password" className="auth-float-label">
+                Password
+              </label>
+              <button
+                type="button"
+                className="password-visibility"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                <span>{showPassword ? "Hide" : "Show"}</span>
+              </button>
+            </div>
 
             <button className="button button-dark auth-submit" disabled={busy}>
               {busy ? "One moment…" : signup ? "Create your account" : "Sign in"} <ArrowUpRight size={16} />

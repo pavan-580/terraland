@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="terraland-leads-${dateStr}.csv"`
+        "Content-Disposition": `attachment; filename="nilay-leads-${dateStr}.csv"`
       }
     });
   }
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="terraland-inquiries-${dateStr}.csv"`
+        "Content-Disposition": `attachment; filename="nilay-inquiries-${dateStr}.csv"`
       }
     });
   }
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="terraland-buyer-requirements-${dateStr}.csv"`
+        "Content-Disposition": `attachment; filename="nilay-buyer-requirements-${dateStr}.csv"`
       }
     });
   }

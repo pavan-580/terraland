@@ -179,6 +179,21 @@ function createDatabase() {
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       sentAt TEXT
     );
+    CREATE TABLE IF NOT EXISTS customer_listing_interests (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      customerName TEXT NOT NULL,
+      customerEmail TEXT NOT NULL COLLATE NOCASE,
+      customerPhone TEXT NOT NULL DEFAULT '',
+      propertyId TEXT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+      source TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      lastEmailedAt TEXT,
+      emailCount INTEGER NOT NULL DEFAULT 0,
+      createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(customerEmail, propertyId)
+    );
     CREATE INDEX IF NOT EXISTS properties_city_idx ON properties(city);
     CREATE INDEX IF NOT EXISTS properties_type_idx ON properties(type);
     CREATE INDEX IF NOT EXISTS seller_phone_clicks_created_idx ON seller_phone_clicks(createdAt);

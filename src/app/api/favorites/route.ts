@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, getSiteSetting, logMemberActivity, publicPropertyFromRow } from "@/lib/db";
 import { currentUser } from "@/lib/session";
+import { recordCustomerListingInterest } from "@/lib/notifications";
 
 export async function GET(request: NextRequest) {
   const propertyId = request.nextUrl.searchParams.get("propertyId");
@@ -31,7 +32,19 @@ export async function POST(request: NextRequest) {
   const property = db.prepare("SELECT id, title FROM properties WHERE id = ? AND status = 'published'").get(propertyId) as { id: string; title: string } | undefined;
   if (!property) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
   const result = db.prepare("INSERT OR IGNORE INTO favorites (userId, propertyId) VALUES (?, ?)").run(user.id, propertyId);
-  if (result.changes) logMemberActivity(user.id, "Added listing to favorites", "Saved to favorites.", property);
+  if (result.changes) {
+    logMemberActivity(user.id, "Added listing to favorites", "Saved to favorites.", property);
+    if (user.email) {
+      recordCustomerListingInterest({
+        customerEmail: user.email,
+        customerName: user.name,
+        customerPhone: user.phone,
+        propertyId: property.id,
+        userId: user.id,
+        source: "favorite",
+      });
+    }
+  }
   return NextResponse.json({ saved: true });
 }
 

@@ -189,7 +189,7 @@ export function AdminPackagesView() {
         <div>
           <strong>Transparent Pricing &amp; Offline Payment Policy:</strong>
           <span>
-            Terraland collects fee payments directly via UPI / Bank transfer with GST/Manual receipts. No hidden brokerage deductions; all due diligence is conducted independently or via certified legal counsel.
+            NILAY collects fee payments directly via UPI / Bank transfer with GST/Manual receipts. No hidden brokerage deductions; all due diligence is conducted independently or via certified legal counsel.
           </span>
         </div>
       </div>

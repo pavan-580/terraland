@@ -124,9 +124,9 @@ export function SiteVisitModal({ isOpen, onClose, property }: SiteVisitModalProp
   // Google Calendar Link generator
   function getGoogleCalendarUrl() {
     const cleanDate = (proposedDate || todayStr).replace(/-/g, "");
-    const title = encodeURIComponent(`Plot Inspection: ${property.title} - Terraland`);
+    const title = encodeURIComponent(`Plot Inspection: ${property.title} - NILAY`);
     const details = encodeURIComponent(
-      `Site visit with Terraland founder for ${property.title} in ${property.locality}, ${property.city}.\nPhone: ${phone}\nTime Slot: ${proposedTime}`
+      `Site visit with NILAY founder for ${property.title} in ${property.locality}, ${property.city}.\nPhone: ${phone}\nTime Slot: ${proposedTime}`
     );
     const location = encodeURIComponent(`${property.locality}, ${property.city}`);
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${cleanDate}T043000Z/${cleanDate}T073000Z&details=${details}&location=${location}`;
@@ -169,7 +169,7 @@ export function SiteVisitModal({ isOpen, onClose, property }: SiteVisitModalProp
               </a>
 
               <a
-                href={`https://wa.me/918074399963?text=Hi%20Terraland%2C%20I%20just%20scheduled%20a%20site%20visit%20for%20${encodeURIComponent(property.title)}%20on%20${proposedDate || todayStr}.`}
+                href={`https://wa.me/918074399963?text=Hi%20NILAY%2C%20I%20just%20scheduled%20a%20site%20visit%20for%20${encodeURIComponent(property.title)}%20on%20${proposedDate || todayStr}.`}
                 target="_blank"
                 rel="noreferrer"
                 className="button button-dark button-small whatsapp-cta"
@@ -338,7 +338,7 @@ export function SiteVisitModal({ isOpen, onClose, property }: SiteVisitModalProp
             </button>
 
             <p className="privacy-note">
-              100% Free · Zero middle agents · Directly accompanied by the Terraland founder
+              100% Free · Zero middle agents · Directly accompanied by the NILAY founder
             </p>
           </form>
         )}

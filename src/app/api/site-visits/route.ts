@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, logMemberActivity } from "@/lib/db";
 import { currentUser, newId } from "@/lib/session";
-import { sendSiteVisitNotice } from "@/lib/notifications";
+import { sendSiteVisitNotice, recordCustomerListingInterest } from "@/lib/notifications";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 async function requireAdmin() {
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       user?.id ?? null,
       name,
       phone,
-      property.owner || "Terraland Verified Seller",
+      property.owner || "NILAY Verified Seller",
       property.phone || "",
       proposedDate,
       proposedTime,

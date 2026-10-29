@@ -7,7 +7,7 @@ import { BrandLogo } from "@/components/brand-logo";
 
 export function SiteFooter({
   carePhone: initialPhone = "8074399963",
-  careEmail: initialEmail = "care@terraland.in",
+  careEmail: initialEmail = "care@nilay.in",
 }: {
   carePhone?: string;
   careEmail?: string;

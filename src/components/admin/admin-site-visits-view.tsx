@@ -122,7 +122,7 @@ export function AdminSiteVisitsView() {
                         <Phone size={13} /> Call
                       </a>
                       <a
-                        href={`https://wa.me/${cleanBuyerPhone}?text=Hello%20${encodeURIComponent(visit.buyerName)}%2C%20this%20is%20Terraland%20regarding%20your%20site%20visit%20for%20${encodeURIComponent(visit.propertyTitle)}%20on%20${visit.proposedDate}.`}
+                        href={`https://wa.me/${cleanBuyerPhone}?text=Hello%20${encodeURIComponent(visit.buyerName)}%2C%20this%20is%20NILAY%20regarding%20your%20site%20visit%20for%20${encodeURIComponent(visit.propertyTitle)}%20on%20${visit.proposedDate}.`}
                         target="_blank"
                         rel="noreferrer"
                         className="contact-icon-btn whatsapp"
@@ -144,7 +144,7 @@ export function AdminSiteVisitsView() {
                           <Phone size={13} /> Call
                         </a>
                         <a
-                          href={`https://wa.me/${cleanSellerPhone}?text=Hello%20${encodeURIComponent(visit.sellerName)}%2C%20this%20is%20Terraland.%20A%20verified%20buyer%20wishes%20to%20visit%20your%20plot%20on%20${visit.proposedDate}.`}
+                          href={`https://wa.me/${cleanSellerPhone}?text=Hello%20${encodeURIComponent(visit.sellerName)}%2C%20this%20is%20NILAY.%20A%20verified%20buyer%20wishes%20to%20visit%20your%20plot%20on%20${visit.proposedDate}.`}
                           target="_blank"
                           rel="noreferrer"
                           className="contact-icon-btn whatsapp"

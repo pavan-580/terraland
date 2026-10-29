@@ -112,7 +112,7 @@ export function AdminRequirementsView() {
                       <Phone size={14} /> Call
                     </a>
                     <a
-                      href={`https://wa.me/${cleanPhone}?text=Hello%20${encodeURIComponent(req.name)}%2C%20this%20is%20the%20founder%20at%20Terraland.%20I%20am%20reviewing%20your%20plot%20requirement%20for%20${encodeURIComponent(req.preferredLocation)}.`}
+                      href={`https://wa.me/${cleanPhone}?text=Hello%20${encodeURIComponent(req.name)}%2C%20this%20is%20the%20founder%20at%20NILAY.%20I%20am%20reviewing%20your%20plot%20requirement%20for%20${encodeURIComponent(req.preferredLocation)}.`}
                       target="_blank"
                       rel="noreferrer"
                       className="contact-icon-btn whatsapp"

@@ -12,7 +12,7 @@ import { currentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nkart.store").replace(/\/+$/, "");
 
 const cityCards = [
   { name: "Hyderabad", image: "https://etimg.etb2bimg.com/thumb/msid-99644024%2Cwidth-1200%2Cheight-900%2Cresizemode-4/.jpg" },
@@ -178,7 +178,7 @@ export default async function Home() {
         </section>
 
         <section className="trust-strip">
-          <span>THE TERRALAND STANDARD</span>
+          <span>THE NILAY STANDARD</span>
           <div><strong>Verified owners.</strong> Every plot is checked on site.</div>
           <Link href="/requirements">Tell us what you need <ArrowUpRight size={15} /></Link>
         </section>
@@ -244,7 +244,7 @@ export default async function Home() {
             <span className="eyebrow">FOR GENUINE LANDOWNERS</span>
             <h2>Sell your plot.<br /><em>Meet real buyers.</em></h2>
             <p>
-              List directly with Terraland and connect with buyers looking in Miyapur and nearby areas.
+              List directly with NILAY and connect with buyers looking in Miyapur and nearby areas.
             </p>
             <div className="seller-actions">
               <Link className="button button-cream" href="/sell">
@@ -252,7 +252,7 @@ export default async function Home() {
               </Link>
               <a
                 className="seller-whatsapp"
-                href="https://wa.me/918074399963?text=Hello%20Terraland%2C%20I%20own%20a%20residential%20plot%20in%20Miyapur%20and%20would%20like%20to%20list%20it."
+                href="https://wa.me/918074399963?text=Hello%20NILAY%2C%20I%20own%20a%20residential%20plot%20in%20Miyapur%20and%20would%20like%20to%20list%20it."
                 target="_blank"
                 rel="noreferrer"
               >
@@ -263,7 +263,7 @@ export default async function Home() {
           <div className="seller-art">
             <div className="seller-art-image" />
             <div className="seller-stamp">
-              <span>TERRALAND<br />VERIFIED<br />GROUND</span>
+              <span>NILAY<br />VERIFIED<br />GROUND</span>
               <ArrowDownRight size={20} />
             </div>
             <div className="seller-side-note">
@@ -272,10 +272,10 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Terraland Four Principles */}
+        {/* NILAY Four Principles */}
         <section className="section assurance-section">
           <div className="assurance-intro">
-            <span className="eyebrow">THE TERRALAND STANDARD</span>
+            <span className="eyebrow">THE NILAY STANDARD</span>
             <h2>How we check <em>each plot.</em></h2>
             <p>Clear details help you decide what to explore and what to verify further.</p>
           </div>

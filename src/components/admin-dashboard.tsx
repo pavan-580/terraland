@@ -220,7 +220,7 @@ export function AdminDashboard() {
       showSellerPhones: true,
       adminContactPhone: "8074399963",
       customerCarePhone: "8074399963",
-      customerCareEmail: "care@terraland.in",
+      customerCareEmail: "care@nilay.in",
       homeTickerText: "New verified plots are added after owner and site checks.",
       homeTickerPropertyId: "",
       popupAdEnabled: false,
@@ -248,7 +248,7 @@ export function AdminDashboard() {
   const [savingPhoneSetting, setSavingPhoneSetting] = useState(false);
   const [adminPhone, setAdminPhone] = useState("8074399963");
   const [carePhone, setCarePhone] = useState("8074399963");
-  const [careEmail, setCareEmail] = useState("care@terraland.in");
+  const [careEmail, setCareEmail] = useState("care@nilay.in");
   const [savingContacts, setSavingContacts] = useState(false);
   const [tickerText, setTickerText] = useState("New verified plots are added after owner and site checks.");
   const [tickerPropertyId, setTickerPropertyId] = useState("");
@@ -282,6 +282,8 @@ export function AdminDashboard() {
   const [savingEmailSettings, setSavingEmailSettings] = useState(false);
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState("");
+  const [runningNurture, setRunningNurture] = useState(false);
+  const [nurtureResult, setNurtureResult] = useState("");
   const [pushingAllEmails, setPushingAllEmails] = useState(false);
   const [siteLogoUrl, setSiteLogoUrl] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -389,7 +391,7 @@ export function AdminDashboard() {
       : Number(plot.price) >= 100000
       ? `₹${(Number(plot.price) / 100000).toFixed(1)} Lakhs`
       : `₹${Number(plot.price).toLocaleString("en-IN")}`;
-    const siteUrl = siteBaseUrl || (typeof window !== "undefined" ? window.location.origin : "https://terraland.onrender.com");
+    const siteUrl = siteBaseUrl || (typeof window !== "undefined" ? window.location.origin : "https://nkart.store");
     const link = `${siteUrl}/properties/${encodeURIComponent(plot.id)}`;
 
     return `🏡 *EXCLUSIVE PLOT FOR SALE - ${plot.locality?.toUpperCase() || "HYDERABAD"}, ${plot.city?.toUpperCase() || "TELANGANA"}*\n\n` +
@@ -446,7 +448,7 @@ export function AdminDashboard() {
       setData(result);
       setAdminPhone(result.settings.adminContactPhone ?? "8074399963");
       setCarePhone(result.settings.customerCarePhone ?? "8074399963");
-      setCareEmail(result.settings.customerCareEmail ?? "care@terraland.in");
+      setCareEmail(result.settings.customerCareEmail ?? "care@nilay.in");
       setTickerText(result.settings.homeTickerText ?? "New verified plots are added after owner and site checks.");
       setTickerPropertyId(result.settings.homeTickerPropertyId ?? "");
       setPopupEnabled(result.settings.popupAdEnabled ?? false);
@@ -929,6 +931,25 @@ export function AdminDashboard() {
       setError(err instanceof Error ? err.message : "Failed to save email settings.");
     } finally {
       setSavingEmailSettings(false);
+    }
+  }
+
+  async function runDailyNurtureAction() {
+    setRunningNurture(true);
+    setNurtureResult("");
+    try {
+      const res = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "run-daily-nurture" }),
+      });
+      const data = await res.json() as { message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to run daily nurture.");
+      setNurtureResult(`✅ ${data.message ?? "Daily nurture ran successfully!"}`);
+    } catch (err) {
+      setNurtureResult(`❌ ${err instanceof Error ? err.message : "Nurture sequence failed."}`);
+    } finally {
+      setRunningNurture(false);
     }
   }
 
@@ -1431,14 +1452,29 @@ export function AdminDashboard() {
             type="button"
             className="button button-outline"
             style={{ minHeight: 32, fontSize: 11, padding: "4px 12px" }}
-            disabled={sendingTestEmail || !resendApiKey}
+            disabled={sendingTestEmail}
             onClick={() => void sendTestEmailAction()}
           >
             {sendingTestEmail ? "Sending Test Email…" : "✉️ Send Test Email to Admin"}
           </button>
+          <button
+            type="button"
+            className="button button-outline"
+            style={{ minHeight: 32, fontSize: 11, padding: "4px 12px", borderColor: "rgba(198, 220, 129, 0.4)" }}
+            disabled={runningNurture}
+            onClick={() => void runDailyNurtureAction()}
+            title="Send daily email updates to all active customers who looked at listings"
+          >
+            {runningNurture ? "Running Daily Nurture…" : "🔄 Run Daily Customer Listing Nurture"}
+          </button>
           {testEmailResult && (
             <span style={{ fontSize: 11, color: testEmailResult.startsWith("✅") ? "var(--lime)" : "#ff6b6b" }}>
               {testEmailResult}
+            </span>
+          )}
+          {nurtureResult && (
+            <span style={{ fontSize: 11, color: nurtureResult.startsWith("✅") ? "var(--lime)" : "#ff6b6b" }}>
+              {nurtureResult}
             </span>
           )}
         </div>
@@ -1471,7 +1507,7 @@ export function AdminDashboard() {
               Currently Pointed Active Domain
             </span>
             <strong style={{ fontSize: 14, color: "#4ade80", fontFamily: "var(--mono, monospace)" }}>
-              {currentOrigin || (typeof window !== "undefined" ? window.location.origin : "https://terraland.onrender.com")}
+              {currentOrigin || (typeof window !== "undefined" ? window.location.origin : "https://nkart.store")}
             </strong>
             <small style={{ display: "block", color: "var(--muted)", fontSize: 10, marginTop: 4 }}>
               Live host detected from current browser session.
@@ -1484,7 +1520,7 @@ export function AdminDashboard() {
               type="url"
               value={siteBaseUrl}
               onChange={(e) => setSiteBaseUrl(e.target.value)}
-              placeholder={currentOrigin || "https://terraland.onrender.com"}
+              placeholder={currentOrigin || "https://nkart.store"}
             />
             <small style={{ color: "var(--muted)", fontSize: 10 }}>
               Leave blank to automatically use the pointed domain or Render URL.
@@ -1512,8 +1548,8 @@ export function AdminDashboard() {
             ref={backupInputRef}
             className="admin-backup-file"
             type="file"
-            accept=".gz,.json,.terraland-backup,application/gzip,application/json"
-            aria-label="Choose a Terraland backup file"
+            accept=".gz,.json,.nilay-backup,.terraland-backup,application/gzip,application/json"
+            aria-label="Choose a NILAY backup file"
             disabled={backupBusy}
             onChange={(event) => void uploadBackup(event.currentTarget.files?.[0])}
           />

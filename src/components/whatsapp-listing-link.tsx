@@ -3,7 +3,7 @@
 import type { MouseEvent } from "react";
 import { formatListingPrice, type Property } from "@/lib/market";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.onrender.com").replace(/\/+$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nkart.store").replace(/\/+$/, "");
 
 export function WhatsAppListingLink({
   property,
@@ -14,7 +14,7 @@ export function WhatsAppListingLink({
   className?: string;
   adminPhone?: string;
 }) {
-  const currentOrigin = (typeof window !== "undefined" && window.location.origin) ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.onrender.com").replace(/\/+$/, "");
+  const currentOrigin = (typeof window !== "undefined" && window.location.origin) ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nkart.store").replace(/\/+$/, "");
   const listingUrl = `${currentOrigin}/properties/${encodeURIComponent(property.id)}`;
   const category = property.listingCategory === "rent" ? "For rent" : "For sale";
   const description = property.description ? property.description.replace(/\s+/g, " ").trim() : "";

@@ -353,7 +353,7 @@ export function SearchResults({ initial, initialProperties = [] }: { initial: { 
                 <span>VERIFIED PLOTS ONLY</span>
                 <h3>No published listings match this criteria right now.</h3>
                 <p>
-                  Terraland does not show fake listings. We verify every plot title and inspect the site before publishing.
+                  NILAY does not show fake listings. We verify every plot title and inspect the site before publishing.
                   If you don&apos;t see what you need, submit your requirement and our founder will match you with upcoming or direct-owner plots in the Miyapur corridor.
                 </p>
                 <div className="empty-state-actions">

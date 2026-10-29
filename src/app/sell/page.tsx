@@ -135,7 +135,7 @@ export default function SellPage() {
           <p>
             {listingCategory === "sale"
               ? "Connect directly with verified buyers in the Miyapur corridor. Every listing is manually reviewed and checked to prevent unverified middlemen."
-              : "List your property with transparent terms. Enquiries are routed through Terraland."}
+              : "List your property with transparent terms. Enquiries are routed through NILAY."}
           </p>
           <div className="sell-points">
             <span><Check size={15} /> Free listing at launch</span>
@@ -155,7 +155,7 @@ export default function SellPage() {
           <p>
             {listingCategory === "sale"
               ? "Accurate details build buyer confidence. Enter actual plot dimensions and document status."
-              : "Set your rental rate, availability, and guest capacity. Enquiries route through Terraland."}
+              : "Set your rental rate, availability, and guest capacity. Enquiries route through NILAY."}
           </p>
 
           <div className="listing-mode-field">
@@ -495,12 +495,12 @@ export default function SellPage() {
 
           <label className="seller-consent">
             <input required type="checkbox" name="publicationConsent" />
-            I confirm I am authorised to submit this property and permit Terraland to publish this listing after founder verification.
+            I confirm I am authorised to submit this property and permit NILAY to publish this listing after founder verification.
           </label>
 
           <label className="seller-consent">
             <input required type="checkbox" name="contactConsent" />
-            I give Terraland permission to contact me regarding buyer enquiries and site visit appointments.
+            I give NILAY permission to contact me regarding buyer enquiries and site visit appointments.
           </label>
 
           {error && <div className="form-error">{error}</div>}
@@ -515,7 +515,7 @@ export default function SellPage() {
               : "Submit plot for verification"}{" "}
             <ArrowUpRight size={16} />
           </button>
-          <p className="privacy-note">Your property will not appear on the live site until verified by the founder. No fake listings are allowed on Terraland.</p>
+          <p className="privacy-note">Your property will not appear on the live site until verified by the founder. No fake listings are allowed on NILAY.</p>
         </form>
       </main>
       <SiteFooter />

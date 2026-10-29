@@ -63,7 +63,7 @@ export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
         <div className="admin-export-group">
           <a
             href="/api/admin/export?type=leads"
-            download="terraland-leads.csv"
+            download="nilay-leads.csv"
             className="admin-export-btn"
             title="Download full CSV of all buyer and seller leads"
           >
@@ -71,7 +71,7 @@ export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
           </a>
           <a
             href="/api/admin/export?type=inquiries"
-            download="terraland-inquiries.csv"
+            download="nilay-inquiries.csv"
             className="admin-export-btn"
             title="Download full CSV of property enquiries"
           >
@@ -79,7 +79,7 @@ export function AdminDailySummary({ onSelectSection }: AdminDailySummaryProps) {
           </a>
           <a
             href="/api/admin/export?type=buyer_requirements"
-            download="terraland-buyer-requirements.csv"
+            download="nilay-buyer-requirements.csv"
             className="admin-export-btn"
             title="Download full CSV of buyer requirements"
           >

@@ -19,7 +19,7 @@ import { formatListingPrice, calculatePricePerSqYd, formatPricePerSqYd } from "@
 import { currentUser } from "@/lib/session";
 
 const currency = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nkart.store").replace(/\/+$/, "");
 
 function yesNo(value?: string) {
   if (value === "yes") return "Yes";
@@ -46,9 +46,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const row = db.prepare("SELECT title, description, image, type, listingCategory, city, locality, price, area, unit FROM properties WHERE id = ? AND status = 'published'").get(id) as
     { title: string; description: string; image: string; type: string; listingCategory: string; city: string; locality: string; price: number; area: number; unit: string } | undefined;
-  if (!row) return { title: "Plot listing in Hyderabad | Terraland" };
+  if (!row) return { title: "Plot listing in Hyderabad | NILAY" };
   const listingMode = row.listingCategory === "rent" ? "for rent" : "for sale";
-  const title = `${row.type} ${listingMode} in ${row.locality}, ${row.city}: ${row.title} | Terraland`;
+  const title = `${row.type} ${listingMode} in ${row.locality}, ${row.city}: ${row.title} | NILAY`;
   const description = `${row.title}: ${row.type} ${listingMode} in ${row.locality}, ${row.city}. ${row.area} ${row.unit}, ${currency.format(row.price)}. ${row.description}`
     .replace(/\s+/g, " ").trim().slice(0, 160);
   const canonical = `${siteUrl}/properties/${encodeURIComponent(id)}`;
@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title,
     description,
     alternates: { canonical },
-    openGraph: { title, description, url: canonical, siteName: "Terraland", locale: "en_IN", type: "website", images: row.image ? [row.image] : [] },
+    openGraph: { title, description, url: canonical, siteName: "NILAY", locale: "en_IN", type: "website", images: row.image ? [row.image] : [] },
     twitter: { card: "summary_large_image", title, description, images: row.image ? [row.image] : [] },
   };
 }
@@ -134,9 +134,9 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
     ["Negotiability", negotiabilityLabel],
     ["Document status", documentStatusLabel],
     ...(listingCategory === "rent" ? [
-      ["Availability", property.availability || "Direct via Terraland"],
+      ["Availability", property.availability || "Direct via NILAY"],
       ...(property.guestCapacity ? [["Guest capacity", `${property.guestCapacity} guests`] as [string, string]] : []),
-      ["Enquiries", "Coordinated through Terraland"],
+      ["Enquiries", "Coordinated through NILAY"],
     ] as [string, string][] : []),
     ...(listingCategory === "sale" ? [
       ["Facing", property.facing || "Not specified"],
@@ -314,7 +314,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ id: s
               <div>
                 <strong>Legal &amp; Title Diligence Advisory</strong>
                 <p>
-                  Listing details are based on seller declarations and initial verification. Terraland facilitates direct contact and physical site inspections. Buyers are strongly advised to independently verify original link documents, revenue survey numbers, and the Encumbrance Certificate (EC) with certified legal counsel before signing sale agreements or transferring funds.
+                  Listing details are based on seller declarations and initial verification. NILAY facilitates direct contact and physical site inspections. Buyers are strongly advised to independently verify original link documents, revenue survey numbers, and the Encumbrance Certificate (EC) with certified legal counsel before signing sale agreements or transferring funds.
                 </p>
               </div>
             </div>

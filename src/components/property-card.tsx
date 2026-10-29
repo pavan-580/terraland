@@ -38,7 +38,7 @@ export function PropertyCard({ property }: { property: Property }) {
         <div className="card-seller-contact">
           <div>
             <span>{property.owner === "Terraland" || property.owner === "NILAY" ? "Direct via" : "Seller"}</span>
-            <strong>{property.owner === "NILAY" ? "Terraland" : property.owner}</strong>
+            <strong>{property.owner === "Terraland" || property.owner === "NILAY" ? "NILAY" : property.owner}</strong>
           </div>
           {property.phone && (
             <div className="card-seller-links">

@@ -154,9 +154,21 @@ export async function POST(request: NextRequest) {
     try {
       const target = typeof (body as Record<string, unknown>).targetEmail === "string" ? (body as Record<string, unknown>).targetEmail as string : undefined;
       const testResult = await notifications.sendTestEmail(target);
-      return NextResponse.json({ message: `Test email successfully delivered to ${testResult.to}!`, ...testResult });
+      const deliveredList = testResult.results.filter((r) => r.success).map((r) => r.to).join(", ");
+      return NextResponse.json({ message: `Test email delivered to: ${deliveredList || "recipients"}`, ...testResult });
     } catch (err) {
       return NextResponse.json({ error: err instanceof Error ? err.message : "Test email failed to deliver." }, { status: 400 });
+    }
+  }
+  if (action === "run-daily-nurture") {
+    try {
+      const nurtureResult = await notifications.dispatchDailyListingNurtureEmails();
+      return NextResponse.json({
+        message: `Daily nurture ran: ${nurtureResult.delivered} delivered, ${nurtureResult.soldClosed} closed (sold), ${nurtureResult.failed} failed.`,
+        ...nurtureResult,
+      });
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : "Failed to run daily listing nurture." }, { status: 400 });
     }
   }
   return NextResponse.json({ error: "Unknown admin action." }, { status: 400 });

@@ -59,8 +59,8 @@ export async function POST(request: Request) {
         from,
         to: [recipient],
         subject: `NILAY daily backup · ${createdAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`,
-        text: `Your daily Terraland backup is ready (${sizeMb} MB). Download it within 7 days: ${downloadUrl}\n\nThe backup includes the site database and listing photos/videos.`,
-        html: `<p>Your daily Terraland backup is ready (${sizeMb} MB).</p><p><a href="${downloadUrl}">Download the backup</a>. This secure link expires in 7 days.</p><p>Includes the site database and listing photos/videos.</p>`,
+        text: `Your daily NILAY backup is ready (${sizeMb} MB). Download it within 7 days: ${downloadUrl}\n\nThe backup includes the site database and listing photos/videos.`,
+        html: `<p>Your daily NILAY backup is ready (${sizeMb} MB).</p><p><a href="${downloadUrl}">Download the backup</a>. This secure link expires in 7 days.</p><p>Includes the site database and listing photos/videos.</p>`,
       }),
     });
     if (!email.ok) throw new Error(`Backup email failed (${email.status}): ${(await email.text()).slice(0, 500)}`);

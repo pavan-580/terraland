@@ -5,7 +5,7 @@ import { VisitTracker } from "@/components/visit-tracker";
 import { PromotionPopup } from "@/components/promotion-popup";
 import "./globals.css";
 
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://terraland.in").replace(/\/+$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://nkart.store").replace(/\/+$/, "");
 
 export const metadata: Metadata = {
   title: {
